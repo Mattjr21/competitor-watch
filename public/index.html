@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Competitor Watch - La Bodega</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="logo.png" alt="La Bodega Supermercado y Restaurante" />
+      <div>
+        <h1 id="store-name">Competitor Watch</h1>
+        <p class="sub" id="meta">Loading local weekly ads...</p>
+      </div>
+    </div>
+    <div class="actions">
+      <label class="btn btn-ghost" for="file">Upload sales data</label>
+      <input id="file" type="file" accept=".csv" hidden />
+      <button id="refresh" class="btn">Refresh deals</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="area-bar">
+      <div class="area-presets" id="area-presets"></div>
+      <form class="zip-form" id="zip-form">
+        <input id="zip-input" type="text" placeholder="ZIP codes, e.g. 77081,77036" />
+        <button class="btn" type="submit">Load area</button>
+      </form>
+    </section>
+
+    <section id="status" class="status">Loading...</section>
+
+    <section class="block" id="combos-block" hidden>
+      <div class="deals-head">
+        <h2>Combos &amp; weekend packs spotted</h2>
+        <div class="filters">
+          <label>Area / ZIP
+            <select id="combo-zip-filter"></select>
+          </label>
+          <label class="chk">
+            <input type="checkbox" id="combo-latino-only" /> Latino groceries only
+          </label>
+        </div>
+      </div>
+      <p class="block-sub" id="combos-sub">Bundle / multi-buy / weekend-pack deals running near these ZIP codes - copy the ideas for your own Sat &amp; Sun.</p>
+      <div id="combos" class="deals-grid"></div>
+    </section>
+
+    <section class="block" id="trending-block" hidden>
+      <div class="deals-head">
+        <h2>Trending in the market (US Latino metros)</h2>
+        <span class="block-sub" id="trending-meta"></span>
+      </div>
+      <p class="block-sub">Most-advertised products this week across major Mexican-populated metros (Houston, Dallas, San Antonio, Rio Grande Valley, Los Angeles, Chicago, Phoenix, Hialeah) - what's hot to stock or feature. Ranked by how many stores &amp; metros are running it.</p>
+      <div class="trend-cols">
+        <div class="trend-col">
+          <h3>Mexican / Latino supermarkets</h3>
+          <ol id="trend-latino" class="trend-list"></ol>
+        </div>
+        <div class="trend-col">
+          <h3>American supermarkets</h3>
+          <ol id="trend-main" class="trend-list"></ol>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="rec-block" hidden>
+      <h2>What to feature this weekend</h2>
+      <p class="block-sub" id="rec-source">Based on your sales data + live competitor ads.</p>
+      <p class="week-signal" id="week-signal"></p>
+
+      <div class="legend">
+        <span class="legend-item"><i class="dot anchor"></i> Bring people in (door-driver)</span>
+        <span class="legend-item"><i class="dot protect"></i> Protect margin (don't discount)</span>
+        <span class="legend-item"><i class="dot attach"></i> Grow the basket (add-on)</span>
+        <span class="legend-item"><i class="dot midweek"></i> Lift slow days</span>
+      </div>
+
+      <div id="recs" class="rec-grid"></div>
+    </section>
+
+    <section class="block" id="deals-block" hidden>
+      <div class="deals-head">
+        <h2>Live competitor deals</h2>
+        <div class="filters">
+          <label>Category
+            <select id="cat-filter"></select>
+          </label>
+          <label>Retailer
+            <select id="merch-filter"></select>
+          </label>
+          <label class="chk">
+            <input type="checkbox" id="latino-only" /> Latino groceries only
+          </label>
+        </div>
+      </div>
+      <div id="deals" class="deals-grid"></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span id="foot-meta"></span>
+    <span>Source: Flipp / Wishabi weekly ads (unofficial) - prices vary by store, verify before printing ads.</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

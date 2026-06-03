@@ -1,0 +1,125 @@
+{
+  "store_name": "La Bodega Supermarket",
+  "primary_zip": "30701",
+  "zips": [
+    "30701", "30735", "30733", "30746", "30103",
+    "30720", "30721", "30719", "30722", "30139",
+    "30734", "30705"
+  ],
+  "competitor_filter": [],
+  "weekend_target_per_day": 10000,
+  "combo_search_terms": [
+    "combo", "paquete", "fin de semana", "family pack", "carne asada",
+    "meal deal", "bundle", "mix and match", "fajita", "taco"
+  ],
+  "trending_zips": [
+    "77036", "75211", "78207", "78521", "90255",
+    "60632", "85009", "33012"
+  ],
+  "trending_terms": [
+    "tortilla", "chorizo", "carne asada", "jarritos", "queso fresco",
+    "chile", "mango", "crema", "salsa", "maseca", "pan dulce", "aguacate"
+  ],
+  "latino_merchants": [
+    "el rancho", "michoacana", "fiesta", "mi tienda", "foodarama", "el super",
+    "vallarta", "northgate", "presidente", "sedano", "bravo", "fresco y mas",
+    "fresco y m", "el ahorro", "cardenas", "superior grocers", "supermercado",
+    "carniceria", "el rio grande", "la fiesta", "compare foods", "rancho market",
+    "mariano", "el mariachi", "morelia", "chapala", "guadalajara", "jerusalem"
+  ],
+  "combo_keywords": [
+    "combo", "paquete", "fin de semana", "weekend", "family pack", "familiar",
+    "bundle", "buy one", "bogo", "/$", " for $", "mix and match", "mix & match"
+  ],
+  "area_presets": [
+    { "label": "My area (Calhoun GA)", "zips": "30701,30735,30733,30746,30103,30720,30721,30705" },
+    { "label": "Houston TX", "zips": "77081,77036,77023" },
+    { "label": "Dallas / Ft Worth TX", "zips": "75211,75217,76106" },
+    { "label": "San Antonio TX", "zips": "78207,78228" },
+    { "label": "Rio Grande Valley TX", "zips": "78521,78539" },
+    { "label": "Hialeah / Miami FL", "zips": "33012,33125,33135" },
+    { "label": "Orlando FL", "zips": "32811,32807" }
+  ],
+  "categories": [
+    {
+      "key": "meat",
+      "label": "Meat / Carne",
+      "role": "anchor",
+      "terms": ["carne asada", "beef chuck roast", "pork spareribs", "chicken leg quarters", "ground beef"],
+      "own_match": ["meat", "carne", "pollo", "chicken", "beef", "pork", "puerco", "res", "costilla", "chorizo", "bistec", "milanesa", "parrilla", "asada"],
+      "unit": "lb"
+    },
+    {
+      "key": "tortilla",
+      "label": "Tortillas",
+      "role": "protect",
+      "terms": ["corn tortilla", "tortilla"],
+      "own_match": ["tortilla"],
+      "hero_sku": "El Milagro Corn Tortillas",
+      "alt_sku": "La Hidalguense Corn Tortillas"
+    },
+    {
+      "key": "charcoal",
+      "label": "Charcoal",
+      "role": "attach",
+      "terms": ["charcoal"],
+      "own_match": ["charcoal", "carbon", "mesquite"]
+    },
+    {
+      "key": "soda",
+      "label": "Soda / Drinks",
+      "role": "attach",
+      "terms": ["coca cola", "soda", "jarritos"],
+      "own_match": ["coca", "coke", "soda", "jarrito", "refresco", "sprite", "pepsi", "fanta", "juice", "jugo", "squirt", "sidral"]
+    },
+    {
+      "key": "queso",
+      "label": "Queso / Cheese",
+      "role": "attach",
+      "terms": ["queso fresco", "mexican cheese"],
+      "own_match": ["queso", "cheese", "cotija", "oaxaca", "panela", "fresco"]
+    },
+    {
+      "key": "crema",
+      "label": "Crema / Sour Cream",
+      "role": "attach",
+      "terms": ["crema", "sour cream"],
+      "own_match": ["crema", "sour cream"]
+    },
+    {
+      "key": "salsa",
+      "label": "Salsa",
+      "role": "attach",
+      "terms": ["salsa", "valentina"],
+      "own_match": ["salsa", "valentina", "picamas"]
+    },
+    {
+      "key": "produce",
+      "label": "Produce",
+      "role": "support",
+      "terms": ["avocado", "roma tomato", "lime", "cilantro"],
+      "own_match": ["avocado", "aguacate", "tomato", "tomate", "lime", "limon", "verde", "cilantro", "onion", "cebolla", "chile", "serrano", "tomatillo", "mango"]
+    }
+  ],
+  "facts": {
+    "meat_basket_avg": 54.64,
+    "nonmeat_basket_avg": 17.01,
+    "weekend_avg_basket": 33.15,
+    "weekday_avg_basket": 27.32,
+    "weekend_rev_per_day": 7694,
+    "weekday_rev_per_day": 3921,
+    "weekend_orders_per_day": 232,
+    "attach_rates_pct": {
+      "tortilla": 14.7,
+      "charcoal": 1.5,
+      "soda": 8.9,
+      "queso": 7.1,
+      "crema": 3.8,
+      "salsa": 5.1,
+      "produce": 21.0
+    },
+    "hero_seller": "El Milagro Corn Tortillas",
+    "hero_basket_avg": 52.18,
+    "prepared_weekend_rev": 1711
+  }
+}
