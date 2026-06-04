@@ -9,3 +9,6 @@ __pycache__/
 Thumbs.db
 .vscode/
 .idea/
+
+# Accidental nested repo folder (do not commit)
+git/
