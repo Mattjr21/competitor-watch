@@ -37,6 +37,7 @@ function render(data) {
   $("#week-signal").textContent = data.week_signal || "";
 
   renderPresets(data);
+  renderSearchHints(data.search_hints || []);
   renderComboFilters(data);
   renderCombos();
   renderRecs(data.recommendations);
@@ -46,6 +47,58 @@ function render(data) {
 
   $("#rec-block").hidden = false;
   $("#deals-block").hidden = false;
+}
+
+function renderSearchHints(hints) {
+  const wrap = $("#search-chips");
+  wrap.innerHTML = "";
+  hints.forEach((term) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip";
+    chip.textContent = term;
+    chip.onclick = () => {
+      $("#search-input").value = term;
+      runSearch();
+    };
+    wrap.appendChild(chip);
+  });
+}
+
+async function runSearch() {
+  const q = $("#search-input").value.trim();
+  if (q.length < 2) {
+    $("#search-meta").hidden = false;
+    $("#search-meta").textContent = "Type at least 2 characters to search.";
+    $("#search-results").innerHTML = "";
+    return;
+  }
+  const btn = $("#search-btn");
+  const meta = $("#search-meta");
+  const wrap = $("#search-results");
+  btn.disabled = true;
+  meta.hidden = false;
+  meta.textContent = `Searching "${q}" across competitor ads...`;
+  wrap.innerHTML = "";
+  try {
+    const params = ["q=" + encodeURIComponent(q)];
+    if (STATE.zips) params.push("zips=" + encodeURIComponent(STATE.zips));
+    if ($("#search-latino-only").checked) params.push("latino=1");
+    const res = await fetch("/api/search?" + params.join("&"));
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    meta.textContent = `${data.count} result${data.count !== 1 ? "s" : ""} for "${data.query}" near ${data.zips.length} ZIP${data.zips.length !== 1 ? "s" : ""}`;
+    if (data.count === 0) {
+      wrap.innerHTML = '<div class="empty">No ads found. Try another spelling, uncheck Latino only, or switch to a Texas/Florida area preset.</div>';
+      return;
+    }
+    data.results.forEach((d) => wrap.appendChild(dealCard(d)));
+    $("#search-block").scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (e) {
+    meta.textContent = "Search failed: " + e.message;
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function renderPresets(data) {
@@ -233,6 +286,11 @@ function renderCombos() {
 $("#refresh").addEventListener("click", () => {
   load(true);
   loadTrending(true);
+});
+
+$("#search-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  runSearch();
 });
 
 $("#zip-form").addEventListener("submit", (e) => {

@@ -248,6 +248,50 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 28px 60px; }
 }
 .chip:hover { border-color: var(--accent); color: var(--accent); }
 .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+/* Product search */
+.search-block { margin-top: 0; }
+.search-form { margin-bottom: 10px; }
+.search-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+.search-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.search-row input {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 14px;
+}
+.search-options {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.search-hint { font-size: 12px; color: var(--muted); }
+.search-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.search-chips .chip { cursor: pointer; border: 0; font-size: 12px; }
+.search-meta {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
 .zip-form { display: flex; gap: 8px; }
 .zip-form input {
   padding: 8px 12px;

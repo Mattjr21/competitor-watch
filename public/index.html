@@ -33,6 +33,25 @@
 
     <section id="status" class="status">Loading...</section>
 
+    <section class="block search-block" id="search-block">
+      <form class="search-form" id="search-form">
+        <label class="search-label" for="search-input">Search competitor ads</label>
+        <div class="search-row">
+          <input id="search-input" type="search" placeholder="Product name, e.g. chorizo, carne asada, jarritos, maseca" autocomplete="off" />
+          <button class="btn" type="submit" id="search-btn">Search</button>
+        </div>
+        <div class="search-options">
+          <label class="chk">
+            <input type="checkbox" id="search-latino-only" /> Latino groceries only
+          </label>
+          <span class="search-hint" id="search-hint">Uses the ZIP area above</span>
+        </div>
+      </form>
+      <div class="search-chips" id="search-chips"></div>
+      <p class="search-meta" id="search-meta" hidden></p>
+      <div id="search-results" class="deals-grid"></div>
+    </section>
+
     <section class="block" id="combos-block" hidden>
       <div class="deals-head">
         <h2>Combos &amp; weekend packs spotted</h2>

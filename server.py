@@ -230,6 +230,33 @@ def cheapest_priced(deals):
     return priced[0] if priced else None
 
 
+def gather_search(query, zips, latino_list, competitor_filter=None, latino_only=False, limit=50):
+    """Search weekly ads for any product term across ZIP codes."""
+    q = (query or "").strip()
+    if len(q) < 2:
+        return []
+    seen = {}
+    for z in zips:
+        for raw in flipp_search(q, z):
+            item = clean_item(raw, latino_list, z)
+            if latino_only and not item["is_latino"]:
+                continue
+            if competitor_filter and item["merchant"] not in competitor_filter:
+                continue
+            if item["price"] is None and not item["sale_story"]:
+                continue
+            key = (item["merchant"].lower(), item["name"].lower())
+            if key in seen:
+                if z not in seen[key]["zips"]:
+                    seen[key]["zips"].append(z)
+                continue
+            item["zips"] = [z]
+            seen[key] = item
+    out = list(seen.values())
+    out.sort(key=lambda i: (i["price"] is None, i["price"] if i["price"] is not None else 9e9))
+    return out[:limit]
+
+
 _TREND_STOP = {
     "oz", "lb", "lbs", "ct", "pk", "pack", "ea", "each", "kg", "ml", "fl", "count",
     "pkg", "gal", "with", "card", "and", "the", "for", "your", "size", "value",
@@ -574,6 +601,7 @@ def build_payload(cfg, zips=None):
         "week_signal": week_signal,
         "facts": facts,
         "data_source": facts.get("source_label", "default"),
+        "search_hints": cfg.get("trending_terms", [])[:10],
     }
 
 
@@ -669,6 +697,32 @@ class Handler(BaseHTTPRequestHandler):
                 print(f"[{time.strftime('%H:%M:%S')}] building trending (refresh={refresh}) ...")
                 self._send_json(gather_trending(cfg, refresh))
                 print("  trending done.")
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=500)
+            return
+
+        if route == "/api/search":
+            try:
+                cfg = load_config()
+                qs = urllib.parse.parse_qs(parsed.query)
+                q = (qs.get("q") or [""])[0].strip()
+                if len(q) < 2:
+                    self._send_json({"error": "Enter at least 2 characters to search"}, status=400)
+                    return
+                zips = cfg["zips"]
+                if qs.get("zips"):
+                    zips = [z.strip() for z in qs["zips"][0].split(",") if z.strip()]
+                latino_only = qs.get("latino", ["0"])[0] in ("1", "true", "yes")
+                cfilter = cfg.get("competitor_filter") or []
+                latino_list = [k.lower() for k in cfg.get("latino_merchants", [])]
+                print(f"[{time.strftime('%H:%M:%S')}] search q={q!r} zips={len(zips)} latino_only={latino_only}")
+                results = gather_search(q, zips, latino_list, cfilter, latino_only)
+                self._send_json({
+                    "query": q,
+                    "zips": zips,
+                    "count": len(results),
+                    "results": results,
+                })
             except Exception as e:
                 self._send_json({"error": str(e)}, status=500)
             return
