@@ -56,6 +56,17 @@
     "community": {"meat": 1.1, "produce": 1.1, "snacks": 1.15},
     "school": {"snacks": 1.2, "frozen": 1.15, "desserts": 1.1}
   },
+  "event_ical_urls": [
+    {"label": "Explore Calhoun-Gordon (CVB)", "url": "https://explorecalhoungordon.com/events/?ical=1"},
+    {"label": "Gordon County Government", "url": "https://www.gordoncountyga.gov/common/modules/iCalendar/iCalendar.aspx?feed=calendar&eventID=0"}
+  ],
+  "event_page_urls": [
+    {"label": "Gordon County Chamber", "url": "https://gordoncountychamber.com/events"}
+  ],
+  "event_search_queries": [
+    "\"Calhoun\" \"Georgia\" festival OR rodeo OR BBQ site:explorecalhoungordon.com",
+    "Gordon County GA community events 2026"
+  ],
   "facebook_pages": [
     {"label": "City of Calhoun GA", "slug": "cityofcalhonga"},
     {"label": "Gordon County GA", "slug": "gordoncountyga"},

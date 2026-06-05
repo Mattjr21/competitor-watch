@@ -224,6 +224,7 @@ async function loadForecast(refresh = false) {
     if (f.error) throw new Error(f.error);
     const loc = f.location || {};
     let meta = `${loc.city || "Calhoun"}, ${loc.state || "GA"} ${loc.zip || "30701"} · updated ${f.generated_at}`;
+    if (f.weather_source) meta += ` · ${f.weather_source}`;
     if (f.weather_stale) meta += " · cached forecast";
     if (f.warnings && f.warnings.length) meta += ` · ${f.warnings[0]}`;
     $("#ops-meta").textContent = meta;
@@ -248,9 +249,10 @@ function renderWeatherDays(days) {
     card.className = "weather-card " + cls;
     const push = (d.push_categories || []).join(", ");
     const skip = (d.skip_categories || []).length ? ` · ease off: ${d.skip_categories.join(", ")}` : "";
+    const src = d.source ? `<span class="weather-src">${d.source}</span> · ` : "";
     card.innerHTML = `
       <h4>${d.label} · ${d.date}</h4>
-      <div class="weather-stats">${d.weather} · ${d.temp_high_f}°F high · ${d.rain_prob_pct}% rain</div>
+      <div class="weather-stats">${src}${d.weather} · ${d.temp_high_f}°F high · ${d.rain_prob_pct}% rain</div>
       <div class="weather-playbook">${d.playbook_note || ""}</div>
       <div class="weather-push"><b>Push:</b> ${push}${skip}</div>
     `;
@@ -263,13 +265,13 @@ function renderEventsList(evPayload) {
   const note = $("#events-note");
   list.innerHTML = "";
   const events = evPayload.events || [];
-  const errs = evPayload.facebook_errors || [];
-  let noteTxt = evPayload.facebook_note || "";
+  const errs = (evPayload.web_errors || []).concat(evPayload.facebook_errors || []);
+  let noteTxt = evPayload.events_note || "";
   if (events.length) {
-    noteTxt = `${events.length} event(s) — ${evPayload.manual_count || 0} manual, ${evPayload.facebook_count || 0} from Facebook.`;
+    noteTxt = `${events.length} event(s) — ${evPayload.manual_count || 0} manual, ${evPayload.web_count || 0} from web search, ${evPayload.facebook_count || 0} Facebook.`;
   }
-  if (errs.length) {
-    noteTxt += " Some Facebook pages could not be scraped (login required). Add events manually below.";
+  if (errs.length && events.length === 0) {
+    noteTxt += " Click Refresh forecast to search local events.";
   }
   note.textContent = noteTxt;
   if (!events.length) {
@@ -278,9 +280,13 @@ function renderEventsList(evPayload) {
   }
   events.forEach((e) => {
     const li = document.createElement("li");
-    const src = e.source === "facebook" ? `Facebook · ${e.page}` : "Manual";
+    let src = "Manual";
+    if (e.source === "facebook") src = `Facebook · ${e.page}`;
+    else if (e.source === "web") src = "Web search";
     const date = e.date ? ` · ${e.date}` : "";
-    li.innerHTML = `<b>${e.name}</b>${date} <span class="ev-src">(${src} · ${e.type || "community"})</span>`;
+    const link = e.url ? ` <a href="${e.url}" target="_blank" rel="noopener">link</a>` : "";
+    const snip = e.snippet ? `<div class="ev-snippet">${e.snippet}</div>` : "";
+    li.innerHTML = `<b>${e.name}</b>${date}${link} <span class="ev-src">(${src} · ${e.type || "community"})</span>${snip}`;
     list.appendChild(li);
   });
 }

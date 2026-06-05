@@ -621,6 +621,7 @@ def build_forecast_payload(cfg, facts=None, refresh=False):
         "generated_at": time.strftime("%Y-%m-%d %H:%M"),
         "location": loc,
         "weather_days": weather_days,
+        "weather_source": wmeta.get("source", ""),
         "weather_stale": wmeta.get("stale", False),
         "events": ev_payload,
         "targets": targets,

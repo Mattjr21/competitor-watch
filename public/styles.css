@@ -288,6 +288,9 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 28px 60px; }
   background: var(--panel);
 }
 .events-list .ev-src { font-size: 11px; color: var(--muted); }
+.events-list .ev-snippet { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+.events-list a { color: var(--anchor); font-size: 11px; }
+.weather-src { font-size: 11px; color: var(--muted); font-weight: 600; }
 .event-form {
   display: flex;
   flex-wrap: wrap;
