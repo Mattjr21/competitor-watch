@@ -31,6 +31,7 @@
     "combo", "paquete", "fin de semana", "weekend", "family pack", "familiar",
     "bundle", "buy one", "bogo", "/$", " for $", "mix and match", "mix & match"
   ],
+  "show_local_events": false,
   "store_location": {
     "zip": "30701",
     "city": "Calhoun",

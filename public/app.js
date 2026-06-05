@@ -217,7 +217,7 @@ function renderDeals() {
 async function loadForecast(refresh = false) {
   const block = $("#ops-block");
   block.hidden = false;
-  $("#weather-days").innerHTML = '<div class="trend-loading">Loading weather & events...</div>';
+  $("#weather-days").innerHTML = '<div class="trend-loading">Loading weather forecast...</div>';
   try {
     const res = await fetch("/api/forecast" + (refresh ? "?refresh=1" : ""));
     const f = await res.json();
@@ -229,7 +229,11 @@ async function loadForecast(refresh = false) {
     if (f.warnings && f.warnings.length) meta += ` · ${f.warnings[0]}`;
     $("#ops-meta").textContent = meta;
     renderWeatherDays(f.weather_days || []);
-    renderEventsList(f.events || {});
+    if (f.show_local_events !== false) {
+      const evBlock = $("#ops-events");
+      if (evBlock) evBlock.hidden = false;
+      renderEventsList(f.events || {});
+    }
     renderTargets(f.targets || {}, f.weather_categories || []);
   } catch (e) {
     $("#weather-days").innerHTML = `<div class="empty">Could not load forecast: ${e.message}</div>`;

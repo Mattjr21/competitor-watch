@@ -614,7 +614,18 @@ def build_forecast_payload(cfg, facts=None, refresh=False):
     if wmeta.get("warning"):
         warnings.append(wmeta["warning"])
 
-    ev_payload = local_events.gather_events(cfg, DATA_DIR, refresh=refresh)
+    if cfg.get("show_local_events", True):
+        ev_payload = local_events.gather_events(cfg, DATA_DIR, refresh=refresh)
+    else:
+        ev_payload = {
+            "events": [],
+            "manual_count": 0,
+            "web_count": 0,
+            "facebook_count": 0,
+            "web_errors": [],
+            "facebook_errors": [],
+            "events_note": "Local events hidden — set show_local_events in config to re-enable.",
+        }
     targets = forecast.build_targets(cfg, facts, weather_days, ev_payload)
 
     payload = {
@@ -623,6 +634,7 @@ def build_forecast_payload(cfg, facts=None, refresh=False):
         "weather_days": weather_days,
         "weather_source": wmeta.get("source", ""),
         "weather_stale": wmeta.get("stale", False),
+        "show_local_events": cfg.get("show_local_events", True),
         "events": ev_payload,
         "targets": targets,
         "weather_categories": cfg.get("weather_categories", []),

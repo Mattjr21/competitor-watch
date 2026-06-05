@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Competitor Watch - La Bodega</title>
-  <link rel="stylesheet" href="styles.css?v=5" />
+  <link rel="stylesheet" href="styles.css?v=6" />
 </head>
 <body>
   <header class="topbar">
@@ -35,14 +35,14 @@
 
     <section class="block" id="ops-block" hidden>
       <div class="deals-head">
-        <h2>Daily ops — weather, events &amp; targets</h2>
+        <h2>Daily ops — weather &amp; targets</h2>
         <button class="btn btn-ghost" id="ops-refresh">Refresh forecast</button>
       </div>
       <p class="block-sub" id="ops-meta">Calhoun 30701 · today + next 2 days</p>
 
       <div id="weather-days" class="ops-weather-grid"></div>
 
-      <div class="ops-events">
+      <div class="ops-events" id="ops-events" hidden>
         <h3>Local events (calendars + manual)</h3>
         <p class="block-sub" id="events-note"></p>
         <ul id="events-list" class="events-list"></ul>
@@ -159,6 +159,6 @@
     <span>Source: Flipp / Wishabi weekly ads (unofficial) - prices vary by store, verify before printing ads.</span>
   </footer>
 
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
