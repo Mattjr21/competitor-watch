@@ -4,11 +4,14 @@ Returns today + next 2 days with category-level playbook multipliers.
 """
 
 import json
+import os
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
-CACHE_TTL = 60 * 60 * 3  # 3 hours
+CACHE_TTL = 60 * 60 * 6  # 6 hours fresh
+STALE_OK = 60 * 60 * 48   # serve up to 48h old on rate-limit / outage
 
 WMO_LABELS = {
     0: "Clear", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
@@ -19,7 +22,6 @@ WMO_LABELS = {
 
 
 def _classify_day(temp_max, temp_min, rain_prob, rain_mm):
-    """Return weather profile: hot_grill, rain_comfort, cold_comfort, mild."""
     if rain_prob >= 50 or (rain_mm or 0) >= 5:
         return "rain_comfort"
     if temp_max is not None and temp_max >= 82:
@@ -32,7 +34,6 @@ def _classify_day(temp_max, temp_min, rain_prob, rain_mm):
 
 
 def _multipliers(profile):
-    """Category multipliers for each weather profile."""
     base = {k: 1.0 for k in (
         "grocery", "meat", "produce", "deli", "hot_food", "frozen", "desserts", "snacks"
     )}
@@ -67,26 +68,37 @@ def _multipliers(profile):
     return base, push, skip, note
 
 
-def fetch_forecast(loc, cache_path=None, refresh=False):
-    """
-    loc: dict with latitude, longitude, timezone
-    Returns list of 3 day dicts with weather + playbooks.
-    """
+def _read_cache(cache_path, max_age):
+    if not cache_path or not os.path.exists(cache_path):
+        return None
+    try:
+        with open(cache_path, "r", encoding="utf-8") as f:
+            cached = json.load(f)
+        if time.time() - cached.get("_epoch", 0) < max_age:
+            return cached
+    except Exception:
+        pass
+    return None
+
+
+def _write_cache(cache_path, days, stale=False):
+    if not cache_path:
+        return
+    try:
+        with open(cache_path, "w", encoding="utf-8") as f:
+            json.dump({
+                "_epoch": time.time(),
+                "days": days,
+                "stale": stale,
+            }, f)
+    except Exception:
+        pass
+
+
+def _days_from_api(loc):
     lat = loc.get("latitude", 34.5037)
     lon = loc.get("longitude", -84.9510)
     tz = loc.get("timezone", "America/New_York")
-
-    if cache_path and not refresh:
-        try:
-            import os
-            if os.path.exists(cache_path):
-                with open(cache_path, "r", encoding="utf-8") as f:
-                    cached = json.load(f)
-                if time.time() - cached.get("_epoch", 0) < CACHE_TTL:
-                    return cached.get("days", [])
-        except Exception:
-            pass
-
     params = urllib.parse.urlencode({
         "latitude": lat,
         "longitude": lon,
@@ -125,11 +137,56 @@ def fetch_forecast(loc, cache_path=None, refresh=False):
             "skip_categories": skip,
             "playbook_note": note,
         })
-
-    if cache_path:
-        try:
-            with open(cache_path, "w", encoding="utf-8") as f:
-                json.dump({"_epoch": time.time(), "days": days}, f)
-        except Exception:
-            pass
     return days
+
+
+def fetch_forecast(loc, cache_path=None, refresh=False):
+    """
+    loc: dict with latitude, longitude, timezone
+    Returns (days_list, meta_dict).
+    On 429/outage returns stale cache instead of raising.
+    """
+    meta = {"stale": False, "warning": ""}
+
+    if not refresh:
+        fresh = _read_cache(cache_path, CACHE_TTL)
+        if fresh and fresh.get("days"):
+            meta["stale"] = bool(fresh.get("stale"))
+            return fresh["days"], meta
+
+    try:
+        days = _days_from_api(loc)
+        _write_cache(cache_path, days, stale=False)
+        return days, meta
+    except urllib.error.HTTPError as e:
+        if e.code == 429:
+            meta["warning"] = "Weather API busy — showing last saved forecast."
+        else:
+            meta["warning"] = f"Weather API error ({e.code}) — showing last saved forecast."
+    except Exception as e:
+        meta["warning"] = f"Weather unavailable — showing last saved forecast."
+
+    stale = _read_cache(cache_path, STALE_OK)
+    if stale and stale.get("days"):
+        meta["stale"] = True
+        return stale["days"], meta
+
+    # Last resort: mild placeholder so UI never hard-fails
+    meta["warning"] = meta["warning"] or "Weather data temporarily unavailable."
+    meta["stale"] = True
+    return [{
+        "date": time.strftime("%Y-%m-%d"),
+        "label": "Today",
+        "temp_high_f": None,
+        "temp_low_f": None,
+        "rain_prob_pct": 0,
+        "rain_mm": 0,
+        "weather": "Unavailable",
+        "profile": "mild",
+        "multipliers": {k: 1.0 for k in (
+            "grocery", "meat", "produce", "deli", "hot_food", "frozen", "desserts", "snacks"
+        )},
+        "push_categories": ["meat", "produce", "grocery"],
+        "skip_categories": [],
+        "playbook_note": "Weather feed paused (rate limit). Run normal weekend mix until refresh works.",
+    }], meta

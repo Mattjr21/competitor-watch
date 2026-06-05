@@ -7,11 +7,12 @@ import json
 import os
 import re
 import time
+import urllib.error
 import urllib.request
 import urllib.parse
 from html import unescape
 
-FB_CACHE_TTL = 60 * 60 * 12  # 12 hours
+FB_CACHE_TTL = 60 * 60 * 24  # 24 hours — avoid hammering Facebook
 HTTP_HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; CompetitorWatch/1.0)"}
 
 
@@ -85,24 +86,40 @@ def _parse_mbasic_events(html, page_label):
     return out[:15]
 
 
+def _load_fb_cache(cache_path):
+    if not os.path.exists(cache_path):
+        return None
+    try:
+        with open(cache_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
 def scrape_facebook_pages(pages, data_dir, refresh=False):
     """
     Best-effort scrape of public Facebook page events via mbasic.
-    pages: [{"label": "...", "slug": "pageSlug"}, ...]
+    Only hits Facebook when refresh=True; otherwise uses cache only.
     """
     cache_path = _fb_cache_path(data_dir)
-    if not refresh and os.path.exists(cache_path):
-        try:
-            with open(cache_path, "r", encoding="utf-8") as f:
-                cached = json.load(f)
-            if time.time() - cached.get("_epoch", 0) < FB_CACHE_TTL:
-                return cached.get("events", []), cached.get("errors", [])
-        except Exception:
-            pass
+    cached = _load_fb_cache(cache_path)
+
+    # Normal page load: never scrape — manual events + cached FB only
+    if not refresh:
+        if cached is not None:
+            return cached.get("events", []), cached.get("errors", [])
+        return [], ["Facebook not fetched yet — click Refresh forecast to try (once per day)."]
+
+    # Refresh: use cache if still fresh
+    if cached and time.time() - cached.get("_epoch", 0) < FB_CACHE_TTL:
+        return cached.get("events", []), cached.get("errors", [])
 
     all_events = []
     errors = []
+    rate_limited = False
     for page in pages:
+        if rate_limited:
+            break
         slug = (page.get("slug") or "").strip().strip("/")
         label = page.get("label") or slug
         if not slug:
@@ -124,9 +141,15 @@ def scrape_facebook_pages(pages, data_dir, refresh=False):
                     all_events.extend(evs)
                     fetched = True
                     break
+            except urllib.error.HTTPError as e:
+                if e.code == 429:
+                    rate_limited = True
+                    errors.append("Facebook rate limit (429) — try again later or add events manually.")
+                    break
+                errors.append(f"{label}: HTTP {e.code}")
             except Exception as e:
                 errors.append(f"{label}: {e}")
-        if not fetched and not any(e.startswith(label) for e in errors):
+        if not fetched and not rate_limited and not any(e.startswith(label) for e in errors):
             errors.append(f"{label}: no public events parsed (page may require login)")
 
     # Dedupe

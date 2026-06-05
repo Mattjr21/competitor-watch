@@ -223,8 +223,10 @@ async function loadForecast(refresh = false) {
     const f = await res.json();
     if (f.error) throw new Error(f.error);
     const loc = f.location || {};
-    $("#ops-meta").textContent =
-      `${loc.city || "Calhoun"}, ${loc.state || "GA"} ${loc.zip || "30701"} · updated ${f.generated_at}`;
+    let meta = `${loc.city || "Calhoun"}, ${loc.state || "GA"} ${loc.zip || "30701"} · updated ${f.generated_at}`;
+    if (f.weather_stale) meta += " · cached forecast";
+    if (f.warnings && f.warnings.length) meta += ` · ${f.warnings[0]}`;
+    $("#ops-meta").textContent = meta;
     renderWeatherDays(f.weather_days || []);
     renderEventsList(f.events || {});
     renderTargets(f.targets || {}, f.weather_categories || []);

@@ -33,6 +33,8 @@ CONFIG_PATH = os.path.join(ROOT, "config.json")
 FACTS_PATH = os.path.join(DATA_DIR, "sales_facts.json")
 TRENDING_PATH = os.path.join(DATA_DIR, "trending.json")
 WEATHER_CACHE_PATH = os.path.join(DATA_DIR, "weather_cache.json")
+FORECAST_CACHE_PATH = os.path.join(DATA_DIR, "forecast_cache.json")
+FORECAST_CACHE_TTL = 60 * 30  # 30 min — whole payload cache
 TRENDING_TTL = 60 * 60 * 12  # 12 hours
 
 FLIPP_BASE = "https://backflipp.wishabi.com/flipp/items/search"
@@ -572,21 +574,61 @@ def build_week_signal(deals_by_cat, combos):
     return "This week near you: " + " · ".join(parts) + "."
 
 
+def _read_forecast_cache():
+    if not os.path.exists(FORECAST_CACHE_PATH):
+        return None
+    try:
+        with open(FORECAST_CACHE_PATH, "r", encoding="utf-8") as f:
+            obj = json.load(f)
+        if time.time() - obj.get("_epoch", 0) < FORECAST_CACHE_TTL:
+            return obj
+    except Exception:
+        pass
+    return None
+
+
+def _write_forecast_cache(payload):
+    try:
+        out = dict(payload)
+        out["_epoch"] = time.time()
+        with open(FORECAST_CACHE_PATH, "w", encoding="utf-8") as f:
+            json.dump(out, f)
+    except Exception:
+        pass
+
+
 def build_forecast_payload(cfg, facts=None, refresh=False):
     """Weather playbooks + local events + category daily targets."""
+    if not refresh:
+        cached = _read_forecast_cache()
+        if cached is not None:
+            out = dict(cached)
+            out.pop("_epoch", None)
+            return out
+
     facts = facts or load_facts(cfg)
     loc = cfg.get("store_location", {})
-    weather_days = weather.fetch_forecast(loc, WEATHER_CACHE_PATH, refresh=refresh)
+    warnings = []
+
+    weather_days, wmeta = weather.fetch_forecast(loc, WEATHER_CACHE_PATH, refresh=refresh)
+    if wmeta.get("warning"):
+        warnings.append(wmeta["warning"])
+
     ev_payload = local_events.gather_events(cfg, DATA_DIR, refresh=refresh)
     targets = forecast.build_targets(cfg, facts, weather_days, ev_payload)
-    return {
+
+    payload = {
         "generated_at": time.strftime("%Y-%m-%d %H:%M"),
         "location": loc,
         "weather_days": weather_days,
+        "weather_stale": wmeta.get("stale", False),
         "events": ev_payload,
         "targets": targets,
         "weather_categories": cfg.get("weather_categories", []),
+        "warnings": warnings,
     }
+    _write_forecast_cache(payload)
+    return payload
 
 
 def build_payload(cfg, zips=None):
