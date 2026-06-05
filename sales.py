@@ -65,7 +65,7 @@ def _match_cat(name, categories):
     return hits
 
 
-def analyze(csv_text, categories):
+def analyze(csv_text, categories, weather_categories=None):
     reader = csv.DictReader(io.StringIO(csv_text))
     headers = reader.fieldnames or []
     if not headers:
@@ -92,6 +92,11 @@ def analyze(csv_text, categories):
     prod_price_wt = {}
     cat_price_rev = {k: 0.0 for k in cat_keys}   # weighted price accumulation
     cat_price_units = {k: 0.0 for k in cat_keys}
+
+    wcats = weather_categories or []
+    wkeys = [c["key"] for c in wcats]
+    wcat_rev = {k: [0.0] * 7 for k in wkeys}
+    wcat_dates = {k: [set() for _ in range(7)] for k in wkeys}
 
     rows = 0
     for r in reader:
@@ -128,6 +133,14 @@ def analyze(csv_text, categories):
                 w = qty or 1
                 cat_price_rev[ck] += unit * w
                 cat_price_units[ck] += w
+
+        if wcats and name:
+            wc = _match_cat(name, wcats)
+            if wc and o["date"]:
+                wk = wc[0]
+                dow = o["date"].weekday()
+                wcat_rev[wk][dow] += line_total
+                wcat_dates[wk][dow].add(o["date"].date())
 
     if not orders:
         raise ValueError("No valid orders parsed from CSV.")
@@ -187,6 +200,20 @@ def analyze(csv_text, categories):
         if cat_price_units[k] > 0:
             own_price_by_cat[k] = round(cat_price_rev[k] / cat_price_units[k], 2)
 
+    weather_baselines = {}
+    for k in wkeys:
+        by_dow = {}
+        for dow in range(7):
+            n_days = len(wcat_dates[k][dow])
+            if n_days:
+                by_dow[str(dow)] = round(wcat_rev[k][dow] / n_days, 0)
+        total_days = sum(len(wcat_dates[k][d]) for d in range(7))
+        total_rev = sum(wcat_rev[k])
+        if total_days:
+            by_dow["avg"] = round(total_rev / total_days, 0)
+        if by_dow:
+            weather_baselines[k] = by_dow
+
     facts = {
         "rows": rows,
         "orders": n_orders,
@@ -203,5 +230,6 @@ def analyze(csv_text, categories):
         "hero_seller": hero,
         "hero_basket_avg": hero_basket_avg,
         "own_price_by_cat": own_price_by_cat,
+        "weather_baselines": weather_baselines,
     }
     return facts

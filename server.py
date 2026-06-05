@@ -21,6 +21,9 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import sales
+import weather
+import events as local_events
+import forecast
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PUBLIC = os.path.join(ROOT, "public")
@@ -29,6 +32,7 @@ DATA_DIR = os.path.join(ROOT, "data")
 CONFIG_PATH = os.path.join(ROOT, "config.json")
 FACTS_PATH = os.path.join(DATA_DIR, "sales_facts.json")
 TRENDING_PATH = os.path.join(DATA_DIR, "trending.json")
+WEATHER_CACHE_PATH = os.path.join(DATA_DIR, "weather_cache.json")
 TRENDING_TTL = 60 * 60 * 12  # 12 hours
 
 FLIPP_BASE = "https://backflipp.wishabi.com/flipp/items/search"
@@ -568,6 +572,23 @@ def build_week_signal(deals_by_cat, combos):
     return "This week near you: " + " · ".join(parts) + "."
 
 
+def build_forecast_payload(cfg, facts=None, refresh=False):
+    """Weather playbooks + local events + category daily targets."""
+    facts = facts or load_facts(cfg)
+    loc = cfg.get("store_location", {})
+    weather_days = weather.fetch_forecast(loc, WEATHER_CACHE_PATH, refresh=refresh)
+    ev_payload = local_events.gather_events(cfg, DATA_DIR, refresh=refresh)
+    targets = forecast.build_targets(cfg, facts, weather_days, ev_payload)
+    return {
+        "generated_at": time.strftime("%Y-%m-%d %H:%M"),
+        "location": loc,
+        "weather_days": weather_days,
+        "events": ev_payload,
+        "targets": targets,
+        "weather_categories": cfg.get("weather_categories", []),
+    }
+
+
 def build_payload(cfg, zips=None):
     zips = zips or cfg["zips"]
     cfilter = cfg.get("competitor_filter") or []
@@ -664,13 +685,29 @@ class Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", "0"))
         raw = self.rfile.read(length).decode("utf-8", errors="replace")
 
+        if parsed.path == "/api/events":
+            try:
+                cfg = load_config()
+                ev = json.loads(raw) if raw.strip() else {}
+                if not ev.get("name"):
+                    self._send_json({"error": "name required"}, status=400)
+                    return
+                ev.setdefault("type", "community")
+                ev.setdefault("source", "manual")
+                local_events.save_manual_event(DATA_DIR, ev)
+                payload = local_events.gather_events(cfg, DATA_DIR)
+                self._send_json({"ok": True, "events": payload})
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=400)
+            return
+
         if parsed.path != "/api/upload":
             self._send_json({"error": "not found"}, status=404)
             return
         try:
             fname = self.headers.get("X-Filename", "uploaded sales data")
             cfg = load_config()
-            facts = sales.analyze(raw, cfg["categories"])
+            facts = sales.analyze(raw, cfg["categories"], cfg.get("weather_categories"))
             label = f"{fname} ({facts['orders']:,} orders, ${facts['total_revenue']:,.0f})"
             save_facts(facts, label)
             print(f"[upload] {label}")
@@ -687,6 +724,19 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if not self._authed():
+            return
+
+        if route == "/api/forecast":
+            try:
+                cfg = load_config()
+                qs = urllib.parse.parse_qs(parsed.query)
+                refresh = "refresh" in qs
+                facts = load_facts(cfg)
+                print(f"[{time.strftime('%H:%M:%S')}] building forecast (refresh={refresh}) ...")
+                self._send_json(build_forecast_payload(cfg, facts, refresh=refresh))
+                print("  forecast done.")
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=500)
             return
 
         if route == "/api/trending":

@@ -248,6 +248,82 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 28px 60px; }
 }
 .chip:hover { border-color: var(--accent); color: var(--accent); }
 .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+/* Daily ops */
+.ops-weather-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+@media (max-width: 900px) {
+  .ops-weather-grid { grid-template-columns: 1fr; }
+}
+.weather-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+.weather-card.hot { border-color: #fed7aa; background: #fff7ed; }
+.weather-card.rain { border-color: #bfdbfe; background: #eff6ff; }
+.weather-card.cold { border-color: #c7d2fe; background: #eef2ff; }
+.weather-card h4 { margin: 0 0 6px; font-size: 15px; }
+.weather-stats { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.weather-playbook { font-size: 13px; line-height: 1.45; }
+.weather-push { margin-top: 8px; font-size: 12px; }
+.weather-push b { color: var(--attach); }
+.ops-events, .ops-targets { margin-top: 18px; }
+.ops-events h3, .ops-targets h3 { font-size: 15px; margin-bottom: 8px; }
+.events-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+.events-list li {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  background: var(--panel);
+}
+.events-list .ev-src { font-size: 11px; color: var(--muted); }
+.event-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.event-form input, .event-form select {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.targets-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  font-size: 13px;
+}
+.targets-table th, .targets-table td {
+  text-align: left;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.targets-table th {
+  background: #f3f4f6;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.targets-table tr:last-child td { border-bottom: 0; }
+.tgt-up { color: var(--attach); font-weight: 700; }
+.tgt-down { color: var(--midweek); font-weight: 700; }
+
 /* Product search */
 .search-block { margin-top: 0; }
 .search-form { margin-bottom: 10px; }

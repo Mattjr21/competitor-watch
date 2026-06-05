@@ -31,6 +31,38 @@
     "combo", "paquete", "fin de semana", "weekend", "family pack", "familiar",
     "bundle", "buy one", "bogo", "/$", " for $", "mix and match", "mix & match"
   ],
+  "store_location": {
+    "zip": "30701",
+    "city": "Calhoun",
+    "state": "GA",
+    "latitude": 34.5037,
+    "longitude": -84.9510,
+    "timezone": "America/New_York"
+  },
+  "weather_categories": [
+    {"key": "grocery", "label": "Grocery", "own_match": ["rice", "arroz", "beans", "frijol", "flour", "harina", "oil", "aceite", "pasta", "cereal", "canned", "maseca", "masa"]},
+    {"key": "meat", "label": "Meat / Carne", "own_match": ["meat", "carne", "pollo", "chicken", "beef", "pork", "puerco", "res", "costilla", "chorizo", "bistec", "milanesa", "asada", "barbacoa", "carnitas"]},
+    {"key": "produce", "label": "Produce", "own_match": ["avocado", "aguacate", "tomato", "tomate", "lime", "limon", "cilantro", "onion", "cebolla", "chile", "mango", "banana", "platan"]},
+    {"key": "deli", "label": "Deli", "own_match": ["deli", "ham", "jamón", "salami", "lunch meat", "cold cut", "queso", "cheese"]},
+    {"key": "hot_food", "label": "Hot Food / Prepared", "own_match": ["prepared", "hot food", "taquito", "tamal", "taco", "pollo asado", "restaurant", "kitchen", "caldo", "soup", "menudo", "birria"]},
+    {"key": "frozen", "label": "Frozen", "own_match": ["frozen", "helado", "ice cream", "paleta", "popsicle", "nugget", "pizza", "congelado"]},
+    {"key": "desserts", "label": "Desserts", "own_match": ["dessert", "postre", "pan dulce", "concha", "cake", "pastel", "churro", "flan", "galleta", "cookie"]},
+    {"key": "snacks", "label": "Snacks / Confectionery", "own_match": ["snack", "chip", "takis", "candy", "dulce", "chocolate", "gum", "churrito", "sabritas", "barcel"]}
+  ],
+  "event_type_boosts": {
+    "sports": {"meat": 1.15, "snacks": 1.25, "grocery": 1.05, "frozen": 1.1},
+    "festival": {"meat": 1.2, "produce": 1.15, "hot_food": 1.1, "desserts": 1.1},
+    "church": {"hot_food": 1.2, "desserts": 1.15, "grocery": 1.1},
+    "community": {"meat": 1.1, "produce": 1.1, "snacks": 1.15},
+    "school": {"snacks": 1.2, "frozen": 1.15, "desserts": 1.1}
+  },
+  "facebook_pages": [
+    {"label": "City of Calhoun GA", "slug": "cityofcalhonga"},
+    {"label": "Gordon County GA", "slug": "gordoncountyga"},
+    {"label": "Gordon County Schools", "slug": "gordoncountyschools"},
+    {"label": "Calhoun Gordon County Chamber", "slug": "calhoungordoncountychamber"},
+    {"label": "Explore Gordon County", "slug": "exploregordoncounty"}
+  ],
   "area_presets": [
     { "label": "My area (Calhoun GA)", "zips": "30701,30735,30733,30746,30103,30720,30721,30705" },
     { "label": "Houston TX", "zips": "77081,77036,77023" },
