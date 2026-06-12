@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import AppLayout from "@cloudscape-design/components/app-layout";
 import ContentLayout from "@cloudscape-design/components/content-layout";
-import Header from "@cloudscape-design/components/header";
-import Button from "@cloudscape-design/components/button";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import Tabs from "@cloudscape-design/components/tabs";
 import Box from "@cloudscape-design/components/box";
@@ -10,6 +8,7 @@ import WeatherSection from "./components/WeatherSection";
 import DealsSection from "./components/DealsSection";
 import TrendingSection from "./components/TrendingSection";
 import AreaSelector from "./components/AreaSelector";
+import HeroBanner from "./components/HeroBanner";
 
 export default function App() {
   const [forecast, setForecast] = useState(null);
@@ -71,26 +70,15 @@ export default function App() {
       content={
         <ContentLayout
           header={
-            <Header
-              variant="h1"
+            <HeroBanner
               description={
                 dealsData
                   ? `${dealsData.zips?.join(", ")} · ${dealsData.merchants?.length} retailers · updated ${dealsData.generated_at}`
                   : "Calhoun, GA · Live competitor pricing"
               }
-              actions={
-                <Button
-                  iconName="refresh"
-                  variant="primary"
-                  onClick={() => { fetchDeals(true, activeZips); fetchForecast(true); fetchTrending(true); }}
-                  loading={dealsLoading || weatherLoading || trendingLoading}
-                >
-                  Refresh all
-                </Button>
-              }
-            >
-              La Bodega — Competitor Watch
-            </Header>
+              onRefreshAll={() => { fetchDeals(true, activeZips); fetchForecast(true); fetchTrending(true); }}
+              loading={dealsLoading || weatherLoading || trendingLoading}
+            />
           }
         >
           <SpaceBetween size="l">
