@@ -258,27 +258,77 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 28px 60px; }
 @media (max-width: 900px) {
   .ops-weather-grid { grid-template-columns: 1fr; }
 }
-.weather-card {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 14px;
-}
-.weather-card.hot { border-color: #fed7aa; background: #fff7ed; }
-.weather-card.rain { border-color: #bfdbfe; background: #eff6ff; }
-.weather-card.cold { border-color: #c7d2fe; background: #eef2ff; }
-.weather-card h4 { margin: 0 0 6px; font-size: 15px; }
-.weather-stats { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
-.weather-playbook { font-size: 13px; line-height: 1.45; }
-.weather-push { margin-top: 8px; font-size: 12px; }
-.weather-push b { color: var(--attach); }
-.ops-events, .ops-targets { margin-top: 18px; }
-.ops-events h3, .ops-targets h3 { font-size: 15px; margin-bottom: 8px; }
-.events-list {
-  list-style: none;
-  margin: 0 0 12px;
-  padding: 0;
-}
+import * as React from "react";
+import ActionCard from "@cloudscape-design/components/action-card";
+import Icon from "@cloudscape-design/components/icon";
+import StatusIndicator from "@cloudscape-design/components/status-indicator";
+import Box from "@cloudscape-design/components/box";
+
+// HOT weather card
+export const HotWeatherCard = ({ temp, humidity, playbook, pushMessage }) => {
+  return (
+    <ActionCard
+      header="☀️ Hot Weather"
+      icon={<Icon name="status-warning" />}
+    >
+      <Box>
+        <Box variant="small" color="text-status-warning">
+          {temp}°F · Humidity: {humidity}%
+        </Box>
+        <Box margin={{ top: "xs" }}>
+          {playbook}
+        </Box>
+        <Box margin={{ top: "xs" }} fontSize="body-s">
+          <strong>Push:</strong> {pushMessage}
+        </Box>
+      </Box>
+    </ActionCard>
+  );
+};
+
+// RAIN weather card
+export const RainWeatherCard = ({ temp, humidity, playbook, pushMessage }) => {
+  return (
+    <ActionCard
+      header="🌧️ Rain Expected"
+      icon={<Icon name="status-info" />}
+    >
+      <Box>
+        <Box variant="small" color="text-status-info">
+          {temp}°F · Humidity: {humidity}%
+        </Box>
+        <Box margin={{ top: "xs" }}>
+          {playbook}
+        </Box>
+        <Box margin={{ top: "xs" }} fontSize="body-s">
+          <strong>Push:</strong> {pushMessage}
+        </Box>
+      </Box>
+    </ActionCard>
+  );
+};
+
+// COLD weather card
+export const ColdWeatherCard = ({ temp, humidity, playbook, pushMessage }) => {
+  return (
+    <ActionCard
+      header="❄️ Cold Weather"
+      icon={<Icon name="status-negative" />}
+    >
+      <Box>
+        <Box variant="small" color="text-body-secondary">
+          {temp}°F · Humidity: {humidity}%
+        </Box>
+        <Box margin={{ top: "xs" }}>
+          {playbook}
+        </Box>
+        <Box margin={{ top: "xs" }} fontSize="body-s">
+          <strong>Push:</strong> {pushMessage}
+        </Box>
+      </Box>
+    </ActionCard>
+  );
+};
 .events-list li {
   padding: 8px 10px;
   border: 1px solid var(--line);
