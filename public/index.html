@@ -33,14 +33,62 @@
 
     <section id="status" class="status">Loading...</section>
 
-    <section class="block" id="ops-block" hidden>
-      <div class="deals-head">
-        <h2>Daily ops — weather &amp; targets</h2>
-        <button class="btn btn-ghost" id="ops-refresh">Refresh forecast</button>
-      </div>
-      <p class="block-sub" id="ops-meta">Calhoun 30701 · today + next 2 days</p>
+import React, { useState } from "react";
+import Container from "@cloudscape-design/components/container";
+import Header from "@cloudscape-design/components/header";
+import Button from "@cloudscape-design/components/button";
+import Box from "@cloudscape-design/components/box";
+import ColumnLayout from "@cloudscape-design/components/column-layout";
+import SpaceBetween from "@cloudscape-design/components/space-between";
 
-      <div id="weather-days" class="ops-weather-grid"></div>
+// Import your weather cards from previous step
+import { HotWeatherCard, RainWeatherCard, ColdWeatherCard } from "./WeatherCards";
+
+export default function OpsBlock({ visible, weatherDays }) {
+  const [loading, setLoading] = useState(false);
+
+  const handleRefresh = () => {
+    setLoading(true);
+    // your existing refresh logic here
+    setTimeout(() => setLoading(false), 1500);
+  };
+
+  if (!visible) return null; // replaces the `hidden` attribute
+
+  return (
+    <Container
+      header={
+        <Header
+          variant="h2"
+          description="Calhoun 30701 · today + next 2 days"
+          actions={
+            <Button
+              iconName="refresh"
+              loading={loading}
+              onClick={handleRefresh}
+            >
+              Refresh forecast
+            </Button>
+          }
+        >
+          Daily ops — weather &amp; targets
+        </Header>
+      }
+    >
+      <SpaceBetween size="m">
+        <ColumnLayout columns={3} variant="text-grid">
+          {weatherDays.map((day, i) => {
+            if (day.type === "hot")
+              return <HotWeatherCard key={i} {...day} />;
+            if (day.type === "rain")
+              return <RainWeatherCard key={i} {...day} />;
+            return <ColdWeatherCard key={i} {...day} />;
+          })}
+        </ColumnLayout>
+      </SpaceBetween>
+    </Container>
+  );
+}
 
       <div class="ops-events" id="ops-events" hidden>
         <h3>Local events (calendars + manual)</h3>
