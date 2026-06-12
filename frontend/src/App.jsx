@@ -24,7 +24,7 @@ export default function App() {
   async function fetchForecast(refresh = false) {
     setWeatherLoading(true);
     try {
-      const res = await fetch("/api/forecast" + (refresh ? "?refresh=1" : ""));
+      const res = await fetch((import.meta.env.VITE_API_URL || "") + "/api/forecast" + (refresh ? "?refresh=1" : ""));
       setForecast(await res.json());
     } catch (e) { console.error(e); }
     finally { setWeatherLoading(false); }
@@ -36,7 +36,7 @@ export default function App() {
       const params = [];
       if (refresh) params.push("refresh=1");
       if (zips) params.push("zips=" + encodeURIComponent(zips));
-      const res = await fetch("/api/data" + (params.length ? "?" + params.join("&") : ""));
+      const res = await fetch((import.meta.env.VITE_API_URL || "") + "/api/data" + (params.length ? "?" + params.join("&") : ""));
       setDealsData(await res.json());
     } catch (e) { console.error(e); }
     finally { setDealsLoading(false); }
@@ -45,7 +45,7 @@ export default function App() {
   async function fetchTrending(refresh = false) {
     setTrendingLoading(true);
     try {
-      const res = await fetch("/api/trending" + (refresh ? "?refresh=1" : ""));
+      const res = await fetch((import.meta.env.VITE_API_URL || "") + "/api/trending" + (refresh ? "?refresh=1" : ""));
       setTrendingData(await res.json());
     } catch (e) { console.error(e); }
     finally { setTrendingLoading(false); }
