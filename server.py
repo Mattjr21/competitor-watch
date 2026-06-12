@@ -26,7 +26,7 @@ import events as local_events
 import forecast
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-PUBLIC = os.path.join(ROOT, "public")
+PUBLIC = os.path.join(ROOT, "frontend/dist")
 CACHE_DIR = os.path.join(ROOT, "cache")
 DATA_DIR = os.path.join(ROOT, "data")
 CONFIG_PATH = os.path.join(ROOT, "config.json")
