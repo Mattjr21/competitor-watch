@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { RefreshCw, Sparkles } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import AreaSelector, { DEFAULT_LOCAL_ZIPS } from "./components/AreaSelector";
 import DealsSection from "./components/DealsSection";
 import WeatherSection from "./components/WeatherSection";
@@ -150,13 +150,15 @@ export default function App() {
       <header className="sticky top-0 z-50 border-b border-white/10 bg-ink/80 backdrop-blur-xl">
         <DemoModeBanner />
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
-          <div className="flex items-center gap-3">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand text-ink">
-              <Sparkles size={18} strokeWidth={2.4} />
-            </span>
-            <div>
-              <h1 className="font-display text-lg font-bold tracking-tight sm:text-xl">
-                La Bodega — Competitor Watch
+          <div className="flex items-center gap-3 sm:gap-4">
+            <img
+              src="/la-bodega-logo.png"
+              alt="La Bodega Supermercado y Restaurante"
+              className="h-11 w-auto max-w-[200px] shrink-0 object-contain object-left sm:h-12 sm:max-w-[220px]"
+            />
+            <div className="min-w-0 border-l border-white/10 pl-3 sm:pl-4">
+              <h1 className="font-display text-base font-bold tracking-tight sm:text-lg">
+                Competitor Watch
               </h1>
               <p className="text-xs text-white/50 sm:text-sm">{headerDesc}</p>
             </div>
@@ -237,6 +239,7 @@ export default function App() {
                 <>
                   <AreaSelector
                     isLoading={dealsLoading}
+                    appliedZips={activeZips}
                     onApply={(zips) => {
                       setActiveZips(zips);
                       fetchDeals(false, zips);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, MapPin } from "lucide-react";
 
 const AREAS = [
@@ -33,49 +33,68 @@ function initialSelected() {
   return init;
 }
 
+function selectionFromZips(zipsCsv) {
+  const zipSet = new Set((zipsCsv || "").split(",").map((z) => z.trim()).filter(Boolean));
+  if (zipSet.size === 0) return initialSelected();
+  const sel = {};
+  AREAS.forEach((a) => {
+    sel[a.id] = a.zips.some((z) => zipSet.has(z));
+  });
+  if (!Object.values(sel).some(Boolean)) return initialSelected();
+  return sel;
+}
+
 function zipsFromSelection(selected) {
   return AREAS.filter((a) => selected[a.id])
     .flatMap((a) => a.zips)
     .join(",");
 }
 
-function idsFromSelection(selected) {
-  return AREAS.filter((a) => selected[a.id]).map((a) => a.id);
+function areasFromSelection(selected) {
+  return AREAS.filter((a) => selected[a.id]);
 }
 
-export default function AreaSelector({ onApply, isLoading }) {
+function selectionDiff(applied, draft) {
+  const added = AREAS.filter((a) => draft[a.id] && !applied[a.id]);
+  const removed = AREAS.filter((a) => applied[a.id] && !draft[a.id]);
+  return { added, removed };
+}
+
+export default function AreaSelector({ onApply, isLoading, appliedZips }) {
   const [expanded, setExpanded] = useState(false);
-  const [draft, setDraft] = useState(initialSelected);
-  const [applied, setApplied] = useState(initialSelected);
-  const [pendingIds, setPendingIds] = useState([]);
+  const loadedSelection = useMemo(
+    () => (appliedZips ? selectionFromZips(appliedZips) : initialSelected()),
+    [appliedZips]
+  );
+  const [draft, setDraft] = useState(loadedSelection);
+  const [applied, setApplied] = useState(loadedSelection);
+  const applyingRef = useRef(null);
+
+  useEffect(() => {
+    setApplied(loadedSelection);
+    setDraft((prev) => {
+      const unchanged = JSON.stringify(prev) === JSON.stringify(applied);
+      return unchanged ? loadedSelection : prev;
+    });
+  }, [loadedSelection]); // eslint-disable-line react-hooks/exhaustive-deps -- only sync when parent zips change
+
+  useEffect(() => {
+    if (!isLoading && applyingRef.current) {
+      setApplied(applyingRef.current);
+      applyingRef.current = null;
+    }
+  }, [isLoading]);
 
   const hasPendingChanges = useMemo(
     () => JSON.stringify(draft) !== JSON.stringify(applied),
     [draft, applied]
   );
 
-  useEffect(() => {
-    if (!isLoading && pendingIds.length > 0) {
-      queueMicrotask(() => {
-        setApplied((prev) => {
-          const next = { ...prev };
-          pendingIds.forEach((id) => {
-            next[id] = draft[id];
-          });
-          return next;
-        });
-        setPendingIds([]);
-      });
-    }
-  }, [isLoading, pendingIds, draft]);
-
   const applySelection = useCallback(() => {
     const activeAreas = AREAS.filter((a) => draft[a.id]);
     if (activeAreas.length === 0) return;
-    const zips = zipsFromSelection(draft);
-    const ids = idsFromSelection(draft);
-    setPendingIds(ids);
-    onApply(zips);
+    applyingRef.current = { ...draft };
+    onApply(zipsFromSelection(draft));
   }, [draft, onApply]);
 
   const toggle = (id) =>
@@ -93,22 +112,18 @@ export default function AreaSelector({ onApply, isLoading }) {
       return next;
     });
 
-  const getChipState = (id) => {
-    if (!draft[id]) return "idle";
-    if (pendingIds.includes(id)) return "loading";
-    if (applied[id]) return "active";
-    return "pending";
-  };
-
-  const activeAreas = AREAS.filter((a) => applied[a.id] && !pendingIds.includes(a.id));
-  const pendingAreas = AREAS.filter((a) => pendingIds.includes(a.id));
-  const summaryLabels = activeAreas.slice(0, 3).map((a) => a.label.split(" ")[0]);
+  const loadedAreas = areasFromSelection(applied);
+  const draftAreas = areasFromSelection(draft);
+  const { added, removed } = selectionDiff(applied, draft);
+  const summaryLabels = loadedAreas.slice(0, 3).map((a) => a.label.split(" ")[0]);
   const summary =
-    activeAreas.length === 0 && pendingAreas.length === 0
+    loadedAreas.length === 0
       ? "No markets selected"
-      : `${activeAreas.length + pendingAreas.length} market${
-          activeAreas.length + pendingAreas.length !== 1 ? "s" : ""
-        }${summaryLabels.length ? ` · ${summaryLabels.join(", ")}${activeAreas.length > 3 ? "…" : ""}` : ""}`;
+      : `${loadedAreas.length} market${loadedAreas.length !== 1 ? "s" : ""}${
+          summaryLabels.length ? ` · ${summaryLabels.join(", ")}${loadedAreas.length > 3 ? "…" : ""}` : ""
+        }`;
+
+  const isApplying = isLoading && applyingRef.current != null;
 
   return (
     <div className="rounded-2xl border border-white/10 bg-ink-2/60 overflow-hidden">
@@ -125,10 +140,10 @@ export default function AreaSelector({ onApply, isLoading }) {
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {hasPendingChanges && !isLoading && (
+          {hasPendingChanges && !isApplying && (
             <span className="text-xs text-amber-300">Unsaved changes</span>
           )}
-          {isLoading && <span className="text-xs text-amber-400">Updating…</span>}
+          {isApplying && <span className="text-xs text-amber-400">Updating…</span>}
           <ChevronDown
             size={18}
             className={"text-white/55 transition-transform " + (expanded ? "rotate-180" : "")}
@@ -138,27 +153,47 @@ export default function AreaSelector({ onApply, isLoading }) {
 
       {expanded && (
         <div className="border-t border-white/8 px-5 pb-5 pt-4">
-          <div className="flex min-h-[44px] flex-wrap items-center gap-2 rounded-xl border border-white/8 bg-white/4 px-3.5 py-2.5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-white/55">Active:</span>
-
-            {pendingAreas.map((area) => (
-              <span
-                key={area.id}
-                className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/50 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-400"
-              >
-                <span className="inline-block h-2 w-2 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" />
-                {area.flag} {area.label}
+          <div className="space-y-3">
+            <div className="flex min-h-[44px] flex-wrap items-center gap-2 rounded-xl border border-white/8 bg-white/4 px-3.5 py-2.5">
+              <span className="text-xs font-semibold uppercase tracking-wider text-white/55">
+                Loaded in deals:
               </span>
-            ))}
+              {loadedAreas.length === 0 ? (
+                <span className="text-xs text-white/45">None</span>
+              ) : (
+                loadedAreas.map((area) => (
+                  <span
+                    key={area.id}
+                    className="inline-flex items-center gap-1 rounded-full border border-leaf/40 bg-leaf/10 px-2.5 py-1 text-xs font-semibold text-leaf"
+                  >
+                    ✓ {area.flag} {area.label}
+                  </span>
+                ))
+              )}
+            </div>
 
-            {activeAreas.map((area) => (
-              <span
-                key={area.id}
-                className="inline-flex items-center gap-1 rounded-full border border-leaf/40 bg-leaf/10 px-2.5 py-1 text-xs font-semibold text-leaf"
-              >
-                ✓ {area.flag} {area.label}
-              </span>
-            ))}
+            {hasPendingChanges && (
+              <div className="flex min-h-[44px] flex-wrap items-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/5 px-3.5 py-2.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-amber-200/80">
+                  Selected (unsaved):
+                </span>
+                {draftAreas.map((area) => (
+                  <span
+                    key={area.id}
+                    className="inline-flex items-center gap-1 rounded-full border border-amber-400/40 bg-amber-400/10 px-2.5 py-1 text-xs font-semibold text-amber-100"
+                  >
+                    {area.flag} {area.label}
+                  </span>
+                ))}
+                {(added.length > 0 || removed.length > 0) && (
+                  <span className="w-full text-[11px] text-amber-200/70">
+                    {added.length > 0 && `+ ${added.map((a) => a.label).join(", ")}`}
+                    {added.length > 0 && removed.length > 0 && " · "}
+                    {removed.length > 0 && `− ${removed.map((a) => a.label).join(", ")}`}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="mt-5 space-y-5">
@@ -185,28 +220,22 @@ export default function AreaSelector({ onApply, isLoading }) {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {AREAS.filter((a) => a.group === group.id).map((area) => {
-                    const state = getChipState(area.id);
-                    const styles = {
-                      idle: "border-white/12 text-white/60 hover:border-white/35 hover:text-white/85",
-                      pending: "border-amber-400/50 bg-amber-400/10 text-amber-200",
-                      loading: "border-amber-500/50 bg-amber-500/10 text-amber-400",
-                      active: "border-leaf/60 bg-leaf/10 text-leaf",
-                    };
+                    const selected = draft[area.id];
                     return (
                       <button
                         key={area.id}
                         type="button"
                         onClick={() => toggle(area.id)}
+                        disabled={isApplying}
                         className={
-                          "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm transition focus-visible:ring-2 focus-visible:ring-brand " +
-                          styles[state]
+                          "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm transition focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 " +
+                          (selected
+                            ? "border-leaf/60 bg-leaf/10 text-leaf"
+                            : "border-white/12 text-white/60 hover:border-white/35 hover:text-white/85")
                         }
                       >
                         {area.flag} {area.label}
-                        {state === "active" && " ✓"}
-                        {state === "loading" && (
-                          <span className="inline-block h-2.5 w-2.5 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" />
-                        )}
+                        {selected && " ✓"}
                       </button>
                     );
                   })}
@@ -219,13 +248,14 @@ export default function AreaSelector({ onApply, isLoading }) {
             <button
               type="button"
               onClick={applySelection}
-              disabled={isLoading || !hasPendingChanges}
+              disabled={isApplying || !hasPendingChanges}
               className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-ink-2"
             >
-              Apply markets
+              {isApplying ? "Updating…" : "Apply markets"}
             </button>
             <p className="text-xs text-white/55">
-              Changes apply only when you click Apply — avoids accidental 60s reloads.
+              Pills above match your selection. &ldquo;Loaded in deals&rdquo; updates after Apply —
+              avoids accidental 60s reloads.
             </p>
           </div>
         </div>
