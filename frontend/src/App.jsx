@@ -151,16 +151,17 @@ export default function App() {
       <header className="sticky top-0 z-50 border-b border-white/10 bg-ink/80 backdrop-blur-xl">
         <DemoModeBanner />
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <img
-              src={APP_ICON_SRC}
-              alt=""
-              aria-hidden
-              className="h-10 w-10 shrink-0 rounded-lg bg-white object-contain p-1 shadow-sm ring-1 ring-black/10 sm:h-11 sm:w-11"
-            />
-            <div className="min-w-0">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+            <div className="shrink-0 rounded-lg bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-black/10">
+              <img
+                src={APP_ICON_SRC}
+                alt="La Bodega Supermercado y Restaurante"
+                className="h-12 w-auto max-w-[min(240px,55vw)] object-contain object-left sm:h-14 sm:max-w-[280px]"
+              />
+            </div>
+            <div className="min-w-0 border-l border-white/10 pl-3 sm:pl-4">
               <h1 className="font-display text-base font-bold tracking-tight sm:text-lg">
-                La Bodega — Competitor Watch
+                Competitor Watch
               </h1>
               <p className="text-xs text-white/50 sm:text-sm">{headerDesc}</p>
             </div>
