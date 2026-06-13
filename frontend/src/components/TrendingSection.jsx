@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
-import { RefreshCw } from "lucide-react";
-import { Eyebrow, ErrorState, EmptyState, EASE } from "../lib/ui";
+import { ErrorState, EmptyState, EASE } from "../lib/ui";
+import { PageHeader, PANEL, SectionHeader, TAB_SECTION_SPACE } from "../lib/sectionUi";
 
 function TrendCard({ item, rank, accent }) {
   const price =
@@ -15,7 +15,7 @@ function TrendCard({ item, rank, accent }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.32, delay: (rank - 1) * 0.03, ease: EASE }}
       whileHover={{ y: -4 }}
-      className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-ink-2 p-4 transition-colors hover:border-white/25 sm:p-5"
+      className={"flex flex-col gap-2 transition-colors hover:border-white/25 " + PANEL + " p-4 sm:p-5"}
     >
       <div className="flex items-start gap-2.5">
         <span className="font-display text-sm font-bold" style={{ color: accent }}>
@@ -60,40 +60,22 @@ export default function TrendingSection({ data, loading, error, onRefresh }) {
   if (error) return <ErrorState message={error} onRetry={onRefresh} />;
 
   return (
-    <section className="space-y-14">
-      <div>
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <Eyebrow>Trending</Eyebrow>
-            <h2 className="mt-4 font-display text-4xl font-bold tracking-[-0.02em] sm:text-5xl">
-              What’s being advertised everywhere.
-            </h2>
-            <p className="mt-3 text-sm text-white/50">
-              Most-advertised products across US Latino metros this week
-            </p>
-          </div>
-          {onRefresh && (
-            <button
-              onClick={onRefresh}
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-medium text-white/75 transition hover:border-white/40 hover:text-white"
-            >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh
-            </button>
-          )}
-        </div>
-      </div>
+    <section className={TAB_SECTION_SPACE}>
+      <PageHeader
+        eyebrow="Trending"
+        title="What's being advertised everywhere."
+        description="Most-advertised products across US Latino metros this week"
+        onRefresh={onRefresh}
+        loading={loading}
+      />
 
       <div>
-        <h3 className="mb-6 font-display text-xl font-semibold tracking-tight text-white/90">
-          🌮 Latino supermarkets
-        </h3>
+        <SectionHeader title="Latino supermarkets" description="Top advertised items at Latino grocers." />
         <TrendGrid items={data?.latino} loading={loading} accent="#ff6a3d" emptyMsg="Scanning Latino metros..." />
       </div>
 
       <div>
-        <h3 className="mb-6 font-display text-xl font-semibold tracking-tight text-white/90">
-          🛒 Mainstream supermarkets
-        </h3>
+        <SectionHeader title="Mainstream supermarkets" description="Top items at national chains." />
         <TrendGrid items={data?.mainstream} loading={loading} accent="#4aa3ff" emptyMsg="Loading..." />
       </div>
     </section>

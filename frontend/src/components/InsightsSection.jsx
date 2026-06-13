@@ -8,25 +8,47 @@ import {
   Users,
   ShoppingBasket,
   Sparkles,
-  RefreshCw,
   MapPin,
   MessageSquare,
   Lock,
   Download,
   Printer,
 } from "lucide-react";
-import { Eyebrow, CountUp, EmptyState, ErrorState, EASE } from "../lib/ui";
+import { EmptyState, ErrorState, EASE } from "../lib/ui";
 import { exportPriceComparisonCsv, printReport } from "../lib/export";
+import {
+  BTN_GHOST,
+  BTN_PRIMARY,
+  NeedsDataPanel,
+  PageHeader,
+  PANEL,
+  SCROLL_MT,
+  SectionHeader,
+  StatCard,
+  TAB_SECTION_SPACE,
+  TABLE_HEAD,
+  UploadCtaLink,
+} from "../lib/sectionUi";
 import TradeAreaCard from "./TradeAreaCard";
 import TradeAreaMapPreview from "./TradeAreaMapPreview";
 import OutreachSection from "./OutreachSection";
+import { CompareBars, DonutChart, RankedBars, RetentionGauge, SegmentBar } from "./InsightCharts";
+import {
+  BasketAnalysisDemoPreview,
+  RetentionLoyaltyDemoPreview,
+  TopCustomersDemoPreview,
+} from "./DemoCustomerPreviews";
 
 const API = import.meta.env.VITE_API_URL || "";
 
 const INSIGHTS_NAV = [
+  { id: "insights-upload", label: "Upload" },
   { id: "insights-pricing", label: "Pricing" },
   { id: "insights-outreach", label: "Outreach" },
-  { id: "insights-customers", label: "Customers" },
+  { id: "insights-basket", label: "Basket" },
+  { id: "insights-retention", label: "Retention" },
+  { id: "insights-top-customers", label: "Top customers" },
+  { id: "insights-trade-area", label: "Trade area" },
   { id: "insights-ideas", label: "Ideas" },
 ];
 
@@ -43,58 +65,18 @@ function positionMeta(position) {
   }
 }
 
-function SegmentBar({ items, valueKey = "pct", color = "#4aa3ff" }) {
-  if (!items?.length) return null;
-  return (
-    <div className="space-y-3">
-      {items.map((item) => (
-        <div key={item.key || item.label}>
-          <div className="mb-1 flex items-center justify-between text-xs">
-            <span className="font-medium text-white/80">{item.label}</span>
-            <span className="tabular-nums text-white/55">
-              {item.count ?? item.orders} · {item[valueKey]}%
-            </span>
-          </div>
-          <div className="h-2 overflow-hidden rounded-full bg-white/8">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.min(item[valueKey], 100)}%` }}
-              transition={{ duration: 0.7, ease: EASE }}
-              className="h-full rounded-full"
-              style={{ background: color }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function StatCard({ label, value, suffix = "", hint }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-ink-2 p-5">
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-white/55">{label}</div>
-      <div className="mt-2 font-display text-3xl font-bold tabular-nums text-white">
-        {typeof value === "number" ? (
-          <>
-            {value < 1000 ? <CountUp to={value} /> : value.toLocaleString()}
-            {suffix}
-          </>
-        ) : (
-          value
-        )}
-      </div>
-      {hint && <p className="mt-2 text-xs text-white/55">{hint}</p>}
-    </div>
-  );
-}
-
 function UploadUnlock({ title, detail }) {
   return (
-    <div className="rounded-2xl border border-dashed border-white/15 bg-ink-2/50 px-6 py-10 text-center">
-      <Lock size={22} className="mx-auto text-white/35" />
-      <p className="mt-3 font-medium text-white/85">{title}</p>
-      <p className="mx-auto mt-2 max-w-md text-sm text-white/55">{detail}</p>
+    <div
+      className="rounded-2xl border border-dashed border-white/15 bg-ink-2/50 px-6 py-10 text-center"
+      role="status"
+    >
+      <Lock size={22} className="mx-auto text-white/45" aria-hidden />
+      <p className="mt-3 font-medium text-white/90">{title}</p>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/65">{detail}</p>
+      <div className="mt-5 flex justify-center">
+        <UploadCtaLink />
+      </div>
     </div>
   );
 }
@@ -112,9 +94,13 @@ function PriceComparisonSection({ priceRows, hasUploadedData, marketCount, gener
   return (
     <>
       {!hasUploadedData && (
-        <p className="mb-4 rounded-xl border border-white/10 bg-white/4 px-4 py-3 text-sm text-white/60">
-          Upload your sales CSV to unlock <strong className="text-white/85">your avg</strong> and
-          competitive position for each category.
+        <p
+          className="mb-4 rounded-xl border border-white/10 bg-white/4 px-4 py-3 text-sm leading-relaxed text-white/70"
+          role="note"
+        >
+          Upload your sales CSV to unlock <strong className="text-white">your avg</strong> and
+          competitive position for each category.{" "}
+          <UploadCtaLink className="min-h-0 inline text-sm" />
         </p>
       )}
 
@@ -122,7 +108,7 @@ function PriceComparisonSection({ priceRows, hasUploadedData, marketCount, gener
         <button
           type="button"
           onClick={() => exportPriceComparisonCsv(priceRows, { hasUploadedData, generatedAt })}
-          className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white/80 transition hover:border-white/40 hover:text-white focus-visible:ring-2 focus-visible:ring-brand"
+          className={BTN_GHOST}
         >
           <Download size={14} aria-hidden />
           Export CSV
@@ -130,7 +116,7 @@ function PriceComparisonSection({ priceRows, hasUploadedData, marketCount, gener
         <button
           type="button"
           onClick={printReport}
-          className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white/80 transition hover:border-white/40 hover:text-white focus-visible:ring-2 focus-visible:ring-brand"
+          className={BTN_GHOST}
         >
           <Printer size={14} aria-hidden />
           Print
@@ -140,16 +126,31 @@ function PriceComparisonSection({ priceRows, hasUploadedData, marketCount, gener
       <div className="overflow-hidden rounded-2xl border border-white/10">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[520px] text-left text-sm">
-            <thead className="bg-white/5 text-[11px] uppercase tracking-wider text-white/55">
+            <caption className="sr-only">
+              {hasUploadedData
+                ? "Your average prices compared to competitor market lows"
+                : "Competitor market reference prices by category"}
+            </caption>
+            <thead className={TABLE_HEAD}>
               <tr>
-                <th className="px-4 py-2.5 font-semibold sm:px-5">Category</th>
+                <th scope="col" className="px-4 py-2.5 font-semibold sm:px-5">
+                  Category
+                </th>
                 {hasUploadedData && (
-                  <th className="px-4 py-2.5 font-semibold sm:px-5">Your avg</th>
+                  <th scope="col" className="px-4 py-2.5 font-semibold sm:px-5">
+                    Your avg
+                  </th>
                 )}
-                <th className="px-4 py-2.5 font-semibold sm:px-5">Market low</th>
-                <th className="hidden px-4 py-2.5 font-semibold sm:table-cell sm:px-5">Median</th>
+                <th scope="col" className="px-4 py-2.5 font-semibold sm:px-5">
+                  Market low
+                </th>
+                <th scope="col" className="hidden px-4 py-2.5 font-semibold sm:table-cell sm:px-5">
+                  Median
+                </th>
                 {hasUploadedData && (
-                  <th className="px-4 py-2.5 font-semibold sm:px-5">Status</th>
+                  <th scope="col" className="px-4 py-2.5 font-semibold sm:px-5">
+                    Status
+                  </th>
                 )}
               </tr>
             </thead>
@@ -187,8 +188,9 @@ function PriceComparisonSection({ priceRows, hasUploadedData, marketCount, gener
                           <span
                             className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold"
                             style={{ background: `${meta.color}22`, color: meta.color }}
+                            title={`Price position: ${meta.label}`}
                           >
-                            <Icon size={12} /> {meta.label}
+                            <Icon size={12} aria-hidden /> {meta.label}
                           </span>
                         ) : (
                           <span className="text-xs text-white/45">—</span>
@@ -240,13 +242,13 @@ function InsightsSubNav() {
   return (
     <nav
       aria-label="Your Store sections"
-      className="no-print sticky top-[4.25rem] z-40 mb-6 flex gap-1 overflow-x-auto border-b border-white/10 bg-ink/95 py-2 backdrop-blur-md sm:top-[4.75rem] lg:top-[5rem] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="no-print sticky top-[4.25rem] z-40 -mx-1 mb-6 flex gap-1 overflow-x-auto border-b border-white/10 bg-ink/95 px-1 py-2 backdrop-blur-md sm:top-[4.75rem] lg:top-[5rem] [scrollbar-width:thin]"
     >
       {INSIGHTS_NAV.map((item) => (
         <a
           key={item.id}
           href={`#${item.id}`}
-          className="shrink-0 rounded-full px-4 py-2 text-sm font-medium text-white/55 transition hover:bg-white/8 hover:text-white focus-visible:ring-2 focus-visible:ring-brand"
+          className="shrink-0 rounded-full px-3.5 py-2.5 text-sm font-medium text-white/60 transition hover:bg-white/8 hover:text-white focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-ink sm:px-4"
         >
           {item.label}
         </a>
@@ -278,6 +280,38 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
     });
     return map;
   }, [data]);
+
+  const loyaltyNewCount = useMemo(() => {
+    const tier = (ca.loyalty_tiers || []).find((t) => t.key === "new");
+    return tier?.count ?? null;
+  }, [ca.loyalty_tiers]);
+
+  const loyaltyRepeatCount = useMemo(() => {
+    if (!ca.unique_customers || loyaltyNewCount == null) return null;
+    return ca.unique_customers - loyaltyNewCount;
+  }, [ca.unique_customers, loyaltyNewCount]);
+
+  const attachRateRows = useMemo(() => {
+    if (!facts.attach_rates_pct) return [];
+    return Object.entries(facts.attach_rates_pct)
+      .map(([key, pct]) => ({
+        key,
+        label: categoryLabels[key] || key,
+        value: pct,
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [facts.attach_rates_pct, categoryLabels]);
+
+  const topCustomerRows = useMemo(
+    () =>
+      topCustomers.map((row, i) => ({
+        key: row.id_masked || i,
+        label: row.id_masked,
+        value: row.spend,
+        sub: `${row.orders} visits · $${row.avg_basket} avg · ${row.tier}`,
+      })),
+    [topCustomers]
+  );
 
   async function handleUpload(e) {
     const file = e.target.files?.[0];
@@ -317,89 +351,99 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
   if (!data) return <EmptyState>Load competitor data first, then upload your sales CSV.</EmptyState>;
 
   return (
-    <section className="space-y-14">
-      <div>
-        <Eyebrow dot>Your store</Eyebrow>
-        <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2 className="font-display text-4xl font-bold tracking-[-0.02em] sm:text-5xl">
-              Price & customer intelligence
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm text-white/60">
-              Compare your shelf prices to live competitor ads, then layer in basket, customer, and
-              WhatsApp outreach insights.
-            </p>
-          </div>
-          {onRefresh && (
-            <button
-              type="button"
-              onClick={onRefresh}
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-medium text-white/75 transition hover:border-white/40 hover:text-white focus-visible:ring-2 focus-visible:ring-brand"
-            >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh
-            </button>
-          )}
-        </div>
-      </div>
+    <section className={TAB_SECTION_SPACE} aria-labelledby="insights-page-title">
+      <PageHeader
+        eyebrow="Your store"
+        eyebrowDot
+        titleId="insights-page-title"
+        title="Price & customer intelligence"
+        description="Compare your shelf prices to live competitor ads, then layer in basket, customer, and WhatsApp outreach insights."
+        onRefresh={onRefresh}
+        loading={loading}
+      />
 
       {/* Upload — always first */}
       <div
         id="insights-upload"
-        className="no-print scroll-mt-36 rounded-2xl border border-dashed border-white/20 bg-ink-2/80 p-4 sm:p-5 lg:p-6"
+        className={"no-print " + SCROLL_MT + " rounded-2xl border border-dashed border-white/20 bg-ink-2/80 p-4 sm:p-5 lg:p-6"}
       >
         <div className="flex flex-wrap items-start gap-6">
-          <div className="grid h-12 w-12 place-items-center rounded-xl bg-brand/15 text-brand">
+          <div className="grid h-12 w-12 place-items-center rounded-xl bg-brand/15 text-brand" aria-hidden>
             <Upload size={22} />
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="font-display text-xl font-semibold">Upload sales CSV</h3>
-            <p className="mt-1 text-sm text-white/60">
+            <p id="insights-upload-help" className="mt-1 text-sm leading-relaxed text-white/65">
               Use a standard order-line export from your POS. Include shopper ID and ZIP for customer
               and trade-area views.
               {data.data_source && (
                 <>
                   {" "}
                   Current view:{" "}
-                  <span className="text-white/80">{data.data_source}</span>
+                  <span className="font-medium text-white/90">{data.data_source}</span>
                 </>
               )}
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <input ref={fileRef} type="file" accept=".csv,text/csv" hidden onChange={handleUpload} />
+              <label htmlFor="insights-sales-csv" className="sr-only">
+                Sales CSV file from your POS
+              </label>
+              <input
+                ref={fileRef}
+                id="insights-sales-csv"
+                type="file"
+                accept=".csv,text/csv"
+                hidden
+                onChange={handleUpload}
+                aria-describedby="insights-upload-help insights-upload-status"
+              />
               <button
                 type="button"
                 disabled={uploading}
+                aria-controls="insights-sales-csv"
                 onClick={() => fileRef.current?.click()}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-ink transition hover:bg-brand hover:text-white disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-ink-2"
+                className={BTN_PRIMARY}
               >
                 {uploading ? "Analyzing…" : "Choose CSV file"}
               </button>
-              {uploadMsg && <span className="text-sm text-leaf">{uploadMsg}</span>}
-              {uploadErr && <span className="text-sm text-red-300">{uploadErr}</span>}
+              <div id="insights-upload-status" aria-live="polite" aria-atomic="true" className="min-w-0">
+                {uploadMsg && <span className="text-sm text-leaf">{uploadMsg}</span>}
+                {uploadErr && (
+                  <span className="text-sm text-red-300" role="alert">
+                    {uploadErr}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
+      {!hasUploadedData && (
+        <div
+          role="status"
+          className="rounded-xl border border-brand/20 bg-brand/8 px-4 py-3 text-sm leading-relaxed text-white/80"
+        >
+          <strong className="text-white">Sample previews below</strong> use May sales analysis numbers.
+          Upload your CSV to replace them with your store&apos;s data.{" "}
+          <UploadCtaLink className="min-h-0 inline text-sm" />
+        </div>
+      )}
+
       <InsightsSubNav />
 
       {/* Pricing — above the fold */}
-      <div id="insights-pricing" className="scroll-mt-36">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <TrendingUp size={18} className="text-leaf" />
-            <div>
-              <h3 className="font-display text-2xl font-semibold">
-                {hasUploadedData ? "Your prices vs market" : "Market reference prices"}
-              </h3>
-              <p className="mt-1 text-xs text-white/55">
-                {hasUploadedData
-                  ? "Your shelf averages compared to live competitor ads."
-                  : "Competitor lows by category until you upload POS data."}
-              </p>
-            </div>
-          </div>
-        </div>
+      <div id="insights-pricing" className={SCROLL_MT}>
+        <SectionHeader
+          icon={TrendingUp}
+          iconClass="text-leaf"
+          title={hasUploadedData ? "Your prices vs market" : "Market reference prices"}
+          description={
+            hasUploadedData
+              ? "Your shelf averages compared to live competitor ads."
+              : "Competitor lows by category until you upload POS data."
+          }
+        />
 
         <PriceComparisonSection
           priceRows={priceRows}
@@ -410,23 +454,29 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
       </div>
 
       {/* Outreach */}
-      <div id="insights-outreach" className="no-print scroll-mt-36">
-        <div className="mb-6 flex items-center gap-2">
-          <MessageSquare size={18} className="text-leaf" />
-          <h3 className="font-display text-2xl font-semibold">WhatsApp outreach</h3>
-        </div>
+      <div id="insights-outreach" className={"no-print " + SCROLL_MT}>
+        <SectionHeader
+          icon={MessageSquare}
+          iconClass="text-leaf"
+          title="WhatsApp outreach"
+          description="Campaign reach and reply rates from your CRM — sample metrics until you connect live data."
+        />
         <OutreachSection facts={facts} compactDemo={isSampleData} />
       </div>
 
       {/* Customers — basket, loyalty, top customers, trade area */}
-      <div id="insights-customers" className="no-print scroll-mt-36 space-y-14">
-        <div>
-          <div className="mb-6 flex items-center gap-2">
-            <ShoppingBasket size={18} className="text-brand" />
-            <h3 className="font-display text-2xl font-semibold">Basket analysis</h3>
-          </div>
+      <div className="no-print space-y-14">
+        <div id="insights-basket" className={SCROLL_MT}>
+          <SectionHeader
+            icon={ShoppingBasket}
+            iconClass="text-brand"
+            title="Basket analysis"
+            description="Ticket size, meat anchor effect, and add-on attach rates from your orders."
+          />
           {!hasUploadedData ? (
-            <UploadUnlock
+            <BasketAnalysisDemoPreview
+              attachRates={facts.attach_rates_pct}
+              categoryLabels={categoryLabels}
               title="Upload POS data to unlock basket metrics"
               detail="Avg basket, meat attach rates, and basket size mix appear after you upload your sales export."
             />
@@ -442,26 +492,64 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
                 <StatCard label="Weekend basket" value={facts.weekend_avg_basket} hint="Sat & Sun trips" />
                 <StatCard label="Weekday basket" value={facts.weekday_avg_basket} hint="Mon–Fri trips" />
               </div>
-              {ca.basket_segments?.length > 0 && (
-                <div className="mt-6 rounded-2xl border border-white/10 bg-ink-2 p-6">
-                  <h4 className="text-sm font-semibold text-white/80">Basket size mix</h4>
+
+              <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div className={PANEL}>
+                  <h4 className="text-sm font-semibold text-white/80">Basket size comparison</h4>
+                  <p className="mt-1 text-xs text-white/50">Meat anchor effect vs trips without meat</p>
                   <div className="mt-4">
-                    <SegmentBar items={ca.basket_segments} valueKey="pct" color="#ff6a3d" />
+                    <CompareBars
+                      label="Basket averages: with meat, without meat, weekend, and weekday"
+                      items={[
+                        {
+                          label: "With meat",
+                          value: facts.meat_basket_avg,
+                          color: "#ff6a3d",
+                        },
+                        {
+                          label: "Without meat",
+                          value: facts.nonmeat_basket_avg,
+                          color: "#4aa3ff",
+                        },
+                        {
+                          label: "Weekend",
+                          value: facts.weekend_avg_basket,
+                          color: "#34c759",
+                        },
+                        {
+                          label: "Weekday",
+                          value: facts.weekday_avg_basket,
+                          color: "#f0b429",
+                        },
+                      ]}
+                    />
                   </div>
                 </div>
-              )}
-              {facts.attach_rates_pct && (
-                <div className="mt-6 rounded-2xl border border-white/10 bg-ink-2 p-6">
+
+                {ca.basket_segments?.length > 0 && (
+                  <div className={PANEL}>
+                    <h4 className="text-sm font-semibold text-white/80">Basket size mix</h4>
+                    <p className="mt-1 text-xs text-white/50">Share of orders by ticket size</p>
+                    <div className="mt-4">
+                      <DonutChart segments={ca.basket_segments} label="Basket size mix by order count" />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {attachRateRows.length > 0 && (
+                <div className={"mt-6 " + PANEL}>
                   <h4 className="text-sm font-semibold text-white/80">Add-on attach rates (meat baskets)</h4>
-                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                    {Object.entries(facts.attach_rates_pct).map(([key, pct]) => (
-                      <div key={key} className="rounded-xl border border-white/8 bg-white/4 px-3 py-2.5">
-                        <div className="text-[10px] uppercase tracking-wider text-white/55">
-                          {categoryLabels[key] || key}
-                        </div>
-                        <div className="font-display text-xl font-bold text-leaf">{pct}%</div>
-                      </div>
-                    ))}
+                  <p className="mt-1 text-xs text-white/50">How often categories ride with a meat purchase</p>
+                  <div className="mt-4">
+                    <RankedBars
+                      items={attachRateRows}
+                      valueKey="value"
+                      labelKey="label"
+                      color="#34c759"
+                      formatValue={(v) => `${v}%`}
+                      label="Add-on attach rates for meat baskets"
+                    />
                   </div>
                 </div>
               )}
@@ -469,21 +557,23 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
           )}
         </div>
 
-        <div>
-          <div className="mb-6 flex items-center gap-2">
-            <Users size={18} className="text-sky" />
-            <h3 className="font-display text-2xl font-semibold">Retention & loyalty</h3>
-          </div>
+        <div id="insights-retention" className={SCROLL_MT}>
+          <SectionHeader
+            icon={Users}
+            iconClass="text-sky"
+            title="Retention & loyalty"
+            description="Repeat visits, spend tiers, and weekend vs weekday shopping rhythm."
+          />
           {!hasUploadedData ? (
-            <UploadUnlock
-              title="Upload POS data to unlock loyalty segments"
-              detail="Include a shopper ID on each order to see retention, tiers, and shopping rhythm."
+            <RetentionLoyaltyDemoPreview
+              title="Upload POS data to unlock retention & loyalty"
+              detail="Retention, tiers, and shopping rhythm appear after you upload your sales export. Include a shopper ID on each order."
             />
           ) : !ca.has_customer_ids ? (
-            <div className="rounded-2xl border border-white/10 bg-ink-2 px-6 py-8 text-sm text-white/60">
-              Loyalty tiers, retention, and shopping rhythm need a shopper ID on each order in your
-              export — the same identifier you use for rewards or receipts.
-            </div>
+            <NeedsDataPanel
+              title="Shopper ID required for loyalty views"
+              detail="Loyalty tiers, retention, and shopping rhythm need a shopper ID on each order in your export — the same identifier you use for rewards or receipts."
+            />
           ) : (
             <>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -500,23 +590,40 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
                   hint="Orders with a shopper ID"
                 />
               </div>
-              <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-ink-2 p-6">
-                  <h4 className="text-sm font-semibold text-white/80">Loyalty tiers</h4>
+
+              {ca.retention_rate_pct != null && (
+                <div className={"mt-6 " + PANEL}>
+                  <h4 className="text-sm font-semibold text-white/80">Retention snapshot</h4>
                   <div className="mt-4">
-                    <SegmentBar items={ca.loyalty_tiers} color="#34c759" />
+                    <RetentionGauge
+                      rate={ca.retention_rate_pct}
+                      repeatCount={loyaltyRepeatCount}
+                      newCount={loyaltyNewCount}
+                    />
                   </div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-ink-2 p-6">
+              )}
+
+              <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+                {ca.loyalty_tiers?.length > 0 && (
+                  <div className={PANEL + " lg:col-span-1"}>
+                    <h4 className="text-sm font-semibold text-white/80">Loyalty tiers</h4>
+                    <p className="mt-1 text-xs text-white/50">By visit frequency</p>
+                    <div className="mt-4">
+                      <DonutChart segments={ca.loyalty_tiers} label="Customer loyalty tiers by visit count" />
+                    </div>
+                  </div>
+                )}
+                <div className={PANEL}>
                   <h4 className="text-sm font-semibold text-white/80">Spend segments</h4>
                   <div className="mt-4">
-                    <SegmentBar items={ca.segments} color="#4aa3ff" />
+                    <SegmentBar items={ca.segments} color="#4aa3ff" label="Spend segments by customer count" />
                   </div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-ink-2 p-6">
+                <div className={PANEL}>
                   <h4 className="text-sm font-semibold text-white/80">Shopping rhythm</h4>
                   <div className="mt-4">
-                    <SegmentBar items={ca.rhythm_segments} color="#f0b429" />
+                    <SegmentBar items={ca.rhythm_segments} color="#f0b429" label="Shopping rhythm segments" />
                   </div>
                 </div>
               </div>
@@ -524,33 +631,63 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
           )}
         </div>
 
-        <div>
-          <div className="mb-6 flex items-center gap-2">
-            <Users size={18} className="text-brand" />
-            <h3 className="font-display text-2xl font-semibold">Top customers</h3>
-          </div>
+        <div id="insights-top-customers" className={SCROLL_MT}>
+          <SectionHeader
+            icon={Users}
+            iconClass="text-brand"
+            title="Top customers"
+            description="Highest lifetime spenders — customer IDs are always masked for privacy."
+          />
           {!hasUploadedData ? (
-            <UploadUnlock
+            <TopCustomersDemoPreview
               title="Upload POS data to unlock top customers"
-              detail="Ranked shoppers appear after upload. IDs are always masked for privacy."
+              detail="Ranked shoppers appear after you upload your sales export. IDs are always masked for privacy."
             />
           ) : topCustomers.length > 0 ? (
-            <div className="overflow-hidden rounded-2xl border border-white/10">
+            <div className="space-y-6">
+              <div className={PANEL}>
+                <h4 className="text-sm font-semibold text-white/80">Spend ranking</h4>
+                <p className="mt-1 text-xs text-white/50">Top shoppers by lifetime spend — IDs masked</p>
+                <div className="mt-4">
+                  <RankedBars
+                    items={topCustomerRows}
+                    valueKey="value"
+                    labelKey="label"
+                    color="#ff6a3d"
+                    label="Top customers by lifetime spend"
+                  />
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-2xl border border-white/10">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[520px] text-left text-sm">
-                  <thead className="bg-white/5 text-[11px] uppercase tracking-wider text-white/55">
+                  <caption className="sr-only">Top customers ranked by lifetime spend</caption>
+                  <thead className={TABLE_HEAD}>
                     <tr>
-                      <th className="px-4 py-3 font-semibold sm:px-5">Customer</th>
-                      <th className="px-4 py-3 font-semibold sm:px-5">Visits</th>
-                      <th className="px-4 py-3 font-semibold sm:px-5">Spend</th>
-                      <th className="px-4 py-3 font-semibold sm:px-5">Avg basket</th>
-                      <th className="px-4 py-3 font-semibold sm:px-5">Last visit</th>
-                      <th className="px-4 py-3 font-semibold sm:px-5">Segment</th>
+                      <th scope="col" className="px-4 py-3 font-semibold sm:px-5">
+                        Customer
+                      </th>
+                      <th scope="col" className="px-4 py-3 font-semibold sm:px-5">
+                        Visits
+                      </th>
+                      <th scope="col" className="px-4 py-3 font-semibold sm:px-5">
+                        Spend
+                      </th>
+                      <th scope="col" className="px-4 py-3 font-semibold sm:px-5">
+                        Avg basket
+                      </th>
+                      <th scope="col" className="px-4 py-3 font-semibold sm:px-5">
+                        Last visit
+                      </th>
+                      <th scope="col" className="px-4 py-3 font-semibold sm:px-5">
+                        Segment
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {topCustomers.map((row, i) => (
-                      <tr key={i} className="border-t border-white/8">
+                    {topCustomers.map((row) => (
+                      <tr key={row.id_masked} className="border-t border-white/8">
                         <td className="px-4 py-3 font-mono text-xs text-white/80 sm:px-5">{row.id_masked}</td>
                         <td className="px-4 py-3 tabular-nums text-white/75 sm:px-5">{row.orders}</td>
                         <td className="px-4 py-3 font-semibold tabular-nums text-white sm:px-5">
@@ -572,20 +709,30 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
                 IDs are masked for privacy · ranked by lifetime spend
               </p>
             </div>
-          ) : (
-            <div className="rounded-2xl border border-white/10 bg-ink-2 px-6 py-8 text-sm text-white/60">
-              {ca.has_customer_ids
-                ? "No ranked customers yet for this period."
-                : "Top customer rankings need a shopper ID on each order in your POS export."}
             </div>
+          ) : (
+            <NeedsDataPanel
+              title={
+                ca.has_customer_ids
+                  ? "No ranked customers yet for this period"
+                  : "Shopper ID required for rankings"
+              }
+              detail={
+                ca.has_customer_ids
+                  ? "Try uploading a longer date range or check that orders include totals."
+                  : "Top customer rankings need a shopper ID on each order in your POS export."
+              }
+            />
           )}
         </div>
 
-        <div>
-          <div className="mb-6 flex items-center gap-2">
-            <MapPin size={18} className="text-sky" />
-            <h3 className="font-display text-2xl font-semibold">Trade area</h3>
-          </div>
+        <div id="insights-trade-area" className={SCROLL_MT}>
+          <SectionHeader
+            icon={MapPin}
+            iconClass="text-sky"
+            title="Trade area"
+            description="How far shoppers travel — ZIP reach and radius from your store."
+          />
           {!hasUploadedData ? (
             <TradeAreaMapPreview
               title="Upload POS data to unlock trade area"
@@ -602,20 +749,25 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
               </TradeAreaMapPreview>
             </div>
           ) : (
-            <div className="rounded-2xl border border-white/10 bg-ink-2 px-6 py-8 text-sm text-white/60">
-              {tradeArea.note ||
-                "Include ZIP or postal codes in your sales export to see how far your shoppers travel."}
-            </div>
+            <NeedsDataPanel
+              title="ZIP codes required for trade area"
+              detail={
+                tradeArea.note ||
+                "Include ZIP or postal codes in your sales export to see how far your shoppers travel."
+              }
+            />
           )}
         </div>
       </div>
 
       {/* Promo ideas */}
-      <div id="insights-ideas" className="no-print scroll-mt-36">
-        <div className="mb-6 flex items-center gap-2">
-          <Sparkles size={18} className="text-brand" />
-          <h3 className="font-display text-2xl font-semibold">This week&apos;s promo ideas</h3>
-        </div>
+      <div id="insights-ideas" className={"no-print " + SCROLL_MT}>
+        <SectionHeader
+          icon={Sparkles}
+          iconClass="text-brand"
+          title="This week&apos;s promo ideas"
+          description="Segment-targeted promos based on your sales patterns and live competitor ads."
+        />
 
         {!hasUploadedData ? (
           <UploadUnlock
@@ -637,7 +789,9 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
                     {block.items.slice(0, 3).map((s, i) => (
                       <div
                         key={`${block.key}-${i}`}
-                        className="rounded-2xl border border-white/10 bg-ink-2 p-4"
+                        className={PANEL + " p-4"}
+                        role="article"
+                        aria-label={`${block.title}: ${s.title}`}
                       >
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/55">

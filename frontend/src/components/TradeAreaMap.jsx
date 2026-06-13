@@ -113,9 +113,7 @@ export default function TradeAreaMap({
         ro.observe(hostRef.current);
 
         // Tab transitions / flex layout can mount before the container has final size.
-        sizeTimers = [0, 150, 400].map((ms) =>
-          window.setTimeout(refreshSize, ms)
-        );
+        sizeTimers = [0, 100, 300, 600].map((ms) => window.setTimeout(refreshSize, ms));
       })
       .catch(() => {
         if (!cancelled) setMapFailed(true);
@@ -130,18 +128,14 @@ export default function TradeAreaMap({
   }, [lat, lng, radiusMiles, interactive, bottomPadding]);
 
   return (
-    <div className={"relative h-full w-full " + className}>
+    <div className={"absolute inset-0 " + className}>
       {mapFailed && (
         <div
           className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(circle_at_50%_42%,rgb(74_163_255/0.18),transparent_58%),linear-gradient(180deg,rgb(17_22_29)_0%,rgb(8_11_15)_100%)]"
           aria-hidden
         />
       )}
-      <div
-        ref={hostRef}
-        className="h-full w-full"
-        aria-hidden={!interactive}
-      />
+      <div ref={hostRef} className="h-full w-full min-h-[200px]" aria-hidden={!interactive} />
     </div>
   );
 }

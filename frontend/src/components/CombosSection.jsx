@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import DealCard from "./DealCard";
 import { EmptyState } from "../lib/ui";
+import { PageHeader } from "../lib/sectionUi";
 
 const COMBO_GRID =
   "grid gap-4 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]";
@@ -21,17 +22,11 @@ export default function CombosSection({ data, embedded = false }) {
   return (
     <section className={embedded ? "" : "mb-14"}>
       {!embedded && (
-        <>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/55">
-            Weekend packs
-          </p>
-          <h2 className="mt-4 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            🎁 Combo &amp; weekend pack deals
-          </h2>
-          <p className="mt-2 text-sm text-white/50">
-            Bundle / multi-buy deals running near your ZIP codes — copy the ideas for Sat &amp; Sun
-          </p>
-        </>
+        <PageHeader
+          eyebrow="Weekend packs"
+          title="Combo & weekend pack deals"
+          description="Bundle / multi-buy deals running near your ZIP codes — copy the ideas for Sat & Sun."
+        />
       )}
 
       {embedded && (

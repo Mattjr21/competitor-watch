@@ -10,6 +10,7 @@ import HeroBanner from "./components/HeroBanner";
 import AppFooter from "./components/AppFooter";
 import { DemoModeBanner } from "./components/OutreachSection";
 import { LoadProgress, EASE } from "./lib/ui";
+import { BTN_GHOST, BTN_PRIMARY } from "./lib/sectionUi";
 import { APP_ICON_SRC } from "./lib/brand";
 
 const API = import.meta.env.VITE_API_URL || "";
@@ -203,7 +204,7 @@ export default function App() {
               type="button"
               onClick={refreshCurrentTab}
               disabled={tabRefreshLoading}
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-brand hover:text-white disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
+              className={BTN_PRIMARY + " disabled:opacity-60"}
             >
               <RefreshCw size={15} className={tabRefreshLoading ? "animate-spin" : ""} aria-hidden />
               {tabRefreshLabel}
@@ -213,7 +214,7 @@ export default function App() {
               onClick={refreshAll}
               disabled={anyLoading}
               title="Re-scrapes competitor ads — can take up to 60 seconds"
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/15 px-3 py-2 text-xs font-medium text-white/65 transition hover:border-white/35 hover:text-white disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand"
+              className={BTN_GHOST + " px-3 py-2 text-xs disabled:opacity-50"}
             >
               Refresh all
             </button>

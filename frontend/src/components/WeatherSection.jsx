@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
-import { Sun, CloudRain, Snowflake, CloudSun, RefreshCw } from "lucide-react";
-import { Eyebrow, ErrorState, EmptyState, EASE } from "../lib/ui";
+import { Sun, CloudRain, Snowflake, CloudSun } from "lucide-react";
+import { ErrorState, EmptyState, EASE } from "../lib/ui";
+import { PageHeader, PANEL, SectionHeader, TAB_SECTION_SPACE, TABLE_HEAD } from "../lib/sectionUi";
 
 function profileMeta(profile) {
   switch (profile) {
@@ -22,7 +23,7 @@ function WeatherDayCard({ day, index }) {
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.06, ease: EASE }}
-      className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-ink-2 p-4 sm:p-5"
+      className={"flex flex-col gap-3 " + PANEL + " p-4 sm:p-5"}
     >
       <div className="flex items-center justify-between">
         <div>
@@ -80,27 +81,15 @@ export default function WeatherSection({ forecast, loading, error, onRefresh }) 
   const loc = forecast.location || {};
 
   return (
-    <section className="space-y-12">
+    <section className={TAB_SECTION_SPACE}>
       <div>
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <Eyebrow>Daily ops</Eyebrow>
-            <h2 className="mt-4 font-display text-4xl font-bold tracking-[-0.02em] sm:text-5xl">
-              The weekend playbook.
-            </h2>
-            <p className="mt-3 text-sm text-white/50">
-              {loc.city || "Calhoun"}, {loc.state || "GA"} · updated {forecast.generated_at}
-            </p>
-          </div>
-          {onRefresh && (
-            <button
-              onClick={onRefresh}
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-medium text-white/75 transition hover:border-white/40 hover:text-white"
-            >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh
-            </button>
-          )}
-        </div>
+        <PageHeader
+          eyebrow="Daily ops"
+          title="The weekend playbook."
+          meta={`${loc.city || "Calhoun"}, ${loc.state || "GA"} · updated ${forecast.generated_at}`}
+          onRefresh={onRefresh}
+          loading={loading}
+        />
 
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {days.map((day, i) => (
@@ -111,12 +100,15 @@ export default function WeatherSection({ forecast, loading, error, onRefresh }) 
 
       {todayTargets && (
         <div>
-          <h3 className="font-display text-2xl font-semibold tracking-tight">Today’s sales targets</h3>
-          {targets.note && <p className="mt-2 text-sm text-white/50">{targets.note}</p>}
+          <SectionHeader
+            title="Today's sales targets"
+            description={targets.note}
+            className="mb-6"
+          />
 
-          <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 md:block hidden">
+          <div className={"mt-6 overflow-hidden rounded-2xl border border-white/10 md:block hidden"}>
             <table className="w-full text-left text-sm">
-              <thead className="bg-white/5 text-xs uppercase tracking-wider text-white/45">
+              <thead className={TABLE_HEAD}>
                 <tr>
                   <th className="px-5 py-3 font-semibold">Category</th>
                   <th className="px-5 py-3 font-semibold">Typical day</th>

@@ -1,27 +1,9 @@
 import { useEffect, useState } from "react";
-import { ExternalLink, MessageSquare, Shield } from "lucide-react";
-import { CountUp, EmptyState, ErrorState } from "../lib/ui";
+import { ExternalLink, Shield } from "lucide-react";
+import { EmptyState, ErrorState } from "../lib/ui";
+import { PANEL, StatCard, TABLE_HEAD } from "../lib/sectionUi";
 
 const API = import.meta.env.VITE_API_URL || "";
-
-function RateTile({ label, value, suffix = "", hint, accent = "text-white" }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-ink-2 p-5">
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-white/55">{label}</div>
-      <div className={`mt-2 font-display text-3xl font-bold tabular-nums ${accent}`}>
-        {typeof value === "number" ? (
-          <>
-            <CountUp to={value} />
-            {suffix}
-          </>
-        ) : (
-          value ?? "—"
-        )}
-      </div>
-      {hint && <p className="mt-2 text-xs text-white/55">{hint}</p>}
-    </div>
-  );
-}
 
 export default function OutreachSection({ facts, compactDemo = false }) {
   const [data, setData] = useState(null);
@@ -71,7 +53,7 @@ export default function OutreachSection({ facts, compactDemo = false }) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-wider text-white/55">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">
             {data.channel === "whatsapp" ? "WhatsApp Business" : data.channel} · {data.period_label}
           </p>
           {!data.demo_mode && (
@@ -83,7 +65,7 @@ export default function OutreachSection({ facts, compactDemo = false }) {
             href={data.crm_app_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm text-white/70 underline-offset-2 hover:text-white hover:underline"
+            className="inline-flex min-h-[44px] items-center gap-1.5 text-sm text-white/75 underline-offset-2 hover:text-white hover:underline focus-visible:rounded focus-visible:ring-2 focus-visible:ring-brand"
           >
             Open production CRM <ExternalLink size={14} />
           </a>
@@ -91,24 +73,29 @@ export default function OutreachSection({ facts, compactDemo = false }) {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <RateTile label="Sent" value={s.sent} hint={`${s.read_rate_pct ?? "—"}% read rate`} />
-        <RateTile label="Read" value={s.read} accent="text-sky" />
-        <RateTile label="Replied" value={s.replied} accent="text-brand" hint={`${s.reply_rate_pct ?? "—"}% reply rate`} />
-        <RateTile
+        <StatCard label="Sent" value={s.sent} hint={`${s.read_rate_pct ?? "—"}% read rate`} />
+        <StatCard label="Read" value={s.read} accentClass="text-sky" />
+        <StatCard
+          label="Replied"
+          value={s.replied}
+          accentClass="text-brand"
+          hint={`${s.reply_rate_pct ?? "—"}% reply rate`}
+        />
+        <StatCard
           label="Store visit (7d)"
           value={s.visited_7d}
-          accent="text-leaf"
+          accentClass="text-leaf"
           hint={`${s.visit_match_pct ?? "—"}% matched to POS`}
         />
       </div>
 
       {data.language_mix?.length > 0 && !hideDetails && (
-        <div className="rounded-2xl border border-white/10 bg-ink-2 p-6">
+        <div className={PANEL}>
           <h4 className="text-sm font-semibold text-white/80">Campaign language mix</h4>
           <div className="mt-4 flex flex-wrap gap-4">
             {data.language_mix.map((row) => (
               <div key={row.language} className="min-w-[120px]">
-                <div className="text-xs text-white/55">{row.language}</div>
+                <div className="text-xs text-white/60">{row.language}</div>
                 <div className="font-display text-2xl font-bold text-white">{row.pct}%</div>
               </div>
             ))}
@@ -123,14 +110,14 @@ export default function OutreachSection({ facts, compactDemo = false }) {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[560px] text-left text-sm">
-              <thead className="text-[11px] uppercase tracking-wider text-white/55">
+              <thead className={TABLE_HEAD}>
                 <tr>
-                  <th className="px-4 py-3 font-semibold sm:px-5">Campaign</th>
-                  <th className="px-4 py-3 font-semibold sm:px-5">Sent</th>
-                  <th className="px-4 py-3 font-semibold sm:px-5">Read</th>
-                  <th className="px-4 py-3 font-semibold sm:px-5">Reply</th>
-                  <th className="px-4 py-3 font-semibold sm:px-5">Visit 7d</th>
-                  <th className="px-4 py-3 font-semibold sm:px-5">Lang</th>
+                  <th scope="col" className="px-4 py-3 font-semibold sm:px-5">Campaign</th>
+                  <th scope="col" className="px-4 py-3 font-semibold sm:px-5">Sent</th>
+                  <th scope="col" className="px-4 py-3 font-semibold sm:px-5">Read</th>
+                  <th scope="col" className="px-4 py-3 font-semibold sm:px-5">Reply</th>
+                  <th scope="col" className="px-4 py-3 font-semibold sm:px-5">Visit 7d</th>
+                  <th scope="col" className="px-4 py-3 font-semibold sm:px-5">Lang</th>
                 </tr>
               </thead>
               <tbody>
