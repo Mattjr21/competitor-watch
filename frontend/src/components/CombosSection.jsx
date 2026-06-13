@@ -52,7 +52,7 @@ export default function CombosSection({ data, embedded = false }) {
               <select
                 value={zipFilter}
                 onChange={(e) => setZipFilter(e.target.value)}
-                className="cursor-pointer rounded-full border border-white/15 bg-ink-2 px-3 py-2 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="toolbar-control cursor-pointer text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-brand"
               >
                 <option value="">All areas</option>
                 {zips.map((z) => {

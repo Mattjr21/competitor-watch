@@ -15,13 +15,14 @@ function RadiusRing({ r, label, opacity }) {
   );
 }
 
-export default function TradeAreaCard({ tradeArea }) {
+export default function TradeAreaCard({ tradeArea, embedded = false }) {
   const ta = tradeArea || {};
   const topZips = ta.top_zips || [];
   const maxCount = topZips[0]?.count || 1;
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[200px_1fr]">
+    <div className={embedded ? "space-y-4" : "grid grid-cols-1 gap-6 lg:grid-cols-[200px_1fr]"}>
+      {!embedded && (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-ink-3/80 p-4">
         <div className="relative aspect-square w-full max-w-[180px] text-brand">
           <svg viewBox="0 0 100 100" className="h-full w-full" aria-hidden>
@@ -40,6 +41,7 @@ export default function TradeAreaCard({ tradeArea }) {
           <span>10 mi</span>
         </div>
       </div>
+      )}
 
       <div className="space-y-4">
         {(ta.within_5_mi_pct != null || ta.within_10_mi_pct != null) && (

@@ -92,7 +92,7 @@ export function ErrorState({ message, onRetry }) {
 
 export function EmptyState({ children }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-ink-2 px-6 py-14 text-center text-sm text-white/45">
+    <div className="rounded-2xl border border-white/10 bg-ink-2 px-4 py-10 text-center text-sm text-white/45 sm:px-6 sm:py-14">
       {children}
     </div>
   );
@@ -119,8 +119,8 @@ export function LoadProgress({ steps }) {
   if (active.length === 0 && done === total) return null;
 
   return (
-    <div className="border-b border-white/10 bg-ink-2/90 px-6 py-3">
-      <div className="mx-auto max-w-7xl">
+    <div className="border-b border-white/10 bg-ink-2/90 py-3">
+      <div className="app-shell">
         <div className="mb-2 flex items-center justify-between gap-3 text-xs text-white/55">
           <span>
             {active.length > 0

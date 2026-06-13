@@ -178,10 +178,12 @@ export function DemoModeBanner() {
   return (
     <div
       role="status"
-      className="border-b border-sky-500/25 bg-sky-950/40 px-6 py-2.5 text-center text-xs text-sky-100/90"
+      className="border-b border-sky-500/25 bg-sky-950/40 py-2.5 text-center text-xs text-sky-100/90"
     >
-      <span className="font-semibold">Demo mode</span> — sample metrics for review. Upload a POS export
-      on Your Store to see your store&apos;s live numbers.
+      <p className="app-shell">
+        <span className="font-semibold">Demo mode</span> — sample metrics for review. Upload a POS export
+        on Your Store to see your store&apos;s live numbers.
+      </p>
     </div>
   );
 }

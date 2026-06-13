@@ -12,9 +12,13 @@ import {
   MapPin,
   MessageSquare,
   Lock,
+  Download,
+  Printer,
 } from "lucide-react";
 import { Eyebrow, CountUp, EmptyState, ErrorState, EASE } from "../lib/ui";
+import { exportPriceComparisonCsv, printReport } from "../lib/export";
 import TradeAreaCard from "./TradeAreaCard";
+import TradeAreaMapPreview from "./TradeAreaMapPreview";
 import OutreachSection from "./OutreachSection";
 
 const API = import.meta.env.VITE_API_URL || "";
@@ -113,6 +117,25 @@ function PriceComparisonSection({ priceRows, hasUploadedData, marketCount, gener
           competitive position for each category.
         </p>
       )}
+
+      <div className="no-print mb-4 flex flex-wrap items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => exportPriceComparisonCsv(priceRows, { hasUploadedData, generatedAt })}
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white/80 transition hover:border-white/40 hover:text-white focus-visible:ring-2 focus-visible:ring-brand"
+        >
+          <Download size={14} aria-hidden />
+          Export CSV
+        </button>
+        <button
+          type="button"
+          onClick={printReport}
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white/80 transition hover:border-white/40 hover:text-white focus-visible:ring-2 focus-visible:ring-brand"
+        >
+          <Printer size={14} aria-hidden />
+          Print
+        </button>
+      </div>
 
       <div className="overflow-hidden rounded-2xl border border-white/10">
         <div className="overflow-x-auto">
@@ -217,7 +240,7 @@ function InsightsSubNav() {
   return (
     <nav
       aria-label="Your Store sections"
-      className="sticky top-[7.25rem] z-40 -mx-1 flex gap-1 overflow-x-auto border-b border-white/10 bg-ink/95 py-2 backdrop-blur-md"
+      className="no-print sticky top-[4.25rem] z-40 mb-6 flex gap-1 overflow-x-auto border-b border-white/10 bg-ink/95 py-2 backdrop-blur-md sm:top-[4.75rem] lg:top-[5rem] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {INSIGHTS_NAV.map((item) => (
         <a
@@ -320,7 +343,10 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
       </div>
 
       {/* Upload — always first */}
-      <div className="rounded-2xl border border-dashed border-white/20 bg-ink-2/80 p-6 sm:p-8">
+      <div
+        id="insights-upload"
+        className="no-print scroll-mt-36 rounded-2xl border border-dashed border-white/20 bg-ink-2/80 p-4 sm:p-5 lg:p-6"
+      >
         <div className="flex flex-wrap items-start gap-6">
           <div className="grid h-12 w-12 place-items-center rounded-xl bg-brand/15 text-brand">
             <Upload size={22} />
@@ -384,7 +410,7 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
       </div>
 
       {/* Outreach */}
-      <div id="insights-outreach" className="scroll-mt-36">
+      <div id="insights-outreach" className="no-print scroll-mt-36">
         <div className="mb-6 flex items-center gap-2">
           <MessageSquare size={18} className="text-leaf" />
           <h3 className="font-display text-2xl font-semibold">WhatsApp outreach</h3>
@@ -393,7 +419,7 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
       </div>
 
       {/* Customers — basket, loyalty, top customers, trade area */}
-      <div id="insights-customers" className="scroll-mt-36 space-y-14">
+      <div id="insights-customers" className="no-print scroll-mt-36 space-y-14">
         <div>
           <div className="mb-6 flex items-center gap-2">
             <ShoppingBasket size={18} className="text-brand" />
@@ -561,13 +587,19 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
             <h3 className="font-display text-2xl font-semibold">Trade area</h3>
           </div>
           {!hasUploadedData ? (
-            <UploadUnlock
+            <TradeAreaMapPreview
               title="Upload POS data to unlock trade area"
               detail="Include ZIP or postal codes in your export to see reach and top ZIP codes."
+              zip={tradeArea.store_zip || undefined}
+              city={tradeArea.store_city || undefined}
             />
           ) : tradeArea.has_zip_data ? (
-            <div className="rounded-2xl border border-white/10 bg-ink-2 p-6">
-              <TradeAreaCard tradeArea={tradeArea} />
+            <div className="space-y-4">
+              <TradeAreaMapPreview locked={false} zip={tradeArea.store_zip} city={tradeArea.store_city}>
+                <div className="border-t border-white/10 bg-ink/85 p-4 backdrop-blur-md sm:p-5">
+                  <TradeAreaCard tradeArea={tradeArea} embedded />
+                </div>
+              </TradeAreaMapPreview>
             </div>
           ) : (
             <div className="rounded-2xl border border-white/10 bg-ink-2 px-6 py-8 text-sm text-white/60">
@@ -579,7 +611,7 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
       </div>
 
       {/* Promo ideas */}
-      <div id="insights-ideas" className="scroll-mt-36">
+      <div id="insights-ideas" className="no-print scroll-mt-36">
         <div className="mb-6 flex items-center gap-2">
           <Sparkles size={18} className="text-brand" />
           <h3 className="font-display text-2xl font-semibold">This week&apos;s promo ideas</h3>

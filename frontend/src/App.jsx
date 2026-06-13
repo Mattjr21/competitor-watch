@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useState, useEffect, useId } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { RefreshCw } from "lucide-react";
 import AreaSelector, { DEFAULT_LOCAL_ZIPS } from "./components/AreaSelector";
 import DealsSection from "./components/DealsSection";
@@ -7,8 +7,9 @@ import WeatherSection from "./components/WeatherSection";
 import TrendingSection from "./components/TrendingSection";
 import InsightsSection from "./components/InsightsSection";
 import HeroBanner from "./components/HeroBanner";
+import AppFooter from "./components/AppFooter";
 import { DemoModeBanner } from "./components/OutreachSection";
-import { LoadProgress } from "./lib/ui";
+import { LoadProgress, EASE } from "./lib/ui";
 import { APP_ICON_SRC } from "./lib/brand";
 
 const API = import.meta.env.VITE_API_URL || "";
@@ -21,6 +22,18 @@ const TABS = [
 ];
 
 export default function App() {
+  const reduceMotion = useReducedMotion();
+  const weatherPanelId = useId();
+  const dealsPanelId = useId();
+  const insightsPanelId = useId();
+  const trendingPanelId = useId();
+  const tabPanelIds = {
+    weather: weatherPanelId,
+    deals: dealsPanelId,
+    insights: insightsPanelId,
+    trending: trendingPanelId,
+  };
+
   const [forecast, setForecast] = useState(null);
   const [dealsData, setDealsData] = useState(null);
   const [trendingData, setTrendingData] = useState(null);
@@ -100,6 +113,13 @@ export default function App() {
     else fetchDeals(true, activeZips);
   };
 
+  const openUploadGuide = () => {
+    setActiveTab("insights");
+    requestAnimationFrame(() => {
+      document.getElementById("insights-upload")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
   const tabRefreshLabel = {
     weather: "Refresh forecast",
     deals: "Refresh deals",
@@ -114,9 +134,9 @@ export default function App() {
         ? trendingLoading
         : dealsLoading;
 
-  const marketCount = dealsData?.zips?.length || 6;
+  const marketCount = dealsData?.zips?.length || 0;
   const headerDesc = dealsData
-    ? `${marketCount} market${marketCount !== 1 ? "s" : ""} · ${dealsData.merchants?.length} retailers · updated ${dealsData.generated_at}`
+    ? `${marketCount} market${marketCount !== 1 ? "s" : ""} · ${dealsData.merchants?.length || 0} retailers · synced ${dealsData.generated_at}`
     : forecast
       ? `${forecast.location?.city || "Calhoun"}, ${forecast.location?.state || "GA"} · loading competitor data…`
       : "Calhoun, GA · Live competitor pricing";
@@ -146,11 +166,25 @@ export default function App() {
     },
   ];
 
+  const TabContent = reduceMotion ? "div" : motion.div;
+  const tabContentProps = reduceMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 8 },
+        animate: { opacity: 1, y: 0 },
+        exit: { opacity: 0, y: -4 },
+        transition: { duration: 0.2, ease: EASE },
+      };
+
   return (
-    <div className="min-h-screen bg-ink text-white selection:bg-brand/30">
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-ink/80 backdrop-blur-xl">
+    <div className="flex min-h-screen flex-col bg-ink text-white selection:bg-brand/30">
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+
+      <header className="no-print sticky top-0 z-50 border-b border-white/10 bg-ink/80 backdrop-blur-xl">
         <DemoModeBanner />
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
+        <div className="app-shell flex flex-wrap items-center justify-between gap-3 py-3 sm:gap-4 sm:py-4">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <img
               src={APP_ICON_SRC}
@@ -169,9 +203,9 @@ export default function App() {
               type="button"
               onClick={refreshCurrentTab}
               disabled={tabRefreshLoading}
-              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-brand hover:text-white disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-brand hover:text-white disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
             >
-              <RefreshCw size={15} className={tabRefreshLoading ? "animate-spin" : ""} />
+              <RefreshCw size={15} className={tabRefreshLoading ? "animate-spin" : ""} aria-hidden />
               {tabRefreshLabel}
             </button>
             <button
@@ -179,7 +213,7 @@ export default function App() {
               onClick={refreshAll}
               disabled={anyLoading}
               title="Re-scrapes competitor ads — can take up to 60 seconds"
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-3 py-2 text-xs font-medium text-white/65 transition hover:border-white/35 hover:text-white disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/15 px-3 py-2 text-xs font-medium text-white/65 transition hover:border-white/35 hover:text-white disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand"
             >
               Refresh all
             </button>
@@ -188,56 +222,74 @@ export default function App() {
         {anyLoading && <LoadProgress steps={loadSteps} />}
       </header>
 
-      <main className="mx-auto max-w-7xl px-6 py-8 pb-24">
-        <div className="flex gap-1 border-b border-white/10">
+      <main id="main-content" className="app-shell flex-1 py-6 sm:py-8 lg:py-10 pb-10 sm:pb-12">
+        <nav
+          role="tablist"
+          aria-label="Main sections"
+          className="no-print flex gap-0.5 overflow-x-auto border-b border-white/10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           {TABS.map((tab) => {
             const active = activeTab === tab.id;
             const badge = tab.id === "deals" && totalDeals ? ` (${totalDeals})` : "";
             return (
               <button
                 key={tab.id}
+                type="button"
+                role="tab"
+                id={`main-tab-${tab.id}`}
+                aria-selected={active}
+                aria-controls={tabPanelIds[tab.id]}
                 onClick={() => setActiveTab(tab.id)}
                 className={
-                  "relative px-4 py-3 text-sm font-medium transition focus-visible:rounded-t focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset sm:px-5 " +
+                  "relative shrink-0 whitespace-nowrap px-4 py-3 text-sm font-medium transition focus-visible:rounded-t focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset " +
                   (active ? "text-white" : "text-white/55 hover:text-white/85")
                 }
               >
                 {tab.label}
                 {badge}
-                {active && (
+                {active && !reduceMotion && (
                   <motion.span
                     layoutId="tab-underline"
                     className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-brand"
                     transition={{ type: "spring", stiffness: 380, damping: 32 }}
                   />
                 )}
+                {active && reduceMotion && (
+                  <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-brand" />
+                )}
               </button>
             );
           })}
-        </div>
+        </nav>
 
-        <div className="pt-8">
+        <div className="pt-6 sm:pt-8">
           {activeTab === "weather" && (
             <HeroBanner location={forecast?.location} />
           )}
           <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.2, ease: EASE }}
-            >
+            <TabContent key={activeTab} {...tabContentProps}>
               {activeTab === "weather" && (
-                <WeatherSection
-                  forecast={forecast}
-                  loading={weatherLoading}
-                  error={errors.weather}
-                  onRefresh={() => fetchForecast(true)}
-                />
+                <div
+                  id={weatherPanelId}
+                  role="tabpanel"
+                  aria-labelledby="main-tab-weather"
+                  tabIndex={0}
+                >
+                  <WeatherSection
+                    forecast={forecast}
+                    loading={weatherLoading}
+                    error={errors.weather}
+                    onRefresh={() => fetchForecast(true)}
+                  />
+                </div>
               )}
               {activeTab === "deals" && (
-                <>
+                <div
+                  id={dealsPanelId}
+                  role="tabpanel"
+                  aria-labelledby="main-tab-deals"
+                  tabIndex={0}
+                >
                   <AreaSelector
                     isLoading={dealsLoading}
                     appliedZips={activeZips}
@@ -246,7 +298,7 @@ export default function App() {
                       fetchDeals(false, zips);
                     }}
                   />
-                  <div className="mt-8">
+                  <div className="mt-6 sm:mt-8">
                     <DealsSection
                       data={dealsData}
                       loading={dealsLoading}
@@ -254,31 +306,49 @@ export default function App() {
                       onRefresh={() => fetchDeals(true, activeZips)}
                     />
                   </div>
-                </>
+                </div>
               )}
               {activeTab === "insights" && (
-                <InsightsSection
-                  data={dealsData}
-                  loading={dealsLoading}
-                  error={errors.deals}
-                  onRefresh={() => fetchDeals(true, activeZips)}
-                  onUploadComplete={() => fetchDeals(false, activeZips)}
-                />
+                <div
+                  id={insightsPanelId}
+                  role="tabpanel"
+                  aria-labelledby="main-tab-insights"
+                  tabIndex={0}
+                >
+                  <InsightsSection
+                    data={dealsData}
+                    loading={dealsLoading}
+                    error={errors.deals}
+                    onRefresh={() => fetchDeals(true, activeZips)}
+                    onUploadComplete={() => fetchDeals(false, activeZips)}
+                  />
+                </div>
               )}
               {activeTab === "trending" && (
-                <TrendingSection
-                  data={trendingData}
-                  loading={trendingLoading}
-                  error={errors.trending}
-                  onRefresh={() => fetchTrending(true)}
-                />
+                <div
+                  id={trendingPanelId}
+                  role="tabpanel"
+                  aria-labelledby="main-tab-trending"
+                  tabIndex={0}
+                >
+                  <TrendingSection
+                    data={trendingData}
+                    loading={trendingLoading}
+                    error={errors.trending}
+                    onRefresh={() => fetchTrending(true)}
+                  />
+                </div>
               )}
-            </motion.div>
+            </TabContent>
           </AnimatePresence>
         </div>
       </main>
+
+      <AppFooter
+        storeName={dealsData?.store_name}
+        lastSynced={dealsData?.generated_at}
+        onUploadGuide={openUploadGuide}
+      />
     </div>
   );
 }
-
-const EASE = [0.22, 1, 0.36, 1];

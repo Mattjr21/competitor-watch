@@ -22,7 +22,7 @@ function WeatherDayCard({ day, index }) {
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.06, ease: EASE }}
-      className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-ink-2 p-5"
+      className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-ink-2 p-4 sm:p-5"
     >
       <div className="flex items-center justify-between">
         <div>

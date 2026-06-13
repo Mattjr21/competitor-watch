@@ -15,7 +15,7 @@ function TrendCard({ item, rank, accent }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.32, delay: (rank - 1) * 0.03, ease: EASE }}
       whileHover={{ y: -4 }}
-      className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-ink-2 p-4 transition-colors hover:border-white/25"
+      className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-ink-2 p-4 transition-colors hover:border-white/25 sm:p-5"
     >
       <div className="flex items-start gap-2.5">
         <span className="font-display text-sm font-bold" style={{ color: accent }}>
