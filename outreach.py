@@ -94,8 +94,7 @@ def _demo_payload(cfg, facts=None):
         "campaigns": campaigns[:6],
         "visit_match_note": visit_note,
         "privacy_note": (
-            "Public demo shows aggregated rates only. Production WhatsApp CRM runs separately "
-            "with auth — no message content or contact details are exposed here."
+            "Demo mode shows summary counts only. Full WhatsApp details live in your CRM app."
         ),
         "crm_app_url": outreach_cfg.get("crm_app_url") or None,
     }
@@ -164,9 +163,7 @@ def build_outreach_payload(cfg, facts=None):
     live = _fetch_supabase_aggregates(cfg)
     if live:
         live["visit_match_note"] = _visit_match_note(facts)
-        live["privacy_note"] = (
-            "Aggregates only — no message bodies or phone numbers in this dashboard."
-        )
+        live["privacy_note"] = "Summary counts only — open your CRM app for full message details."
         return live
 
     payload = _demo_payload(cfg, facts=facts)

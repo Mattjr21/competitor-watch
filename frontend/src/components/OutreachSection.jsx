@@ -75,8 +75,7 @@ export default function OutreachSection({ facts }) {
         >
           <Shield size={18} className="mt-0.5 shrink-0" />
           <div>
-            <span className="font-semibold">Demo-safe outreach view.</span>{" "}
-            Aggregates only — no phone numbers, message text, or identifiable customers.
+            <span className="font-semibold">Demo mode</span> — sample outreach totals for review.
             {data.crm_app_url ? (
               <>
                 {" "}
@@ -205,8 +204,8 @@ export function DemoModeBanner() {
       role="status"
       className="border-b border-sky-500/25 bg-sky-950/40 px-6 py-2.5 text-center text-xs text-sky-100/90"
     >
-      <span className="font-semibold">Portfolio demo mode</span> — sample and aggregated data only. No
-      customer contact details or message content are shown.
+      <span className="font-semibold">Demo mode</span> — sample metrics for review. Upload a POS export
+      on Your Store to see your store&apos;s live numbers.
     </div>
   );
 }

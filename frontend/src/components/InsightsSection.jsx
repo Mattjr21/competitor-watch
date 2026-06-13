@@ -169,8 +169,8 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
           role="status"
           className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
         >
-          <span className="font-semibold">Illustrative sample data.</span>{" "}
-          Upload your POS export below to see your store&apos;s basket, pricing, and loyalty metrics.
+          <span className="font-semibold">Demo mode</span> — basket and pricing figures are samples
+          until you upload your POS export below.
         </div>
       )}
 
