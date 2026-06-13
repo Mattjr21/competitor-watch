@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { loadLeaflet } from "../lib/loadLeaflet";
 import { MAPBOX_TOKEN } from "../lib/mapbox";
 
@@ -49,17 +49,24 @@ export default function TradeAreaMap({
   className = "",
 }) {
   const hostRef = useRef(null);
+  const [mapFailed, setMapFailed] = useState(false);
 
   useEffect(() => {
     if (!hostRef.current) return;
 
     let map = null;
     let ro = null;
+    let sizeTimers = [];
     let cancelled = false;
+
+    const refreshSize = () => {
+      if (map) map.invalidateSize({ animate: false });
+    };
 
     loadLeaflet()
       .then((L) => {
         if (cancelled || !hostRef.current) return;
+        setMapFailed(false);
 
         map = L.map(hostRef.current, {
           center: [lat, lng],
@@ -102,25 +109,39 @@ export default function TradeAreaMap({
           paddingBottomRight: [32, bottomPadding],
         });
 
-        ro = new ResizeObserver(() => map.invalidateSize());
+        ro = new ResizeObserver(refreshSize);
         ro.observe(hostRef.current);
+
+        // Tab transitions / flex layout can mount before the container has final size.
+        sizeTimers = [0, 150, 400].map((ms) =>
+          window.setTimeout(refreshSize, ms)
+        );
       })
       .catch(() => {
-        /* Map preview falls back to gradient overlay in parent */
+        if (!cancelled) setMapFailed(true);
       });
 
     return () => {
       cancelled = true;
+      sizeTimers.forEach((id) => window.clearTimeout(id));
       ro?.disconnect();
       map?.remove();
     };
   }, [lat, lng, radiusMiles, interactive, bottomPadding]);
 
   return (
-    <div
-      ref={hostRef}
-      className={"h-full w-full " + className}
-      aria-hidden={!interactive}
-    />
+    <div className={"relative h-full w-full " + className}>
+      {mapFailed && (
+        <div
+          className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(circle_at_50%_42%,rgb(74_163_255/0.18),transparent_58%),linear-gradient(180deg,rgb(17_22_29)_0%,rgb(8_11_15)_100%)]"
+          aria-hidden
+        />
+      )}
+      <div
+        ref={hostRef}
+        className="h-full w-full"
+        aria-hidden={!interactive}
+      />
+    </div>
   );
 }
