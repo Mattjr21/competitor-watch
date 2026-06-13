@@ -243,7 +243,7 @@ function InsightsSubNav() {
   return (
     <nav
       aria-label="Your Store sections"
-      className="no-print sticky top-[4.25rem] z-40 -mx-1 mb-6 flex gap-1 overflow-x-auto border-b border-white/10 bg-ink/95 px-1 py-2 backdrop-blur-md sm:top-[4.75rem] lg:top-[5rem] [scrollbar-width:thin]"
+      className="no-print sticky z-30 -mx-1 mb-6 flex gap-1 overflow-x-auto border-b border-white/10 bg-ink px-1 py-2 [top:var(--app-header-height)] [scrollbar-width:thin]"
     >
       {INSIGHTS_NAV.map((item) => (
         <a
@@ -774,7 +774,7 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
           <RecommendationCards
             recommendations={data.recommendations}
             title="Weekend plan from live ads"
-            description="Upload POS data below for segment-specific weekday and weekend promos."
+            description="Tap any suggestion for the full playbook."
             compact
           />
         ) : !hasUploadedData ? (

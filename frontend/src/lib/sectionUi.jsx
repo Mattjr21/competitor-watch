@@ -16,7 +16,7 @@ export const BTN_PRIMARY =
   "inline-flex min-h-[44px] items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-ink transition hover:bg-brand hover:text-white disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-ink-2";
 
 export { PANEL, PANEL_MUTED };
-export const SCROLL_MT = "scroll-mt-36";
+export const SCROLL_MT = "scroll-mt-section";
 export const TAB_SECTION_SPACE = "space-y-12 sm:space-y-14";
 export const TABLE_HEAD =
   "bg-white/5 text-[11px] uppercase tracking-wider text-white/60";
@@ -131,9 +131,9 @@ export function UploadCtaLink({ className = "", label = "Upload sales CSV" }) {
   );
 }
 
-export function LockedFooter({ title, detail, showUploadLink = true }) {
+export function LockedFooter({ title, detail, showUploadLink = true, className = "" }) {
   return (
-    <div className="border-t border-white/12 bg-ink px-3 py-3 sm:px-4 sm:py-4">
+    <div className={"border-t border-white/12 bg-ink px-3 py-3 sm:px-4 sm:py-4 " + className}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
         <div className="flex min-w-0 flex-1 items-start gap-3">
           <div

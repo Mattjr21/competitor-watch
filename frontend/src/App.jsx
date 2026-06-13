@@ -1,4 +1,4 @@
-import { useState, useEffect, useId } from "react";
+import { useState, useEffect, useId, useRef } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { RefreshCw } from "lucide-react";
 import AreaSelector from "./components/AreaSelector";
@@ -48,6 +48,21 @@ export default function App() {
   const [errors, setErrors] = useState({});
   const [activeTab, setActiveTab] = useState("home");
   const [activeZips, setActiveZips] = useState(DEFAULT_LOCAL_ZIPS);
+  const headerRef = useRef(null);
+
+  useEffect(() => {
+    const node = headerRef.current;
+    if (!node) return;
+
+    const syncHeaderHeight = () => {
+      document.documentElement.style.setProperty("--app-header-height", `${node.offsetHeight}px`);
+    };
+
+    syncHeaderHeight();
+    const ro = new ResizeObserver(syncHeaderHeight);
+    ro.observe(node);
+    return () => ro.disconnect();
+  }, []);
 
   const setErr = (k, v) => setErrors((e) => ({ ...e, [k]: v }));
 
@@ -187,9 +202,9 @@ export default function App() {
   const tabContentProps = reduceMotion
     ? {}
     : {
-        initial: { opacity: 0, y: 8 },
-        animate: { opacity: 1, y: 0 },
-        exit: { opacity: 0, y: -4 },
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
         transition: { duration: 0.2, ease: EASE },
       };
 
@@ -199,7 +214,10 @@ export default function App() {
         Skip to main content
       </a>
 
-      <header className="no-print sticky top-0 z-50 border-b border-white/10 bg-ink/80 backdrop-blur-xl">
+      <header
+        ref={headerRef}
+        className="no-print sticky top-0 z-50 border-b border-white/10 bg-ink/95 backdrop-blur-xl"
+      >
         <DemoModeBanner />
         <div className="app-shell flex flex-wrap items-center justify-between gap-3 py-3 sm:gap-4 sm:py-4">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
