@@ -1,7 +1,11 @@
-import { useState, useEffect, useId, useRef } from "react";
+import { useState, useEffect, useId, useRef, useMemo } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { RefreshCw } from "lucide-react";
 import AreaSelector from "./components/AreaSelector";
+import BenchmarkProfileSelector, {
+  getStoredBenchmarkProfile,
+  setStoredBenchmarkProfile,
+} from "./components/BenchmarkProfileSelector";
 import DealsSection from "./components/DealsSection";
 import WeatherSection from "./components/WeatherSection";
 import TrendingSection from "./components/TrendingSection";
@@ -12,16 +16,28 @@ import { DemoModeBanner } from "./components/OutreachSection";
 import { LoadProgress, EASE } from "./lib/ui";
 import { BTN_GHOST, BTN_PRIMARY } from "./lib/sectionUi";
 import { APP_ICON_SRC } from "./lib/brand";
-import { DEFAULT_LOCAL_ZIPS } from "./lib/marketAreas";
+import { DEFAULT_LOCAL_ZIPS, HOME_MARKET_ZIPS, describeLoadedMarkets } from "./lib/marketAreas";
+import { resolveAreaPresets } from "./lib/benchmarkProfiles";
 
 const API = import.meta.env.VITE_API_URL || "";
 
+function zipsKey(zips) {
+  const list = Array.isArray(zips)
+    ? zips
+    : (zips || "").split(",");
+  return list
+    .map((z) => String(z).trim())
+    .filter(Boolean)
+    .sort()
+    .join(",");
+}
+
 const TABS = [
-  { id: "home", label: "🏠 Dashboard" },
-  { id: "weather", label: "☀️ Daily Ops" },
-  { id: "deals", label: "🏪 Deals" },
-  { id: "insights", label: "📊 Your Store" },
-  { id: "trending", label: "📈 Trending" },
+  { id: "home", label: "Dashboard", icon: "🏠" },
+  { id: "weather", label: "Daily Ops", icon: "☀️" },
+  { id: "deals", label: "Deals", icon: "🏪" },
+  { id: "insights", label: "Your Store", icon: "📊" },
+  { id: "trending", label: "Trending", icon: "📈" },
 ];
 
 export default function App() {
@@ -48,7 +64,10 @@ export default function App() {
   const [errors, setErrors] = useState({});
   const [activeTab, setActiveTab] = useState("home");
   const [activeZips, setActiveZips] = useState(DEFAULT_LOCAL_ZIPS);
+  const [benchmarkProfile, setBenchmarkProfile] = useState(getStoredBenchmarkProfile);
   const headerRef = useRef(null);
+  const dealsRequestRef = useRef(0);
+  const trendingRequestRef = useRef(0);
 
   useEffect(() => {
     const node = headerRef.current;
@@ -80,41 +99,82 @@ export default function App() {
     }
   }
 
-  async function fetchDeals(refresh = false, zips = "") {
+  async function fetchDeals(
+    refresh = false,
+    zips = activeZips,
+    profile = benchmarkProfile,
+    refreshNational = false
+  ) {
+    const requestId = ++dealsRequestRef.current;
     setDealsLoading(true);
     setErr("deals", null);
     try {
       const params = [];
       if (refresh) params.push("refresh=1");
+      if (refreshNational) params.push("refresh_national=1");
       if (zips) params.push("zips=" + encodeURIComponent(zips));
+      if (HOME_MARKET_ZIPS) params.push("home_zips=" + encodeURIComponent(HOME_MARKET_ZIPS));
+      if (profile) params.push("profile=" + encodeURIComponent(profile));
       const res = await fetch(`${API}/api/data${params.length ? "?" + params.join("&") : ""}`);
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
-      setDealsData(await res.json());
+      const payload = await res.json();
+      if (requestId !== dealsRequestRef.current) return;
+      setDealsData(payload);
     } catch (e) {
+      if (requestId !== dealsRequestRef.current) return;
       setErr("deals", e.message || "Failed to load deals");
     } finally {
-      setDealsLoading(false);
+      if (requestId === dealsRequestRef.current) setDealsLoading(false);
     }
   }
 
-  async function fetchTrending(refresh = false) {
+  function handleBenchmarkProfileChange(profileId) {
+    setBenchmarkProfile(profileId);
+    setStoredBenchmarkProfile(profileId);
+  }
+
+  function refreshNationalRanking() {
+    fetchDeals(false, activeZips, benchmarkProfile, true);
+  }
+
+  async function fetchTrending(
+    refresh = false,
+    zips = activeZips,
+    profile = benchmarkProfile
+  ) {
+    const requestId = ++trendingRequestRef.current;
     setTrendingLoading(true);
     setErr("trending", null);
     try {
-      const res = await fetch(`${API}/api/trending${refresh ? "?refresh=1" : ""}`);
+      const params = [];
+      if (refresh) params.push("refresh=1");
+      if (zips) params.push("zips=" + encodeURIComponent(zips));
+      if (profile) params.push("profile=" + encodeURIComponent(profile));
+      const res = await fetch(
+        `${API}/api/trending${params.length ? "?" + params.join("&") : ""}`
+      );
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
-      setTrendingData(await res.json());
+      const payload = await res.json();
+      if (requestId !== trendingRequestRef.current) return;
+      setTrendingData(payload);
     } catch (e) {
+      if (requestId !== trendingRequestRef.current) return;
       setErr("trending", e.message || "Failed to load trending");
     } finally {
-      setTrendingLoading(false);
+      if (requestId === trendingRequestRef.current) setTrendingLoading(false);
     }
   }
 
   useEffect(() => {
-    Promise.all([fetchForecast(), fetchDeals(false, DEFAULT_LOCAL_ZIPS), fetchTrending()]);
+    fetchForecast();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    fetchDeals(false, activeZips, benchmarkProfile);
+    fetchTrending(false, activeZips, benchmarkProfile);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeZips, benchmarkProfile]);
 
   const anyLoading = weatherLoading || dealsLoading || trendingLoading;
   const totalDeals = dealsData
@@ -122,9 +182,9 @@ export default function App() {
     : 0;
 
   const refreshAll = () => {
-    fetchDeals(true, activeZips);
+    fetchDeals(true, activeZips, benchmarkProfile);
     fetchForecast(true);
-    fetchTrending(true);
+    fetchTrending(true, activeZips, benchmarkProfile);
   };
 
   const refreshCurrentTab = () => {
@@ -133,8 +193,8 @@ export default function App() {
       return;
     }
     if (activeTab === "weather") fetchForecast(true);
-    else if (activeTab === "trending") fetchTrending(true);
-    else fetchDeals(true, activeZips);
+    else if (activeTab === "trending") fetchTrending(true, activeZips, benchmarkProfile);
+    else fetchDeals(true, activeZips, benchmarkProfile);
   };
 
   const navigateToTab = (tabId) => {
@@ -166,9 +226,29 @@ export default function App() {
           ? trendingLoading
           : dealsLoading;
 
-  const marketCount = dealsData?.zips?.length || 0;
+  const activeProfileId = dealsData?.benchmark_profile || benchmarkProfile;
+  const areaPresets = useMemo(
+    () => resolveAreaPresets(dealsData?.area_presets, activeProfileId, dealsData?.benchmark_profile),
+    [dealsData?.area_presets, dealsData?.benchmark_profile, activeProfileId]
+  );
+
+  const marketSummary = describeLoadedMarkets(
+    dealsData?.zips?.join(",") || activeZips,
+    areaPresets
+  );
+  const pendingMarketSummary = describeLoadedMarkets(activeZips, areaPresets);
+  const dealsScopeMismatch =
+    dealsLoading &&
+    dealsData?.zips?.length &&
+    zipsKey(dealsData.zips) !== zipsKey(activeZips);
+  const homeMarketSummary = useMemo(
+    () => describeLoadedMarkets(HOME_MARKET_ZIPS, areaPresets),
+    [areaPresets]
+  );
+  const compareMarketSummary = pendingMarketSummary;
+  const isBenchmarking = zipsKey(HOME_MARKET_ZIPS) !== zipsKey(activeZips);
   const headerDesc = dealsData
-    ? `${marketCount} market${marketCount !== 1 ? "s" : ""} · ${dealsData.merchants?.length || 0} retailers · synced ${dealsData.generated_at}`
+    ? `${marketSummary.short} · ${dealsData.merchants?.length || 0} retailers · synced ${dealsData.generated_at}`
     : forecast
       ? `${forecast.location?.city || "Calhoun"}, ${forecast.location?.state || "GA"} · loading competitor data…`
       : "Calhoun, GA · Live competitor pricing";
@@ -277,9 +357,10 @@ export default function App() {
                 onClick={() => setActiveTab(tab.id)}
                 className={
                   "relative shrink-0 whitespace-nowrap px-4 py-3 text-sm font-medium transition focus-visible:rounded-t focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset " +
-                  (active ? "text-white" : "text-white/55 hover:text-white/85")
+                  (active ? "text-white" : "text-white/65 hover:text-white/90")
                 }
               >
+                <span aria-hidden="true">{tab.icon} </span>
                 {tab.label}
                 {badge}
                 {active && !reduceMotion && (
@@ -297,6 +378,33 @@ export default function App() {
           })}
         </nav>
 
+        <div className="space-y-3 pt-4 sm:pt-5">
+          <BenchmarkProfileSelector
+            profiles={dealsData?.benchmark_profiles || []}
+            activeProfile={dealsData?.benchmark_profile || benchmarkProfile}
+            onChange={handleBenchmarkProfileChange}
+            disabled={dealsLoading}
+          />
+          <AreaSelector
+            isLoading={dealsLoading}
+            appliedZips={activeZips}
+            homeZips={HOME_MARKET_ZIPS}
+            areaPresets={areaPresets}
+            onApply={(zips) => setActiveZips(zips)}
+          />
+          {isBenchmarking && (
+            <div
+              role="note"
+              className="rounded-xl border border-sky/25 bg-sky/10 px-4 py-3 text-xs leading-relaxed text-white/70"
+            >
+              <span className="font-semibold text-white/90">Weekend playbook &amp; Your Store</span>{" "}
+              use your home market ({homeMarketSummary.short}).{" "}
+              <span className="font-semibold text-white/90">Deals &amp; Trending</span> show{" "}
+              {compareMarketSummary.short} competitors for benchmarking.
+            </div>
+          )}
+        </div>
+
         <div className="pt-6 sm:pt-8">
           <AnimatePresence mode="wait">
             <TabContent key={activeTab} {...tabContentProps}>
@@ -309,11 +417,16 @@ export default function App() {
                 >
                   <DashboardSection
                     forecast={forecast}
-                    dealsData={dealsData}
+                    dealsData={dealsScopeMismatch ? null : dealsData}
                     trendingData={trendingData}
                     loading={anyLoading}
+                    marketLabel={pendingMarketSummary.short}
+                    homeMarketLabel={homeMarketSummary.short}
+                    isBenchmarking={isBenchmarking}
+                    pendingMarket={dealsScopeMismatch}
                     onNavigate={navigateToTab}
                     onUploadGuide={openUploadGuide}
+                    onRefreshNational={refreshNationalRanking}
                     reduceMotion={reduceMotion}
                   />
                 </div>
@@ -340,23 +453,16 @@ export default function App() {
                   aria-labelledby="main-tab-deals"
                   tabIndex={0}
                 >
-                  <AreaSelector
-                    isLoading={dealsLoading}
-                    appliedZips={activeZips}
-                    areaPresets={dealsData?.area_presets}
-                    onApply={(zips) => {
-                      setActiveZips(zips);
-                      fetchDeals(false, zips);
-                    }}
+                  <DealsSection
+                    data={dealsScopeMismatch ? null : dealsData}
+                    loading={dealsLoading}
+                    error={errors.deals}
+                    marketLabel={pendingMarketSummary.short}
+                    homeMarketLabel={homeMarketSummary.short}
+                    isBenchmarking={isBenchmarking}
+                    pendingMarket={dealsScopeMismatch}
+                    onRefresh={() => fetchDeals(true, activeZips, benchmarkProfile)}
                   />
-                  <div className="mt-6 sm:mt-8">
-                    <DealsSection
-                      data={dealsData}
-                      loading={dealsLoading}
-                      error={errors.deals}
-                      onRefresh={() => fetchDeals(true, activeZips)}
-                    />
-                  </div>
                 </div>
               )}
               {activeTab === "insights" && (
@@ -367,11 +473,15 @@ export default function App() {
                   tabIndex={0}
                 >
                   <InsightsSection
-                    data={dealsData}
+                    data={dealsScopeMismatch ? null : dealsData}
                     loading={dealsLoading}
                     error={errors.deals}
-                    onRefresh={() => fetchDeals(true, activeZips)}
-                    onUploadComplete={() => fetchDeals(false, activeZips)}
+                    marketLabel={homeMarketSummary.short}
+                    compareMarketLabel={compareMarketSummary.short}
+                    isBenchmarking={isBenchmarking}
+                    pendingMarket={dealsScopeMismatch}
+                    onRefresh={() => fetchDeals(true, activeZips, benchmarkProfile)}
+                    onUploadComplete={() => fetchDeals(false, activeZips, benchmarkProfile)}
                   />
                 </div>
               )}
@@ -386,7 +496,13 @@ export default function App() {
                     data={trendingData}
                     loading={trendingLoading}
                     error={errors.trending}
-                    onRefresh={() => fetchTrending(true)}
+                    marketLabel={marketSummary.short}
+                    profileLabel={
+                      dealsData?.benchmark_profile_label ||
+                      trendingData?.profile_label ||
+                      "Latino grocery"
+                    }
+                    onRefresh={() => fetchTrending(true, activeZips, benchmarkProfile)}
                   />
                 </div>
               )}

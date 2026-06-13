@@ -82,7 +82,16 @@ function DealGrid({ deals, compact = false, showMerchant = true, reduceMotion = 
   );
 }
 
-export default function DealsSection({ data, loading, error, onRefresh }) {
+export default function DealsSection({
+  data,
+  loading,
+  error,
+  onRefresh,
+  marketLabel = "your market",
+  homeMarketLabel,
+  isBenchmarking = false,
+  pendingMarket = false,
+}) {
   const reduceMotion = useReducedMotion();
   const bestPanelId = useId();
   const dealsPanelId = useId();
@@ -162,7 +171,22 @@ export default function DealsSection({ data, loading, error, onRefresh }) {
   };
 
   if (error && !data) return <ErrorState message={error} onRetry={onRefresh} />;
-  if (loading && !data) return <CardSkeletonGrid count={8} />;
+  if ((loading && !data) || pendingMarket) {
+    return (
+      <div>
+        <div
+          role="status"
+          aria-live="polite"
+          className="mb-4 rounded-xl border border-brand/30 bg-brand/10 px-4 py-3 text-sm text-white/80"
+        >
+          <RefreshCw size={14} className="mr-2 inline animate-spin" aria-hidden />
+          Loading competitor ads for <span className="font-semibold text-white">{marketLabel}</span>
+          … first load can take up to 60 seconds.
+        </div>
+        <CardSkeletonGrid count={8} />
+      </div>
+    );
+  }
   if (!data) return <EmptyState>No deals loaded yet.</EmptyState>;
 
   const SectionWrapper = reduceMotion ? "section" : motion.section;
@@ -198,6 +222,26 @@ export default function DealsSection({ data, loading, error, onRefresh }) {
           {error}
         </div>
       )}
+
+      <div
+        role="note"
+        className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs leading-relaxed text-white/60"
+      >
+        Showing benchmark ads for{" "}
+        <span className="font-semibold text-white/85">{marketLabel}</span>
+        {isBenchmarking && homeMarketLabel && (
+          <span className="text-white/45"> · playbook uses {homeMarketLabel}</span>
+        )}
+        {activeZips.length > 0 && (
+          <>
+            {" "}
+            · <span className="font-mono text-white/50">{activeZips.join(", ")}</span>
+          </>
+        )}
+        {data.generated_at && (
+          <span className="text-white/40"> · synced {data.generated_at}</span>
+        )}
+      </div>
 
       {data.week_signal && (
         <div role="note" className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">

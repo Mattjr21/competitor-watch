@@ -35,7 +35,7 @@ function WeatherDayCard({ day, index }) {
           className="grid h-11 w-11 place-items-center rounded-xl"
           style={{ background: `${color}1f`, color }}
         >
-          <Icon size={22} strokeWidth={1.8} />
+          <Icon size={22} strokeWidth={1.8} aria-hidden />
         </span>
       </div>
 

@@ -1,0 +1,298 @@
+{
+  "default_profile": "latino",
+  "profiles": {
+    "latino": {
+      "label": "Latino grocery",
+      "description": "Hispanic supermarkets and carnicerías — tortillas, carne, queso, Jarritos.",
+      "merchants": [
+        "el rancho", "michoacana", "fiesta", "mi tienda", "foodarama", "el super",
+        "vallarta", "northgate", "presidente", "sedano", "bravo", "fresco y mas",
+        "fresco y m", "el ahorro", "cardenas", "superior grocers", "supermercado",
+        "carniceria", "el rio grande", "la fiesta", "compare foods", "rancho market",
+        "mariano", "el mariachi", "morelia", "chapala", "guadalajara"
+      ],
+      "trending_zips": [
+        "77036", "75211", "78207", "78521", "90255", "60632", "85009", "33012",
+        "30340", "10452", "07501", "93706", "89101", "95823", "79905"
+      ],
+      "national_benchmark_zips": [
+        "77036", "75211", "78207", "78521", "90255", "60632", "85009", "33012",
+        "30340", "10452", "07501", "93706", "89101", "95823", "79905", "30701"
+      ],
+      "area_presets": [
+        {
+          "label": "My area (Calhoun GA)",
+          "zips": "30701,30735,30733,30746,30103,30720,30721,30705",
+          "criteria": "Your store trade area — Calhoun + Gordon County (~15 mi)."
+        },
+        {
+          "label": "Atlanta GA",
+          "zips": "30340,30341,30360",
+          "criteria": "Buford Hwy / Doraville Latino grocery corridor."
+        },
+        {
+          "label": "Houston TX",
+          "zips": "77081,77036,77023",
+          "criteria": "SW Houston — Gulfton, Sharpstown Hispanic markets."
+        },
+        {
+          "label": "Dallas / Ft Worth TX",
+          "zips": "75211,75217,76106",
+          "criteria": "Oak Cliff + Fort Worth Latino grocery zones."
+        },
+        {
+          "label": "San Antonio TX",
+          "zips": "78207,78228",
+          "criteria": "West Side San Antonio — high Latino ad density."
+        },
+        {
+          "label": "Rio Grande Valley TX",
+          "zips": "78521,78539",
+          "criteria": "McAllen / Brownsville border-market reference."
+        },
+        {
+          "label": "Hialeah / Miami FL",
+          "zips": "33012,33125,33135",
+          "criteria": "Miami-Dade Latino supermarket hubs."
+        },
+        {
+          "label": "Orlando FL",
+          "zips": "32811,32807",
+          "criteria": "Orlando Latino grocery pockets."
+        },
+        {
+          "label": "Chicago IL",
+          "zips": "60632,60623,60608",
+          "criteria": "Back of the Yards / Little Village — Midwest Latino belt."
+        },
+        {
+          "label": "Los Angeles CA",
+          "zips": "90255,90001,90011",
+          "criteria": "Huntington Park / South LA — highest Latino grocery saturation."
+        },
+        {
+          "label": "Phoenix AZ",
+          "zips": "85009,85033,85035",
+          "criteria": "Maryvale / west Phoenix Hispanic markets."
+        },
+        {
+          "label": "Bronx NYC",
+          "zips": "10452,10468,10453",
+          "criteria": "South Bronx bodega + Latino supermarket mix."
+        },
+        {
+          "label": "Paterson NJ",
+          "zips": "07501,07504,07502",
+          "criteria": "Paterson / Passaic Latino + halal corridor."
+        },
+        {
+          "label": "Fresno CA",
+          "zips": "93706,93701,93721",
+          "criteria": "Central Valley agricultural Latino communities."
+        },
+        {
+          "label": "Las Vegas NV",
+          "zips": "89101,89110,89104",
+          "criteria": "East Las Vegas Hispanic grocery growth."
+        },
+        {
+          "label": "Sacramento CA",
+          "zips": "95823,95828,95824",
+          "criteria": "South Sacramento Latino markets."
+        },
+        {
+          "label": "El Paso TX",
+          "zips": "79905,79901,79925",
+          "criteria": "El Paso border city Latino pricing reference."
+        }
+      ]
+    },
+    "middle_eastern": {
+      "label": "Middle Eastern / Halal",
+      "description": "Halal markets, Mediterranean grocers — lamb, pita, tahini, spices.",
+      "merchants": [
+        "halal", "mediterranean", "middle east", "al-safa", "ziyad", "cortas",
+        "sahadi", "kalustyan", "patel brothers", "world market", "istanbul",
+        "jerusalem", "lebanese", "syrian", "turkish", "persian", "afghan"
+      ],
+      "trending_zips": ["48126", "48124", "11209", "60645", "77081", "07501"],
+      "national_benchmark_zips": ["48126", "48124", "11209", "60645", "77081", "07501", "22101"],
+      "area_presets": [
+        {
+          "label": "Dearborn MI",
+          "zips": "48126,48124,48128",
+          "criteria": "Highest US Arab-American grocery density."
+        },
+        {
+          "label": "Paterson / Clifton NJ",
+          "zips": "07501,07504,07011",
+          "criteria": "NJ halal + Middle Eastern wholesale corridor."
+        },
+        {
+          "label": "Brooklyn NY",
+          "zips": "11209,11214,11220",
+          "criteria": "Bay Ridge / Atlantic Ave halal markets."
+        },
+        {
+          "label": "Chicago Devon Ave",
+          "zips": "60645,60659,60626",
+          "criteria": "Devon Avenue Middle Eastern + South Asian strip."
+        },
+        {
+          "label": "Houston TX",
+          "zips": "77081,77036,77074",
+          "criteria": "SW Houston halal and Mediterranean grocers."
+        },
+        {
+          "label": "Northern Virginia",
+          "zips": "22101,22043,20151",
+          "criteria": "Falls Church / Tysons halal grocery belt."
+        }
+      ]
+    },
+    "asian": {
+      "label": "East & Southeast Asian",
+      "description": "H-Mart, 99 Ranch, Vietnamese and Filipino markets — rice, noodles, seafood.",
+      "merchants": [
+        "h mart", "hmart", "99 ranch", "ranch 99", "seafood city", "zion",
+        "great wall", "hong kong", "vietnamese", "filipino", "japanese", "korean",
+        "chinatown", "mitsuwa", "nijiya", "uwajimaya", "lotte", "galleria"
+      ],
+      "trending_zips": ["91754", "94108", "11355", "77036", "60616", "98036"],
+      "national_benchmark_zips": ["91754", "94108", "11355", "77036", "60616", "98036", "96817"],
+      "area_presets": [
+        {
+          "label": "Los Angeles (Monterey Park)",
+          "zips": "91754,91803,90012",
+          "criteria": "San Gabriel Valley — dense Asian supermarket cluster."
+        },
+        {
+          "label": "San Francisco",
+          "zips": "94108,94133,94116",
+          "criteria": "Chinatown + Richmond District Asian grocers."
+        },
+        {
+          "label": "Flushing NYC",
+          "zips": "11355,11354,11358",
+          "criteria": "Queens Flushing — Korean, Chinese, Taiwanese markets."
+        },
+        {
+          "label": "Houston TX",
+          "zips": "77036,77074,77072",
+          "criteria": "Bellaire / Asiatown Houston."
+        },
+        {
+          "label": "Chicago",
+          "zips": "60616,60608,60707",
+          "criteria": "Chinatown + west suburban Asian markets."
+        },
+        {
+          "label": "Seattle",
+          "zips": "98118,98108,98036",
+          "criteria": "International District + Lynnwood H-Mart belt."
+        },
+        {
+          "label": "Honolulu",
+          "zips": "96817,96819,96826",
+          "criteria": "Kalihi / Palolo Filipino and Asian markets."
+        }
+      ]
+    },
+    "south_asian": {
+      "label": "South Asian",
+      "description": "Patel Brothers, Indian/Pakistani/Bangladeshi — dal, atta, spices, paneer.",
+      "merchants": [
+        "patel", "patel brothers", "india bazaar", "subzi mandi", "apna",
+        "indian", "pakistani", "bangladesh", "sri lankan", "nepali", "desi",
+        "raja", "khan", "swad", "deep", "haldiram"
+      ],
+      "trending_zips": ["08817", "94538", "77074", "60659", "11375", "75038"],
+      "national_benchmark_zips": ["08817", "94538", "77074", "60659", "11375", "75038", "30084"],
+      "area_presets": [
+        {
+          "label": "Edison NJ",
+          "zips": "08817,08820,08837",
+          "criteria": "Edison / Iselin — highest US South Asian grocery density."
+        },
+        {
+          "label": "Fremont CA",
+          "zips": "94538,94536,94555",
+          "criteria": "Bay Area South Asian supermarket hub."
+        },
+        {
+          "label": "Houston Hillcroft",
+          "zips": "77074,77072,77063",
+          "criteria": "Hillcroft Mahatma Gandhi district."
+        },
+        {
+          "label": "Chicago Devon",
+          "zips": "60659,60645,60076",
+          "criteria": "Devon Avenue Little India."
+        },
+        {
+          "label": "Queens NYC",
+          "zips": "11375,11367,11432",
+          "criteria": "Jackson Heights / Jamaica Desi markets."
+        },
+        {
+          "label": "Dallas Irving",
+          "zips": "75038,75062,75039",
+          "criteria": "DFW South Asian grocery belt."
+        },
+        {
+          "label": "Atlanta Decatur",
+          "zips": "30084,30033,30341",
+          "criteria": "Buford Hwy + Decatur South Asian stores."
+        }
+      ]
+    },
+    "african_caribbean": {
+      "label": "African & Caribbean",
+      "description": "Caribbean markets, African grocers — plantain, goat, scotch bonnet, yam.",
+      "merchants": [
+        "caribbean", "jamaican", "haitian", "african", "ethiopian", "nigerian",
+        "ghana", "west indian", "island", "tropical", "exotic", "patty",
+        "golden krust", "flatbush", "crown heights", "little caribbean"
+      ],
+      "trending_zips": ["30310", "33142", "10456", "77091", "20017", "11226"],
+      "national_benchmark_zips": ["30310", "33142", "10456", "77091", "20017", "11226", "30087"],
+      "area_presets": [
+        {
+          "label": "Atlanta SW",
+          "zips": "30310,30315,30311",
+          "criteria": "SW Atlanta African + Caribbean grocery pockets."
+        },
+        {
+          "label": "Miami",
+          "zips": "33142,33167,33147",
+          "criteria": "Liberty City / Little Haiti Caribbean markets."
+        },
+        {
+          "label": "Bronx NYC",
+          "zips": "10456,10451,10474",
+          "criteria": "South Bronx African and Caribbean grocers."
+        },
+        {
+          "label": "Houston",
+          "zips": "77091,77076,77088",
+          "criteria": "North Houston African/Caribbean markets."
+        },
+        {
+          "label": "Washington DC",
+          "zips": "20017,20002,20011",
+          "criteria": "Georgia Ave Ethiopian + Caribbean corridor."
+        },
+        {
+          "label": "Brooklyn NYC",
+          "zips": "11226,11213,11216",
+          "criteria": "Flatbush / Crown Heights Caribbean belt."
+        },
+        {
+          "label": "Stone Mountain GA",
+          "zips": "30087,30083,30058",
+          "criteria": "DeKalb County African grocery cluster."
+        }
+      ]
+    }
+  }
+}

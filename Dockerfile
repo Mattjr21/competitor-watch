@@ -1,5 +1,7 @@
 # --- Stage 1: build the React frontend into frontend/dist ---
 FROM node:22-slim AS frontend
+WORKDIR /app
+COPY benchmark_profiles.json ./
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 # npm ci fails on Linux when optional native deps (emnapi/tailwind oxide)

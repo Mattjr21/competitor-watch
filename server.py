@@ -25,6 +25,7 @@ import weather
 import events as local_events
 import forecast
 import outreach
+import benchmark
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PUBLIC = os.path.join(ROOT, "frontend/dist")
@@ -527,11 +528,21 @@ def _norm_product(name):
     return " ".join(words[:4])
 
 
-def _read_trending_cache():
-    if not os.path.exists(TRENDING_PATH):
+def _trending_scope_key(profile_id, zips):
+    z = ",".join(sorted(str(x) for x in zips))
+    return hashlib.md5(f"{profile_id}|{z}".encode()).hexdigest()[:16]
+
+
+def _trending_cache_path(scope_key):
+    return os.path.join(DATA_DIR, f"trending_{scope_key}.json")
+
+
+def _read_trending_cache(scope_key):
+    path = _trending_cache_path(scope_key)
+    if not os.path.exists(path):
         return None
     try:
-        with open(TRENDING_PATH, "r", encoding="utf-8") as f:
+        with open(path, "r", encoding="utf-8") as f:
             obj = json.load(f)
         if time.time() - obj.get("_epoch", 0) <= TRENDING_TTL:
             return obj
@@ -540,43 +551,65 @@ def _read_trending_cache():
     return None
 
 
-def _write_trending_cache(obj):
+def _write_trending_cache(scope_key, obj):
     try:
         out = dict(obj)
         out["_epoch"] = time.time()
-        with open(TRENDING_PATH, "w", encoding="utf-8") as f:
+        with open(_trending_cache_path(scope_key), "w", encoding="utf-8") as f:
             json.dump(out, f)
     except Exception:
         pass
 
 
-def gather_trending(cfg, refresh=False):
-    """Most-advertised products this week across major US Latino metros.
+def _merchant_matches_profile(merchant, merchant_list, profile_id, is_latino_flag):
+    m = (merchant or "").lower()
+    if any(k in m for k in merchant_list):
+        return True
+    return profile_id == "latino" and bool(is_latino_flag)
 
-    "Trending" = how broadly a product is being advertised right now (how many
-    distinct stores and metro areas feature it). Split into Latino vs mainstream
-    supermarkets. Heavily cached because it scans many ZIP/term combinations.
+
+def gather_trending(cfg, refresh=False, zips=None, profile_id=None):
+    """Most-advertised products in selected ZIPs, split ethnic vs mainstream.
+
+    Ethnic bucket uses the active benchmark profile's merchant list (e.g. Latino,
+    halal, H-Mart). Mainstream = everything else in the same ZIPs.
     """
+    profile, active_pid = benchmark.resolve_profile(profile_id)
+    if isinstance(zips, str):
+        zips = [z.strip() for z in zips.split(",") if z.strip()]
+    elif zips:
+        zips = [str(z).strip() for z in zips if str(z).strip()]
+    elif profile and profile.get("trending_zips"):
+        zips = list(profile["trending_zips"])
+    else:
+        zips = cfg.get("trending_zips", [])
+
+    merchant_list = (
+        profile.get("merchants")
+        if profile and profile.get("merchants")
+        else [k.lower() for k in cfg.get("latino_merchants", [])]
+    )
+    profile_label = (profile or {}).get("label") or "Latino grocery"
+    scope_key = _trending_scope_key(active_pid, zips)
+
     if not refresh:
-        cached = _read_trending_cache()
+        cached = _read_trending_cache(scope_key)
         if cached is not None:
             return cached
 
-    zips = cfg.get("trending_zips", [])
     terms = cfg.get("trending_terms", [])
-    latino_list = [k.lower() for k in cfg.get("latino_merchants", [])]
-
-    latino_b, main_b = {}, {}
+    ethnic_b, main_b = {}, {}
     seen = set()
     for term in terms:
         for z in zips:
             for raw in flipp_search(term, z):
-                item = clean_item(raw, latino_list, z)
+                item = clean_item(raw, merchant_list, z)
                 if not item["name"] or _has_nonfood(item):
                     continue
-                # Latino grocers are food-only; for mainstream stores require a
-                # food category so cookware / apparel / candles don't sneak in.
-                if not item["is_latino"] and not _food_cat_match(item):
+                is_ethnic = _merchant_matches_profile(
+                    item["merchant"], merchant_list, active_pid, item.get("is_latino")
+                )
+                if not is_ethnic and not _food_cat_match(item):
                     continue
                 ddk = (item["merchant"].lower(), item["name"].lower(), z)
                 if ddk in seen:
@@ -585,11 +618,17 @@ def gather_trending(cfg, refresh=False):
                 key = _norm_product(item["name"])
                 if not key:
                     continue
-                bucket = latino_b if item["is_latino"] else main_b
+                bucket = ethnic_b if is_ethnic else main_b
                 e = bucket.get(key)
                 if e is None:
-                    e = {"name": item["name"], "count": 0, "merchants": set(),
-                         "areas": set(), "prices": [], "image": item["image"]}
+                    e = {
+                        "name": item["name"],
+                        "count": 0,
+                        "merchants": set(),
+                        "areas": set(),
+                        "prices": [],
+                        "image": item["image"],
+                    }
                     bucket[key] = e
                 e["count"] += 1
                 e["merchants"].add(item["merchant"])
@@ -600,26 +639,32 @@ def gather_trending(cfg, refresh=False):
     def top(bucket, n=10):
         rows = []
         for e in bucket.values():
-            rows.append({
-                "name": e["name"][:52],
-                "stores": len(e["merchants"]),
-                "areas": len(e["areas"]),
-                "count": e["count"],
-                "min": round(min(e["prices"]), 2) if e["prices"] else None,
-                "max": round(max(e["prices"]), 2) if e["prices"] else None,
-                "merchants": sorted(e["merchants"])[:4],
-                "image": e["image"],
-            })
+            rows.append(
+                {
+                    "name": e["name"][:52],
+                    "stores": len(e["merchants"]),
+                    "areas": len(e["areas"]),
+                    "count": e["count"],
+                    "min": round(min(e["prices"]), 2) if e["prices"] else None,
+                    "max": round(max(e["prices"]), 2) if e["prices"] else None,
+                    "merchants": sorted(e["merchants"])[:4],
+                    "image": e["image"],
+                }
+            )
         rows.sort(key=lambda r: (r["areas"], r["stores"], r["count"]), reverse=True)
         return rows[:n]
 
+    ethnic_rows = top(ethnic_b)
     result = {
         "generated_at": time.strftime("%Y-%m-%d %H:%M"),
+        "profile_id": active_pid,
+        "profile_label": profile_label,
         "scanned_zips": zips,
-        "latino": top(latino_b),
+        "ethnic": ethnic_rows,
         "mainstream": top(main_b),
+        "latino": ethnic_rows,
     }
-    _write_trending_cache(result)
+    _write_trending_cache(scope_key, result)
     return result
 
 
@@ -892,42 +937,95 @@ def build_forecast_payload(cfg, facts=None, refresh=False):
     return payload
 
 
-def build_payload(cfg, zips=None):
-    zips = zips or cfg["zips"]
-    cfilter = cfg.get("competitor_filter") or []
-    latino_list = [k.lower() for k in cfg.get("latino_merchants", [])]
+def _normalize_zips(zips):
+    if isinstance(zips, str):
+        return [z.strip() for z in zips.split(",") if z.strip()]
+    if zips:
+        return [str(z).strip() for z in zips if str(z).strip()]
+    return []
+
+
+def _zips_key(zips):
+    return ",".join(sorted(_normalize_zips(zips)))
+
+
+def _gather_market_data(cfg, zips, cfilter, merchant_list):
     deals_by_cat = {}
     for cat in cfg["categories"]:
-        print(f"  gathering: {cat['label']} ...")
-        deals_by_cat[cat["key"]] = gather_category(cat, zips, cfilter, latino_list)
-
+        print(f"  gathering: {cat['label']} ({len(zips)} ZIPs) ...")
+        deals_by_cat[cat["key"]] = gather_category(cat, zips, cfilter, merchant_list)
     print("  gathering: combos & weekend packs ...")
-    combos = gather_combos(cfg, zips, latino_list)
+    combos = gather_combos(cfg, zips, merchant_list)
+    return deals_by_cat, combos
 
-    all_deals = [d for deals in deals_by_cat.values() for d in deals]
+
+def build_payload(cfg, zips=None, profile_id=None, refresh_national=False, home_zips=None):
+    compare_zips = _normalize_zips(zips) or list(cfg["zips"])
+    home_zips = _normalize_zips(home_zips) or list(cfg["zips"])
+    profile, active_pid = benchmark.resolve_profile(profile_id)
+    cfilter = cfg.get("competitor_filter") or []
+    if profile and profile.get("merchants"):
+        merchant_list = profile["merchants"]
+    else:
+        merchant_list = [k.lower() for k in cfg.get("latino_merchants", [])]
+
+    compare_deals, compare_combos = _gather_market_data(
+        cfg, compare_zips, cfilter, merchant_list
+    )
+
+    if _zips_key(compare_zips) == _zips_key(home_zips):
+        home_deals, home_combos = compare_deals, compare_combos
+    else:
+        print(f"  gathering home-market intel ({len(home_zips)} ZIPs) for recommendations ...")
+        home_deals, home_combos = _gather_market_data(
+            cfg, home_zips, cfilter, merchant_list
+        )
+
+    all_deals = [d for deals in compare_deals.values() for d in deals]
     merchants = sorted({d["merchant"] for d in all_deals})
-    latino_merchants = sorted({d["merchant"] for d in all_deals + combos if d["is_latino"]})
+    latino_merchants = sorted(
+        {d["merchant"] for d in all_deals + compare_combos if d["is_latino"]}
+    )
     facts = load_facts(cfg)
-    recs = build_recommendations(cfg, deals_by_cat, combos, facts)
-    week_signal = build_week_signal(deals_by_cat, combos)
-    price_comparison = build_price_comparison(cfg, deals_by_cat, facts)
-    segment_suggestions = build_segment_deal_suggestions(cfg, deals_by_cat, facts, recs)
+    recs = build_recommendations(cfg, home_deals, home_combos, facts)
+    week_signal = build_week_signal(home_deals, home_combos)
+    price_comparison = build_price_comparison(cfg, home_deals, facts)
+    segment_suggestions = build_segment_deal_suggestions(cfg, home_deals, facts, recs)
+
+    area_presets = (profile or {}).get("area_presets") or cfg.get("area_presets", [])
+    national_bench = None
+    if profile:
+        if refresh_national:
+            print(f"  building national benchmark ({active_pid}) ...")
+            national_bench = benchmark.gather_national_benchmarks(
+                cfg, profile, gather_category, market_price_stats, refresh=True
+            )
+        else:
+            national_bench = benchmark.read_national_cache(active_pid)
+    national_ranking = benchmark.build_national_ranking(price_comparison, national_bench, facts)
+
     return {
         "store_name": cfg["store_name"],
         "primary_zip": cfg["primary_zip"],
-        "zips": zips,
+        "zips": compare_zips,
+        "home_zips": home_zips,
+        "benchmarking_other_market": _zips_key(compare_zips) != _zips_key(home_zips),
         "generated_at": time.strftime("%Y-%m-%d %H:%M"),
         "categories": cfg["categories"],
-        "deals_by_category": deals_by_cat,
+        "deals_by_category": compare_deals,
         "merchants": merchants,
         "latino_merchants": latino_merchants,
-        "combos": combos,
-        "area_presets": cfg.get("area_presets", []),
+        "combos": compare_combos,
+        "area_presets": area_presets,
+        "benchmark_profile": active_pid,
+        "benchmark_profile_label": (profile or {}).get("label"),
+        "benchmark_profiles": benchmark.list_profiles(),
         "recommendations": recs,
         "week_signal": week_signal,
         "facts": facts,
         "data_source": facts.get("source_label", "default"),
         "price_comparison": price_comparison,
+        "national_ranking": national_ranking,
         "segment_suggestions": segment_suggestions,
         "search_hints": cfg.get("trending_terms", [])[:10],
     }
@@ -1101,8 +1199,13 @@ class Handler(BaseHTTPRequestHandler):
                 cfg = load_config()
                 qs = urllib.parse.parse_qs(parsed.query)
                 refresh = "refresh" in qs
-                print(f"[{time.strftime('%H:%M:%S')}] building trending (refresh={refresh}) ...")
-                self._send_json(gather_trending(cfg, refresh))
+                zips = (qs.get("zips") or [None])[0]
+                profile_id = (qs.get("profile") or [None])[0]
+                print(
+                    f"[{time.strftime('%H:%M:%S')}] building trending "
+                    f"(refresh={refresh}, profile={profile_id or 'default'}, zips={'custom' if zips else 'default'}) ..."
+                )
+                self._send_json(gather_trending(cfg, refresh, zips=zips, profile_id=profile_id))
                 print("  trending done.")
             except Exception as e:
                 self._send_json({"error": str(e)}, status=500)
@@ -1134,22 +1237,81 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json({"error": str(e)}, status=500)
             return
 
+        if route == "/api/benchmark-profiles":
+            try:
+                self._send_json({
+                    "default_profile": benchmark.load_benchmark_catalog().get("default_profile", "latino"),
+                    "profiles": benchmark.list_profiles(),
+                })
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=500)
+            return
+
+        if route == "/api/national-ranking":
+            try:
+                cfg = load_config()
+                qs = urllib.parse.parse_qs(parsed.query)
+                profile_id = (qs.get("profile") or [None])[0]
+                refresh = "refresh" in qs
+                profile, pid = benchmark.resolve_profile(profile_id)
+                facts = load_facts(cfg)
+                if refresh and profile:
+                    print(f"[{time.strftime('%H:%M:%S')}] national benchmark refresh ({pid}) ...")
+                    national_bench = benchmark.gather_national_benchmarks(
+                        cfg, profile, gather_category, market_price_stats, refresh=True
+                    )
+                else:
+                    national_bench = benchmark.read_national_cache(pid) if profile else None
+                # Local comparison optional — use empty if not provided
+                price_comparison = []
+                zips = cfg["zips"]
+                if qs.get("zips"):
+                    zips = [z.strip() for z in qs["zips"][0].split(",") if z.strip()]
+                if national_bench or refresh:
+                    cfilter = cfg.get("competitor_filter") or []
+                    merchants = (profile or {}).get("merchants") or []
+                    deals_by_cat = {
+                        cat["key"]: gather_category(cat, zips, cfilter, merchants)
+                        for cat in cfg["categories"]
+                    }
+                    price_comparison = build_price_comparison(cfg, deals_by_cat, facts)
+                ranking = benchmark.build_national_ranking(price_comparison, national_bench, facts)
+                self._send_json(ranking)
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=500)
+            return
+
         if route == "/api/data":
             try:
                 cfg = load_config()
                 qs = urllib.parse.parse_qs(parsed.query)
                 force = "refresh" in qs
+                refresh_national = "refresh_national" in qs or force
+                profile_id = (qs.get("profile") or [None])[0]
                 zips = None
+                home_zips = None
                 if qs.get("zips"):
                     zips = [z.strip() for z in qs["zips"][0].split(",") if z.strip()]
+                if qs.get("home_zips"):
+                    home_zips = [z.strip() for z in qs["home_zips"][0].split(",") if z.strip()]
                 if force:
                     for fn in os.listdir(CACHE_DIR):
                         try:
                             os.remove(os.path.join(CACHE_DIR, fn))
                         except Exception:
                             pass
-                print(f"[{time.strftime('%H:%M:%S')}] building payload (refresh={force}, zips={zips or 'default'}) ...")
-                payload = build_payload(cfg, zips)
+                print(
+                    f"[{time.strftime('%H:%M:%S')}] building payload "
+                    f"(refresh={force}, profile={profile_id or 'default'}, "
+                    f"compare_zips={zips or 'default'}, home_zips={home_zips or 'default'}) ..."
+                )
+                payload = build_payload(
+                    cfg,
+                    zips,
+                    profile_id=profile_id,
+                    refresh_national=refresh_national,
+                    home_zips=home_zips,
+                )
                 print("  done.")
                 self._send_json(payload)
             except Exception as e:

@@ -34,6 +34,7 @@ import TradeAreaMapPreview from "./TradeAreaMapPreview";
 import OutreachSection from "./OutreachSection";
 import { CompareBars, DonutChart, RankedBars, RetentionGauge, SegmentBar } from "./InsightCharts";
 import RecommendationCards from "./RecommendationCards";
+import { describeLoadedMarkets } from "../lib/marketAreas";
 import {
   BasketAnalysisDemoPreview,
   RetentionLoyaltyDemoPreview,
@@ -82,7 +83,7 @@ function UploadUnlock({ title, detail }) {
   );
 }
 
-function PriceComparisonSection({ priceRows, hasUploadedData, marketCount, generatedAt }) {
+function PriceComparisonSection({ priceRows, hasUploadedData, marketLabel, generatedAt }) {
   const [showAll, setShowAll] = useState(false);
   const limit = 4;
   const hiddenCount = Math.max(0, priceRows.length - limit);
@@ -229,10 +230,10 @@ function PriceComparisonSection({ priceRows, hasUploadedData, marketCount, gener
         </div>
       )}
 
-      {marketCount > 0 && (
+      {marketLabel && (
         <p className="mt-3 text-[11px] text-white/45">
-          vs {marketCount} market{marketCount !== 1 ? "s" : ""}
-          {generatedAt ? ` · ads updated ${generatedAt}` : ""} · change markets on Deals tab
+          vs {marketLabel}
+          {generatedAt ? ` · ads updated ${generatedAt}` : ""} · change markets above
         </p>
       )}
     </>
@@ -258,7 +259,17 @@ function InsightsSubNav() {
   );
 }
 
-export default function InsightsSection({ data, loading, error, onRefresh, onUploadComplete }) {
+export default function InsightsSection({
+  data,
+  loading,
+  error,
+  onRefresh,
+  onUploadComplete,
+  marketLabel = "your market",
+  compareMarketLabel,
+  isBenchmarking = false,
+  pendingMarket = false,
+}) {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState(null);
@@ -272,7 +283,10 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
   const suggestions = data?.segment_suggestions || { weekday: [], weekend: [] };
   const isSampleData = /default/i.test(data?.data_source || "");
   const hasUploadedData = !isSampleData;
-  const marketCount = data?.zips?.length || 0;
+  const marketInfo = useMemo(
+    () => describeLoadedMarkets(data?.home_zips?.join(",") || data?.zips?.join(","), data?.area_presets),
+    [data?.home_zips, data?.zips, data?.area_presets]
+  );
 
   const categoryLabels = useMemo(() => {
     const map = {};
@@ -344,6 +358,15 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
   if (loading && !data)
     return (
       <div className="space-y-6">
+        {pendingMarket && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="rounded-xl border border-brand/30 bg-brand/10 px-4 py-3 text-sm text-white/80"
+          >
+            Loading competitor data for <span className="font-semibold text-white">{marketLabel}</span>…
+          </div>
+        )}
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="skeleton h-40" />
         ))}
@@ -358,7 +381,11 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
         eyebrowDot
         titleId="insights-page-title"
         title="Price & customer intelligence"
-        description="Compare your shelf prices to live competitor ads, then layer in basket, customer, and WhatsApp outreach insights."
+        description={
+          isBenchmarking
+            ? `Shelf prices vs competitors in ${marketLabel}. Deals tab shows ${compareMarketLabel || "another market"} for research.`
+            : "Compare your shelf prices to live competitor ads, then layer in basket, customer, and WhatsApp outreach insights."
+        }
         onRefresh={onRefresh}
         loading={loading}
       />
@@ -449,7 +476,7 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
         <PriceComparisonSection
           priceRows={priceRows}
           hasUploadedData={hasUploadedData}
-          marketCount={marketCount}
+          marketLabel={marketInfo.short}
           generatedAt={data.generated_at}
         />
       </div>

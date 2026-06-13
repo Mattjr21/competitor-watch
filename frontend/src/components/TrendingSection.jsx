@@ -69,27 +69,76 @@ function TrendGrid({ items, loading, accent, emptyMsg }) {
   );
 }
 
-export default function TrendingSection({ data, loading, error, onRefresh }) {
+export default function TrendingSection({
+  data,
+  loading,
+  error,
+  onRefresh,
+  marketLabel = "your selected market",
+  profileLabel = "Latino grocery",
+}) {
   if (error) return <ErrorState message={error} onRetry={onRefresh} />;
+
+  const ethnicLabel = data?.profile_label || profileLabel;
+  const ethnicItems = data?.ethnic || data?.latino || [];
+  const zipCount = data?.scanned_zips?.length || 0;
+  const scopeLine =
+    marketLabel && marketLabel !== "No markets"
+      ? marketLabel
+      : zipCount
+        ? `${zipCount} ZIP${zipCount !== 1 ? "s" : ""}`
+        : "selected ZIP codes";
 
   return (
     <section className={TAB_SECTION_SPACE}>
       <PageHeader
         eyebrow="Trending"
-        title="What's being advertised everywhere."
-        description="Most-advertised products across US Latino metros this week"
+        title="What's being advertised in your market."
+        description={`Most-advertised products in ${scopeLine} — ${ethnicLabel.toLowerCase()} grocers vs mainstream chains`}
         onRefresh={onRefresh}
         loading={loading}
       />
 
-      <div>
-        <SectionHeader title="Latino supermarkets" description="Top advertised items at Latino grocers." />
-        <TrendGrid items={data?.latino} loading={loading} accent="#ff6a3d" emptyMsg="Scanning Latino metros..." />
+      <div
+        role="note"
+        className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs leading-relaxed text-white/60"
+      >
+        Scanning <span className="font-medium text-white/80">{scopeLine}</span>
+        {zipCount > 0 && (
+          <>
+            {" "}
+            · <span className="font-mono text-white/50">{data.scanned_zips.join(", ")}</span>
+          </>
+        )}
+        {data?.generated_at && (
+          <span className="text-white/40"> · updated {data.generated_at}</span>
+        )}
       </div>
 
       <div>
-        <SectionHeader title="Mainstream supermarkets" description="Top items at national chains." />
-        <TrendGrid items={data?.mainstream} loading={loading} accent="#4aa3ff" emptyMsg="Loading..." />
+        <SectionHeader
+          title={`${ethnicLabel} supermarkets`}
+          description={`Top advertised items at ${ethnicLabel.toLowerCase()} grocers in ${scopeLine}.`}
+        />
+        <TrendGrid
+          items={ethnicItems}
+          loading={loading}
+          accent="#ff6a3d"
+          emptyMsg={`Scanning ${ethnicLabel.toLowerCase()} ads in ${scopeLine}…`}
+        />
+      </div>
+
+      <div>
+        <SectionHeader
+          title="Mainstream supermarkets"
+          description={`Top items at Kroger, Walmart, Publix, and other national chains in the same ${scopeLine}.`}
+        />
+        <TrendGrid
+          items={data?.mainstream}
+          loading={loading}
+          accent="#4aa3ff"
+          emptyMsg={`Scanning mainstream ads in ${scopeLine}…`}
+        />
       </div>
     </section>
   );

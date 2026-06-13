@@ -90,13 +90,91 @@
     {"label": "Explore Gordon County", "slug": "exploregordoncounty"}
   ],
   "area_presets": [
-    { "label": "My area (Calhoun GA)", "zips": "30701,30735,30733,30746,30103,30720,30721,30705" },
-    { "label": "Houston TX", "zips": "77081,77036,77023" },
-    { "label": "Dallas / Ft Worth TX", "zips": "75211,75217,76106" },
-    { "label": "San Antonio TX", "zips": "78207,78228" },
-    { "label": "Rio Grande Valley TX", "zips": "78521,78539" },
-    { "label": "Hialeah / Miami FL", "zips": "33012,33125,33135" },
-    { "label": "Orlando FL", "zips": "32811,32807" }
+    {
+      "label": "My area (Calhoun GA)",
+      "zips": "30701,30735,30733,30746,30103,30720,30721,30705",
+      "criteria": "La Bodega trade area — Calhoun plus Gordon County and nearby towns where competitors run weekly ads and shoppers drive from (~15 mi radius)."
+    },
+    {
+      "label": "Atlanta GA",
+      "zips": "30340,30341,30360",
+      "criteria": "Buford Highway / NE Atlanta Latino grocery corridor — major competitors (Buford Hwy, Doraville, Chamblee)."
+    },
+    {
+      "label": "Houston TX",
+      "zips": "77081,77036,77023",
+      "criteria": "SW Houston Latino supermarket belt — Gulfton, Sharpstown, and nearby Hispanic grocery markets."
+    },
+    {
+      "label": "Dallas / Ft Worth TX",
+      "zips": "75211,75217,76106",
+      "criteria": "Dallas Oak Cliff and Fort Worth Latino grocery zones — benchmark Texas pricing."
+    },
+    {
+      "label": "San Antonio TX",
+      "zips": "78207,78228",
+      "criteria": "West Side San Antonio — high Latino grocery density and strong weekly-ad competition."
+    },
+    {
+      "label": "Rio Grande Valley TX",
+      "zips": "78521,78539",
+      "criteria": "McAllen / Brownsville RGV — border-market Latino grocery pricing reference."
+    },
+    {
+      "label": "Hialeah / Miami FL",
+      "zips": "33012,33125,33135",
+      "criteria": "Miami-Dade Latino supermarket hubs — Hialeah and central Miami Hispanic grocers."
+    },
+    {
+      "label": "Orlando FL",
+      "zips": "32811,32807",
+      "criteria": "Orlando Latino grocery pockets — Pine Hills and east Orlando Hispanic markets."
+    },
+    {
+      "label": "Chicago IL",
+      "zips": "60632,60623,60608",
+      "criteria": "Back of the Yards / Little Village — Midwest Latino belt."
+    },
+    {
+      "label": "Los Angeles CA",
+      "zips": "90255,90001,90011",
+      "criteria": "Huntington Park / South LA — highest Latino grocery saturation."
+    },
+    {
+      "label": "Phoenix AZ",
+      "zips": "85009,85033,85035",
+      "criteria": "Maryvale / west Phoenix Hispanic markets."
+    },
+    {
+      "label": "Bronx NYC",
+      "zips": "10452,10468,10453",
+      "criteria": "South Bronx bodega + Latino supermarket mix."
+    },
+    {
+      "label": "Paterson NJ",
+      "zips": "07501,07504,07502",
+      "criteria": "Paterson / Passaic Latino + halal corridor."
+    },
+    {
+      "label": "Fresno CA",
+      "zips": "93706,93701,93721",
+      "criteria": "Central Valley agricultural Latino communities."
+    },
+    {
+      "label": "Las Vegas NV",
+      "zips": "89101,89110,89104",
+      "criteria": "East Las Vegas Hispanic grocery growth."
+    },
+    {
+      "label": "Sacramento CA",
+      "zips": "95823,95828,95824",
+      "criteria": "South Sacramento Latino markets."
+    },
+    {
+      "label": "El Paso TX",
+      "zips": "79905,79901,79925",
+      "criteria": "El Paso border city Latino pricing reference."
+    }
   ],
   "categories": [
     {

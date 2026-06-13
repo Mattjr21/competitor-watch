@@ -137,6 +137,8 @@ select.toolbar-control {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
+  color: #f4f6f8;
+  background-color: var(--color-ink);
   padding-right: 2.75rem;
   cursor: pointer;
   overflow: hidden;
@@ -146,6 +148,24 @@ select.toolbar-control {
   background-repeat: no-repeat;
   background-position: right 0.875rem center;
   background-size: 1rem;
+}
+
+select.toolbar-control option {
+  color: #080b0f;
+  background-color: #f4f6f8;
+}
+
+details > summary {
+  list-style: none;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+details > summary:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
 }
 
 input.toolbar-control[type="search"] {

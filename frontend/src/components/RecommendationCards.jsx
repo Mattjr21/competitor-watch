@@ -64,9 +64,9 @@ function RecommendationItem({ rec }) {
           >
             {rec.tag}
           </span>
-          <h4 className="mt-1.5 font-display text-sm font-semibold leading-snug text-white sm:text-[15px]">
+          <p className="mt-1.5 font-display text-sm font-semibold leading-snug text-white sm:text-[15px]">
             {rec.title}
-          </h4>
+          </p>
         </div>
         <ChevronDown
           size={18}

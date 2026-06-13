@@ -6,11 +6,11 @@ import {
   BarChart3,
   TrendingUp,
   Beef,
-  MapPin,
   Upload,
 } from "lucide-react";
 import HeroBanner from "./HeroBanner";
 import RecommendationCards from "./RecommendationCards";
+import NationalRankPanel from "./NationalRankPanel";
 import { EASE } from "../lib/ui";
 import {
   PageHeader,
@@ -20,6 +20,7 @@ import {
   SECTION_LEDE,
 } from "../lib/sectionUi";
 import { computeCategoryWinners, formatDealPrice, MEAT_TYPES } from "../lib/dealWinners";
+import { describeLoadedMarkets } from "../lib/marketAreas";
 
 const NAV_CARDS = [
   {
@@ -129,8 +130,13 @@ export default function DashboardSection({
   dealsData,
   trendingData,
   loading,
+  marketLabel = "your market",
+  homeMarketLabel = "Calhoun GA",
+  isBenchmarking = false,
+  pendingMarket = false,
   onNavigate,
   onUploadGuide,
+  onRefreshNational,
   reduceMotion = false,
 }) {
   const loc = forecast?.location || {};
@@ -139,14 +145,20 @@ export default function DashboardSection({
     ? Object.values(dealsData.deals_by_category || {}).flat().length
     : 0;
   const storeCount = dealsData?.merchants?.length || 0;
-  const marketCount = dealsData?.zips?.length || 0;
+  const marketInfo = describeLoadedMarkets(dealsData?.zips?.join(","), dealsData?.area_presets);
+  const homeMarketInfo = describeLoadedMarkets(
+    dealsData?.home_zips?.join(",") || dealsData?.zips?.join(","),
+    dealsData?.area_presets
+  );
   const winners = computeCategoryWinners(dealsData?.deals_by_category, dealsData?.categories || []);
   const meatWinners = MEAT_TYPES.map((t) => winners.find((w) => w.meatType === t.key)).filter(Boolean);
   const isSampleData = /default/i.test(dealsData?.data_source || "");
   const hasUploadedData = dealsData && !isSampleData;
   const priceRows = (dealsData?.price_comparison || []).filter((r) => r.market);
-  const latinoTrends = trendingData?.latino?.length || 0;
+  const ethnicTrends = trendingData?.ethnic || trendingData?.latino || [];
+  const latinoTrends = ethnicTrends.length;
   const mainstreamTrends = trendingData?.mainstream?.length || 0;
+  const trendProfileLabel = trendingData?.profile_label || "Latino grocery";
 
   const weekendDays = (forecast?.weather_days || []).filter((d) =>
     /sat|sun|sáb|dom/i.test(d.label || "")
@@ -160,7 +172,13 @@ export default function DashboardSection({
         : loading
           ? "Loading…"
           : "—",
-    deals: totalDeals ? `${totalDeals} ads` : loading ? "Loading…" : "—",
+    deals: pendingMarket
+      ? `Loading ${marketLabel}…`
+      : totalDeals
+        ? `${totalDeals} ads`
+        : loading
+          ? "Loading…"
+          : "—",
     insights: hasUploadedData
       ? "CSV uploaded"
       : priceRows.length
@@ -184,8 +202,8 @@ export default function DashboardSection({
     insights: hasUploadedData
       ? "Your sales CSV powers basket, retention, and trade area."
       : "Upload POS data to unlock customer and trade area insights.",
-    trending: trendingData?.latino?.[0]
-      ? `#1 Latino ad: ${trendingData.latino[0].name}`
+    trending: ethnicTrends[0]
+      ? `#1 ${trendProfileLabel} ad: ${ethnicTrends[0].name}`
       : null,
   };
 
@@ -200,7 +218,7 @@ export default function DashboardSection({
         description="Your weekend command center — competitor ads, weather playbook, and store insights in one place."
         meta={
           dealsData?.generated_at
-            ? `${marketCount} ZIP${marketCount !== 1 ? "s" : ""} · ${storeCount} retailers · synced ${dealsData.generated_at}`
+            ? `${marketInfo.short} · ${storeCount} retailers · synced ${dealsData.generated_at}`
             : `${loc.city || "Calhoun"}, ${loc.state || "GA"} · loading market data…`
         }
       />
@@ -217,8 +235,23 @@ export default function DashboardSection({
       {dealsData?.recommendations?.length > 0 && (
         <RecommendationCards
           recommendations={dealsData.recommendations}
+          title="What to feature this weekend"
+          description={
+            isBenchmarking
+              ? `Playbook for ${homeMarketLabel} — based on your local competitors, not ${marketLabel}.`
+              : `Based on competitor ads near ${homeMarketInfo.short}.`
+          }
           limit={4}
           reduceMotion={reduceMotion}
+        />
+      )}
+
+      {dealsData?.national_ranking && (
+        <NationalRankPanel
+          ranking={dealsData.national_ranking}
+          onRefresh={onRefreshNational}
+          loading={loading}
+          onUploadGuide={onUploadGuide}
         />
       )}
 
@@ -236,9 +269,19 @@ export default function DashboardSection({
           accentClass="text-brand"
         />
         <StatCard
-          label="Markets"
-          value={loading && !marketCount ? "…" : marketCount}
-          hint="ZIP codes tracked"
+          label="Benchmark market"
+          value={
+            loading && !marketInfo.areaCount && !marketInfo.customZips.length
+              ? "…"
+              : marketInfo.short
+          }
+          hint={
+            isBenchmarking
+              ? `Playbook uses ${homeMarketLabel}`
+              : storeCount
+                ? `${storeCount} retailers in scan`
+                : "Change market above"
+          }
         />
         <StatCard
           label="Your data"
@@ -351,13 +394,6 @@ export default function DashboardSection({
             ))}
           </ul>
         </div>
-      )}
-
-      {marketCount > 0 && (
-        <p className="flex items-center gap-1.5 text-xs text-white/45">
-          <MapPin size={13} aria-hidden />
-          Tracking {marketCount} market ZIP{marketCount !== 1 ? "s" : ""}: {dealsData.zips.join(", ")}
-        </p>
       )}
     </section>
   );
