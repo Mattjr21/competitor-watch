@@ -95,6 +95,124 @@ function UploadUnlock({ title, detail }) {
   );
 }
 
+function PriceComparisonSection({ priceRows, hasUploadedData, marketCount, generatedAt }) {
+  const [showAll, setShowAll] = useState(false);
+  const limit = 4;
+  const hiddenCount = Math.max(0, priceRows.length - limit);
+  const rows = showAll || hiddenCount === 0 ? priceRows : priceRows.slice(0, limit);
+
+  if (priceRows.length === 0) {
+    return <EmptyState>Upload sales data to compare your category averages to competitor ads.</EmptyState>;
+  }
+
+  return (
+    <>
+      {!hasUploadedData && (
+        <p className="mb-4 rounded-xl border border-white/10 bg-white/4 px-4 py-3 text-sm text-white/60">
+          Upload your sales CSV to unlock <strong className="text-white/85">your avg</strong> and
+          competitive position for each category.
+        </p>
+      )}
+
+      <div className="overflow-hidden rounded-2xl border border-white/10">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[520px] text-left text-sm">
+            <thead className="bg-white/5 text-[11px] uppercase tracking-wider text-white/55">
+              <tr>
+                <th className="px-4 py-2.5 font-semibold sm:px-5">Category</th>
+                {hasUploadedData && (
+                  <th className="px-4 py-2.5 font-semibold sm:px-5">Your avg</th>
+                )}
+                <th className="px-4 py-2.5 font-semibold sm:px-5">Market low</th>
+                <th className="hidden px-4 py-2.5 font-semibold sm:table-cell sm:px-5">Median</th>
+                {hasUploadedData && (
+                  <th className="px-4 py-2.5 font-semibold sm:px-5">Status</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => {
+                const meta = positionMeta(row.position);
+                const Icon = meta.Icon;
+                const showStatus = hasUploadedData && row.own_avg != null && row.position !== "no_data";
+                return (
+                  <tr key={row.key} className="border-t border-white/8">
+                    <td className="px-4 py-3 font-medium text-white/90 sm:px-5">{row.label}</td>
+                    {hasUploadedData && (
+                      <td className="px-4 py-3 tabular-nums text-white/80 sm:px-5">
+                        {row.own_avg != null ? `$${row.own_avg}` : "—"}
+                      </td>
+                    )}
+                    <td className="px-4 py-3 sm:px-5">
+                      {row.market ? (
+                        <span className="tabular-nums text-white/80">
+                          <strong className="text-leaf">${row.market.low}</strong>
+                          {row.market.cheapest_merchant && (
+                            <span className="text-white/50"> · {row.market.cheapest_merchant}</span>
+                          )}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="hidden px-4 py-3 tabular-nums text-white/55 sm:table-cell sm:px-5">
+                      {row.market ? `$${row.market.median} · ${row.market.count} ads` : "—"}
+                    </td>
+                    {hasUploadedData && (
+                      <td className="px-4 py-3 sm:px-5">
+                        {showStatus ? (
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                            style={{ background: `${meta.color}22`, color: meta.color }}
+                          >
+                            <Icon size={12} /> {meta.label}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-white/45">—</span>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {hiddenCount > 0 && !showAll && (
+        <button
+          type="button"
+          onClick={() => setShowAll(true)}
+          className="mt-3 text-sm font-medium text-sky underline-offset-2 hover:underline focus-visible:rounded focus-visible:ring-2 focus-visible:ring-brand"
+        >
+          Show all {priceRows.length} categories
+        </button>
+      )}
+
+      {hasUploadedData && (
+        <div className="mt-4 space-y-2">
+          {rows
+            .filter((r) => r.own_avg != null && r.suggested_action && r.position !== "no_data")
+            .slice(0, showAll ? undefined : 2)
+            .map((row) => (
+              <p key={row.key} className="text-xs leading-relaxed text-white/55">
+                <span className="font-medium text-white/70">{row.label}:</span> {row.suggested_action}
+              </p>
+            ))}
+        </div>
+      )}
+
+      {marketCount > 0 && (
+        <p className="mt-3 text-[11px] text-white/45">
+          vs {marketCount} market{marketCount !== 1 ? "s" : ""}
+          {generatedAt ? ` · ads updated ${generatedAt}` : ""} · change markets on Deals tab
+        </p>
+      )}
+    </>
+  );
+}
+
 function InsightsSubNav() {
   return (
     <nav
@@ -241,71 +359,28 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
 
       {/* Pricing — above the fold */}
       <div id="insights-pricing" className="scroll-mt-36">
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div className="flex items-center gap-2">
             <TrendingUp size={18} className="text-leaf" />
-            <h3 className="font-display text-2xl font-semibold">Your prices vs market</h3>
+            <div>
+              <h3 className="font-display text-2xl font-semibold">
+                {hasUploadedData ? "Your prices vs market" : "Market reference prices"}
+              </h3>
+              <p className="mt-1 text-xs text-white/55">
+                {hasUploadedData
+                  ? "Your shelf averages compared to live competitor ads."
+                  : "Competitor lows by category until you upload POS data."}
+              </p>
+            </div>
           </div>
-          {marketCount > 0 && (
-            <p className="text-xs text-white/55">
-              vs {marketCount} market{marketCount !== 1 ? "s" : ""}
-              {data.generated_at ? ` · ${data.generated_at}` : ""} · change markets on Deals tab
-            </p>
-          )}
         </div>
 
-        {priceRows.length === 0 ? (
-          <EmptyState>Upload sales data to compare your category averages to competitor ads.</EmptyState>
-        ) : (
-          <div className="space-y-4">
-            {priceRows.map((row) => {
-              const meta = positionMeta(row.position);
-              const Icon = meta.Icon;
-              return (
-                <motion.div
-                  key={row.key}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl border border-white/10 bg-ink-2 p-5"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                      <div className="font-display text-lg font-semibold">{row.label}</div>
-                      <div className="mt-2 flex flex-wrap gap-4 text-sm">
-                        <span className="text-white/70">
-                          Your avg:{" "}
-                          <strong className="text-white">
-                            {row.own_avg != null ? `$${row.own_avg}` : "—"}
-                          </strong>
-                        </span>
-                        {row.market && (
-                          <>
-                            <span className="text-white/70">
-                              Market low: <strong className="text-leaf">${row.market.low}</strong>
-                              {row.market.cheapest_merchant && (
-                                <span className="text-white/55"> · {row.market.cheapest_merchant}</span>
-                              )}
-                            </span>
-                            <span className="text-white/55">
-                              Median ${row.market.median} · {row.market.count} ads
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <span
-                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
-                      style={{ background: `${meta.color}22`, color: meta.color }}
-                    >
-                      <Icon size={14} /> {meta.label}
-                    </span>
-                  </div>
-                  <p className="mt-3 text-sm leading-relaxed text-white/65">{row.suggested_action}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-        )}
+        <PriceComparisonSection
+          priceRows={priceRows}
+          hasUploadedData={hasUploadedData}
+          marketCount={marketCount}
+          generatedAt={data.generated_at}
+        />
       </div>
 
       {/* Outreach */}
