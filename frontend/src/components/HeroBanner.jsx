@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 import { EASE } from "../lib/ui";
 
-const HERO_SRC = "/hero-la-bodega.png?v=6";
+const HERO_SRC = "/hero-la-bodega.png?v=7";
 
 export default function HeroBanner({ location }) {
   const city = location?.city || "Calhoun";
@@ -18,7 +18,7 @@ export default function HeroBanner({ location }) {
       <img
         src={HERO_SRC}
         alt="La Bodega Supermercado — produce, grocery aisles, and meat counter"
-        className="aspect-[21/9] max-h-[min(42vh,360px)] w-full object-cover object-[center_35%] sm:max-h-[360px]"
+        className="aspect-[21/9] max-h-[min(42vh,360px)] w-full object-cover object-center sm:max-h-[360px]"
         fetchPriority="high"
       />
 
