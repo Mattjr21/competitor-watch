@@ -9,7 +9,7 @@ import InsightsSection from "./components/InsightsSection";
 import HeroBanner from "./components/HeroBanner";
 import { DemoModeBanner } from "./components/OutreachSection";
 import { LoadProgress } from "./lib/ui";
-import { LOGO_SRC } from "./lib/brand";
+import { APP_ICON_SRC } from "./lib/brand";
 
 const API = import.meta.env.VITE_API_URL || "";
 
@@ -152,16 +152,15 @@ export default function App() {
         <DemoModeBanner />
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="shrink-0 rounded-lg bg-white px-2 py-1 shadow-sm ring-1 ring-black/10">
-              <img
-                src={LOGO_SRC}
-                alt="La Bodega Supermercado y Restaurante"
-                className="h-12 w-auto max-w-[min(280px,52vw)] object-contain object-left sm:h-14"
-              />
-            </div>
-            <div className="min-w-0 border-l border-white/10 pl-3 sm:pl-4">
+            <img
+              src={APP_ICON_SRC}
+              alt=""
+              aria-hidden
+              className="h-10 w-10 shrink-0 rounded-lg bg-white object-contain p-1 shadow-sm ring-1 ring-black/10 sm:h-11 sm:w-11"
+            />
+            <div className="min-w-0">
               <h1 className="font-display text-base font-bold tracking-tight sm:text-lg">
-                Competitor Watch
+                La Bodega — Competitor Watch
               </h1>
               <p className="text-xs text-white/50 sm:text-sm">{headerDesc}</p>
             </div>

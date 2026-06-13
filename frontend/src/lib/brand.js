@@ -1,5 +1,4 @@
-/** La Bodega header logo + favicon (cropped from compressed brand PNG). */
-export const BRAND_VERSION = "5";
+/** La Bodega app icon (from compressedImage). */
+export const BRAND_VERSION = "11";
 
-export const LOGO_SRC = `/la-bodega-logo.png?v=${BRAND_VERSION}`;
-export const FAVICON_SRC = `/favicon.png?v=${BRAND_VERSION}`;
+export const APP_ICON_SRC = `/app-icon.jpeg?v=${BRAND_VERSION}`;
