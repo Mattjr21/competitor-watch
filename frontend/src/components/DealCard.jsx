@@ -1,62 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-
-const CAT_COLORS = {
-  produce:    { bg: "#f0faf0", border: "#1f8a1f", color: "#1a6b1a" },
-  verduras:   { bg: "#f0faf0", border: "#1f8a1f", color: "#1a6b1a" },
-  vegetables: { bg: "#f0faf0", border: "#1f8a1f", color: "#1a6b1a" },
-  fruits:     { bg: "#f0faf0", border: "#1f8a1f", color: "#1a6b1a" },
-  frutas:     { bg: "#f0faf0", border: "#1f8a1f", color: "#1a6b1a" },
-  meat:       { bg: "#fff1f0", border: "#c0392b", color: "#a93226" },
-  carne:      { bg: "#fff1f0", border: "#c0392b", color: "#a93226" },
-  carnes:     { bg: "#fff1f0", border: "#c0392b", color: "#a93226" },
-  seafood:    { bg: "#fff1f0", border: "#c0392b", color: "#a93226" },
-  poultry:    { bg: "#fff1f0", border: "#c0392b", color: "#a93226" },
-  beef:       { bg: "#fff1f0", border: "#c0392b", color: "#a93226" },
-  pork:       { bg: "#fff1f0", border: "#c0392b", color: "#a93226" },
-  dairy:      { bg: "#eff6ff", border: "#3b82f6", color: "#1d4ed8" },
-  lacteos:    { bg: "#eff6ff", border: "#3b82f6", color: "#1d4ed8" },
-  cheese:     { bg: "#eff6ff", border: "#3b82f6", color: "#1d4ed8" },
-  queso:      { bg: "#eff6ff", border: "#3b82f6", color: "#1d4ed8" },
-  milk:       { bg: "#eff6ff", border: "#3b82f6", color: "#1d4ed8" },
-  leche:      { bg: "#eff6ff", border: "#3b82f6", color: "#1d4ed8" },
-  cream:      { bg: "#eff6ff", border: "#3b82f6", color: "#1d4ed8" },
-  crema:      { bg: "#eff6ff", border: "#3b82f6", color: "#1d4ed8" },
-  butter:     { bg: "#eff6ff", border: "#3b82f6", color: "#1d4ed8" },
-  yogurt:     { bg: "#eff6ff", border: "#3b82f6", color: "#1d4ed8" },
-  tortillas:  { bg: "#fffbeb", border: "#d97706", color: "#b45309" },
-  bread:      { bg: "#fffbeb", border: "#d97706", color: "#b45309" },
-  bakery:     { bg: "#fffbeb", border: "#d97706", color: "#b45309" },
-  pan:        { bg: "#fffbeb", border: "#d97706", color: "#b45309" },
-  masa:       { bg: "#fffbeb", border: "#d97706", color: "#b45309" },
-  chips:      { bg: "#fffbeb", border: "#d97706", color: "#b45309" },
-  snacks:     { bg: "#fffbeb", border: "#d97706", color: "#b45309" },
-  salsa:      { bg: "#fff7ed", border: "#ea580c", color: "#c2410c" },
-  spices:     { bg: "#fff7ed", border: "#ea580c", color: "#c2410c" },
-  especias:   { bg: "#fff7ed", border: "#ea580c", color: "#c2410c" },
-  chile:      { bg: "#fff7ed", border: "#ea580c", color: "#c2410c" },
-  drinks:     { bg: "#f0fdfa", border: "#0d9488", color: "#0f766e" },
-  beverages:  { bg: "#f0fdfa", border: "#0d9488", color: "#0f766e" },
-  bebidas:    { bg: "#f0fdfa", border: "#0d9488", color: "#0f766e" },
-  soda:       { bg: "#f0fdfa", border: "#0d9488", color: "#0f766e" },
-  juice:      { bg: "#f0fdfa", border: "#0d9488", color: "#0f766e" },
-  agua:       { bg: "#f0fdfa", border: "#0d9488", color: "#0f766e" },
-  beer:       { bg: "#f0fdfa", border: "#0d9488", color: "#0f766e" },
-  cerveza:    { bg: "#f0fdfa", border: "#0d9488", color: "#0f766e" },
-  household:  { bg: "#f5f3ff", border: "#7c3aed", color: "#6d28d9" },
-  cleaning:   { bg: "#f5f3ff", border: "#7c3aed", color: "#6d28d9" },
-  limpieza:   { bg: "#f5f3ff", border: "#7c3aed", color: "#6d28d9" },
-  personal:   { bg: "#f5f3ff", border: "#7c3aed", color: "#6d28d9" },
-};
-const DEFAULT_CAT = { bg: "#f3f4f6", border: "#d1d5db", color: "#6b7280" };
-
-function getCatStyle(catLabel) {
-  if (!catLabel) return DEFAULT_CAT;
-  const words = catLabel.toLowerCase().replace(/[/()]/g, " ").split(/\s+/).filter(Boolean);
-  for (const word of words) {
-    if (CAT_COLORS[word]) return CAT_COLORS[word];
-  }
-  return DEFAULT_CAT;
-}
+import { getCategoryMeta } from "../lib/categories";
 
 function fmtDate(d) {
   if (!d) return null;
@@ -87,11 +30,7 @@ function AnimatedPrice({ value, unit }) {
     ? value
     : "$" + display.toFixed(2).replace(/\.00$/, "") + (unit ? "/" + unit : "");
 
-  return (
-    <span style={{ fontWeight: "800", fontSize: "17px", color: "#1a7a1a", fontVariantNumeric: "tabular-nums" }}>
-      {formatted}
-    </span>
-  );
+  return <span className="font-display text-xl font-bold tabular-nums text-leaf">{formatted}</span>;
 }
 
 export default function DealCard({ d }) {
@@ -100,45 +39,57 @@ export default function DealCard({ d }) {
   const hasBuyCondition = /when you buy|buy \d|limit|must buy/i.test(saleStory);
   const condition = hasBuyCondition ? saleStory : null;
   const validTo = fmtDate(d.valid_to);
-  const catStyle = getCatStyle(d.catLabel);
+  const meta = getCategoryMeta(d.catLabel);
+  const Icon = meta.icon;
 
   return (
-    <div style={{
-      background: "#fff", border: "1px solid #e1e4e8",
-      borderRadius: "10px", padding: "14px 16px",
-      display: "flex", flexDirection: "column", gap: "6px",
-      minHeight: "120px",
-      height: "100%",
-      boxSizing: "border-box",
-    }}>
-      <span style={{
-        fontWeight: "600", fontSize: "13px", lineHeight: "1.4", color: "#1a1a1a",
-        display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-        overflow: "hidden",
-      }} title={d.name}>{d.name}</span>
+    <div className="flex h-full flex-col gap-2 rounded-2xl border border-white/10 bg-ink-2 p-4 transition-colors hover:border-white/25">
+      {d.merchant && (
+        <div className="truncate text-[11px] font-semibold uppercase tracking-wide text-white/45">
+          {d.merchant}
+        </div>
+      )}
+      <div className="flex items-start gap-2">
+        <span
+          className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg"
+          style={{ background: `${meta.color}1f`, color: meta.color }}
+        >
+          <Icon size={15} strokeWidth={2} />
+        </span>
+        <span
+          className="line-clamp-2 text-[13px] font-medium leading-snug text-white/90"
+          title={d.name}
+        >
+          {d.name}
+        </span>
+      </div>
 
       <div>
         {displayPrice ? (
           <>
             <AnimatedPrice value={displayPrice} unit={d.unit} />
-            {condition && (
-              <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "1px" }}>{condition}</div>
-            )}
+            {condition && <div className="mt-0.5 text-[11px] text-white/45">{condition}</div>}
           </>
         ) : (
-          <span style={{ fontSize: "12px", color: "#6b7280" }}>{saleStory || "See ad"}</span>
+          <span className="text-xs text-white/50">{saleStory || "See ad"}</span>
         )}
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+      <div className="mt-auto flex flex-wrap items-center gap-2 pt-1">
         {d.catLabel && (
-          <span style={{
-            background: catStyle.bg, border: "1px solid " + catStyle.border,
-            color: catStyle.color, fontSize: "11px", fontWeight: "600",
-            padding: "2px 8px", borderRadius: "999px",
-          }}>{d.catLabel}</span>
+          <span
+            className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
+            style={{ background: `${meta.color}1a`, color: meta.color }}
+          >
+            {d.catLabel}
+          </span>
         )}
-        {validTo && <span style={{ fontSize: "11px", color: "#9ca3af" }}>· thru {validTo}</span>}
+        {validTo && <span className="text-[11px] text-white/35">· thru {validTo}</span>}
+        {d.is_latino && (
+          <span className="rounded-full border border-white/15 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white/55">
+            Latino
+          </span>
+        )}
       </div>
     </div>
   );

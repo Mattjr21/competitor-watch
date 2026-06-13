@@ -1,9 +1,22 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
 @import "tailwindcss";
 
+/* Milling Duplex (205TF, paid). Drop the licensed file at
+   frontend/public/fonts/ and it loads automatically; until then the
+   display stack falls back to Space Grotesk so layouts stay intact. */
+@font-face {
+  font-family: "Milling Duplex";
+  src:
+    url("/fonts/MillingDuplex.woff2") format("woff2"),
+    url("/fonts/MillingDuplex.otf") format("opentype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Space Grotesk", "Inter", sans-serif;
+  --font-display: "Milling Duplex", "Space Grotesk", "Inter", sans-serif;
 
   --color-ink: #080b0f;
   --color-ink-2: #11161d;
@@ -16,7 +29,7 @@
 
 html,
 body,
-#root {
+#preview-root {
   height: 100%;
 }
 
@@ -28,19 +41,8 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Thin, modern scrollbar to match the dark canvas */
 * {
   scrollbar-width: thin;
   scrollbar-color: #2a3340 transparent;
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-.skeleton {
-  background: linear-gradient(90deg, #11161d 25%, #1a212b 50%, #11161d 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
-  border-radius: 12px;
 }

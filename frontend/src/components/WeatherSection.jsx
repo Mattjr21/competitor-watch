@@ -1,17 +1,78 @@
-import Container from "@cloudscape-design/components/container";
-import Header from "@cloudscape-design/components/header";
-import Button from "@cloudscape-design/components/button";
-import ColumnLayout from "@cloudscape-design/components/column-layout";
-import SpaceBetween from "@cloudscape-design/components/space-between";
-import Box from "@cloudscape-design/components/box";
-import Table from "@cloudscape-design/components/table";
-import WeatherCard from "./WeatherCards";
+import { motion } from "motion/react";
+import { Sun, CloudRain, Snowflake, CloudSun, RefreshCw } from "lucide-react";
+import { Eyebrow, ErrorState, EmptyState, EASE } from "../lib/ui";
 
-export default function WeatherSection({ forecast, onRefresh, loading }) {
-  if (loading && !forecast) {
-    return <Box color="text-body-secondary" padding="l">Loading weather forecast...</Box>;
+function profileMeta(profile) {
+  switch (profile) {
+    case "hot_grill":
+      return { Icon: Sun, color: "#ff6a3d", label: "Grill weather" };
+    case "rain_comfort":
+      return { Icon: CloudRain, color: "#4aa3ff", label: "Rainy / comfort" };
+    case "cold_comfort":
+      return { Icon: Snowflake, color: "#8fd0ff", label: "Cold / comfort" };
+    default:
+      return { Icon: CloudSun, color: "#f0b429", label: "Mild" };
   }
-  if (!forecast) return null;
+}
+
+function WeatherDayCard({ day, index }) {
+  const { Icon, color, label } = profileMeta(day.profile);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.06, ease: EASE }}
+      className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-ink-2 p-5"
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="font-display text-lg font-semibold tracking-tight">{day.label}</div>
+          <div className="text-xs text-white/45">{day.date}</div>
+        </div>
+        <span
+          className="grid h-11 w-11 place-items-center rounded-xl"
+          style={{ background: `${color}1f`, color }}
+        >
+          <Icon size={22} strokeWidth={1.8} />
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <span className="rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: `${color}1a`, color }}>
+          {day.temp_high_f}°F high
+        </span>
+        <span className="rounded-full bg-white/8 px-2.5 py-1 text-xs text-white/65">
+          {day.rain_prob_pct}% rain
+        </span>
+      </div>
+
+      {day.weather && <p className="text-sm text-white/55">{day.weather}</p>}
+      {day.playbook_note && <p className="text-sm leading-relaxed text-white/80">{day.playbook_note}</p>}
+
+      {day.push_categories?.length > 0 && (
+        <div className="mt-auto border-t border-white/8 pt-3 text-xs text-white/60">
+          <span className="font-semibold text-leaf">Push:</span> {day.push_categories.join(", ")}
+          {day.skip_categories?.length > 0 && (
+            <span className="text-white/40"> · ease off: {day.skip_categories.join(", ")}</span>
+          )}
+        </div>
+      )}
+      <div className="text-[10px] uppercase tracking-wider text-white/30">{label}</div>
+    </motion.div>
+  );
+}
+
+export default function WeatherSection({ forecast, loading, error, onRefresh }) {
+  if (error) return <ErrorState message={error} onRetry={onRefresh} />;
+  if (loading && !forecast)
+    return (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="skeleton h-56" />
+        ))}
+      </div>
+    );
+  if (!forecast) return <EmptyState>No forecast loaded yet.</EmptyState>;
 
   const days = forecast.weather_days || [];
   const targets = forecast.targets || {};
@@ -19,44 +80,71 @@ export default function WeatherSection({ forecast, onRefresh, loading }) {
   const loc = forecast.location || {};
 
   return (
-    <SpaceBetween size="l">
-      <Container
-        header={
-          <Header
-            variant="h2"
-            description={`${loc.city || "Calhoun"}, ${loc.state || "GA"} · updated ${forecast.generated_at}`}
-            actions={<Button iconName="refresh" loading={loading} onClick={onRefresh}>Refresh</Button>}
-          >
-            Weather Forecast
-          </Header>
-        }
-      >
-        <ColumnLayout columns={3} variant="text-grid">
-          {days.map((day, i) => <WeatherCard key={i} day={day} />)}
-        </ColumnLayout>
-      </Container>
+    <section className="space-y-12">
+      <div>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <Eyebrow>Daily ops</Eyebrow>
+            <h2 className="mt-4 font-display text-4xl font-bold tracking-[-0.02em] sm:text-5xl">
+              The weekend playbook.
+            </h2>
+            <p className="mt-3 text-sm text-white/50">
+              {loc.city || "Calhoun"}, {loc.state || "GA"} · updated {forecast.generated_at}
+            </p>
+          </div>
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-medium text-white/75 transition hover:border-white/40 hover:text-white"
+            >
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh
+            </button>
+          )}
+        </div>
+
+        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {days.map((day, i) => (
+            <WeatherDayCard key={i} day={day} index={i} />
+          ))}
+        </div>
+      </div>
 
       {todayTargets && (
-        <Container
-          header={<Header variant="h2" description={targets.note || ""}>Today's Sales Targets</Header>}
-        >
-          <Table
-            items={todayTargets.categories || []}
-            columnDefinitions={[
-              { id: "cat", header: "Category", cell: (r) => <strong>{r.label}</strong> },
-              { id: "baseline", header: "Typical day", cell: (r) => `$${r.baseline.toLocaleString()}` },
-              { id: "target", header: "Today's target", cell: (r) => (
-                <Box color={r.target > r.baseline ? "text-status-success" : "text-status-warning"} fontWeight="bold">
-                  ${r.target.toLocaleString()}
-                </Box>
-              )},
-              { id: "why", header: "Why", cell: (r) => r.why },
-            ]}
-            variant="embedded"
-            stripedRows
-          />
-        </Container>
+        <div>
+          <h3 className="font-display text-2xl font-semibold tracking-tight">Today’s sales targets</h3>
+          {targets.note && <p className="mt-2 text-sm text-white/50">{targets.note}</p>}
+
+          <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-white/5 text-xs uppercase tracking-wider text-white/45">
+                <tr>
+                  <th className="px-5 py-3 font-semibold">Category</th>
+                  <th className="px-5 py-3 font-semibold">Typical day</th>
+                  <th className="px-5 py-3 font-semibold">Today’s target</th>
+                  <th className="px-5 py-3 font-semibold">Why</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(todayTargets.categories || []).map((r, i) => (
+                  <tr key={i} className="border-t border-white/8">
+                    <td className="px-5 py-3 font-medium text-white/90">{r.label}</td>
+                    <td className="px-5 py-3 text-white/55 tabular-nums">${r.baseline?.toLocaleString()}</td>
+                    <td
+                      className={
+                        "px-5 py-3 font-semibold tabular-nums " +
+                        (r.target > r.baseline ? "text-leaf" : "text-amber-400")
+                      }
+                    >
+                      ${r.target?.toLocaleString()}
+                    </td>
+                    <td className="px-5 py-3 text-white/55">{r.why}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
-    </SpaceBetween>
+    </section>
   );
 }
