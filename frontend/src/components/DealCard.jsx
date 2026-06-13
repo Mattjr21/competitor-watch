@@ -44,8 +44,21 @@ export default function DealCard({ d }) {
 
   return (
     <div className="flex h-full flex-col gap-2 rounded-2xl border border-white/10 bg-ink-2 p-4 transition-colors hover:border-white/25">
+      {d.image && (
+        <div className="mb-1 overflow-hidden rounded-xl border border-white/8 bg-white/5">
+          <img
+            src={d.image}
+            alt=""
+            loading="lazy"
+            className="aspect-[4/3] w-full object-cover"
+            onError={(e) => {
+              e.currentTarget.parentElement.style.display = "none";
+            }}
+          />
+        </div>
+      )}
       {d.merchant && (
-        <div className="truncate text-[11px] font-semibold uppercase tracking-wide text-white/45">
+        <div className="truncate text-[11px] font-semibold uppercase tracking-wide text-white/55">
           {d.merchant}
         </div>
       )}
@@ -68,7 +81,7 @@ export default function DealCard({ d }) {
         {displayPrice ? (
           <>
             <AnimatedPrice value={displayPrice} unit={d.unit} />
-            {condition && <div className="mt-0.5 text-[11px] text-white/45">{condition}</div>}
+            {condition && <div className="mt-0.5 text-[11px] text-white/55">{condition}</div>}
           </>
         ) : (
           <span className="text-xs text-white/50">{saleStory || "See ad"}</span>

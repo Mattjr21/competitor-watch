@@ -27,7 +27,7 @@ function WeatherDayCard({ day, index }) {
       <div className="flex items-center justify-between">
         <div>
           <div className="font-display text-lg font-semibold tracking-tight">{day.label}</div>
-          <div className="text-xs text-white/45">{day.date}</div>
+          <div className="text-xs text-white/55">{day.date}</div>
         </div>
         <span
           className="grid h-11 w-11 place-items-center rounded-xl"
@@ -114,7 +114,7 @@ export default function WeatherSection({ forecast, loading, error, onRefresh }) 
           <h3 className="font-display text-2xl font-semibold tracking-tight">Today’s sales targets</h3>
           {targets.note && <p className="mt-2 text-sm text-white/50">{targets.note}</p>}
 
-          <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
+          <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 md:block hidden">
             <table className="w-full text-left text-sm">
               <thead className="bg-white/5 text-xs uppercase tracking-wider text-white/45">
                 <tr>
@@ -142,6 +142,32 @@ export default function WeatherSection({ forecast, loading, error, onRefresh }) 
                 ))}
               </tbody>
             </table>
+          </div>
+
+          <div className="mt-6 space-y-3 md:hidden">
+            {(todayTargets.categories || []).map((r, i) => (
+              <div key={i} className="rounded-2xl border border-white/10 bg-ink-2 p-4">
+                <div className="font-medium text-white/90">{r.label}</div>
+                <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider text-white/55">Typical</div>
+                    <div className="tabular-nums text-white/70">${r.baseline?.toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider text-white/55">Target</div>
+                    <div
+                      className={
+                        "font-semibold tabular-nums " +
+                        (r.target > r.baseline ? "text-leaf" : "text-amber-400")
+                      }
+                    >
+                      ${r.target?.toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+                <p className="mt-3 text-xs leading-relaxed text-white/60">{r.why}</p>
+              </div>
+            ))}
           </div>
         </div>
       )}

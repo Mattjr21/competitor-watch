@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { RefreshCw, Sparkles } from "lucide-react";
-import AreaSelector from "./components/AreaSelector";
+import AreaSelector, { DEFAULT_LOCAL_ZIPS } from "./components/AreaSelector";
 import DealsSection from "./components/DealsSection";
 import WeatherSection from "./components/WeatherSection";
 import TrendingSection from "./components/TrendingSection";
+import InsightsSection from "./components/InsightsSection";
+import HeroBanner from "./components/HeroBanner";
+import { DemoModeBanner } from "./components/OutreachSection";
 import { LoadProgress } from "./lib/ui";
 
 const API = import.meta.env.VITE_API_URL || "";
@@ -12,6 +15,7 @@ const API = import.meta.env.VITE_API_URL || "";
 const TABS = [
   { id: "weather", label: "☀️ Daily Ops" },
   { id: "deals", label: "🏪 Deals" },
+  { id: "insights", label: "📊 Your Store" },
   { id: "trending", label: "📈 Trending" },
 ];
 
@@ -24,7 +28,7 @@ export default function App() {
   const [trendingLoading, setTrendingLoading] = useState(true);
   const [errors, setErrors] = useState({});
   const [activeTab, setActiveTab] = useState("weather");
-  const [activeZips, setActiveZips] = useState("");
+  const [activeZips, setActiveZips] = useState(DEFAULT_LOCAL_ZIPS);
 
   const setErr = (k, v) => setErrors((e) => ({ ...e, [k]: v }));
 
@@ -74,7 +78,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    Promise.all([fetchForecast(), fetchDeals(), fetchTrending()]);
+    Promise.all([fetchForecast(), fetchDeals(false, DEFAULT_LOCAL_ZIPS), fetchTrending()]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -88,6 +92,26 @@ export default function App() {
     fetchForecast(true);
     fetchTrending(true);
   };
+
+  const refreshCurrentTab = () => {
+    if (activeTab === "weather") fetchForecast(true);
+    else if (activeTab === "trending") fetchTrending(true);
+    else fetchDeals(true, activeZips);
+  };
+
+  const tabRefreshLabel = {
+    weather: "Refresh forecast",
+    deals: "Refresh deals",
+    insights: "Refresh data",
+    trending: "Refresh trends",
+  }[activeTab];
+
+  const tabRefreshLoading =
+    activeTab === "weather"
+      ? weatherLoading
+      : activeTab === "trending"
+        ? trendingLoading
+        : dealsLoading;
 
   const marketCount = dealsData?.zips?.length || 6;
   const headerDesc = dealsData
@@ -124,6 +148,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-ink text-white selection:bg-brand/30">
       <header className="sticky top-0 z-50 border-b border-white/10 bg-ink/80 backdrop-blur-xl">
+        <DemoModeBanner />
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-3">
             <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand text-ink">
@@ -136,13 +161,26 @@ export default function App() {
               <p className="text-xs text-white/50 sm:text-sm">{headerDesc}</p>
             </div>
           </div>
-          <button
-            onClick={refreshAll}
-            className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-brand hover:text-white"
-          >
-            <RefreshCw size={15} className={anyLoading ? "animate-spin" : ""} />
-            Refresh all
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={refreshCurrentTab}
+              disabled={tabRefreshLoading}
+              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-brand hover:text-white disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
+            >
+              <RefreshCw size={15} className={tabRefreshLoading ? "animate-spin" : ""} />
+              {tabRefreshLabel}
+            </button>
+            <button
+              type="button"
+              onClick={refreshAll}
+              disabled={anyLoading}
+              title="Re-scrapes competitor ads — can take up to 60 seconds"
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-3 py-2 text-xs font-medium text-white/65 transition hover:border-white/35 hover:text-white disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              Refresh all
+            </button>
+          </div>
         </div>
         {anyLoading && <LoadProgress steps={loadSteps} />}
       </header>
@@ -157,8 +195,8 @@ export default function App() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={
-                  "relative px-4 py-3 text-sm font-medium transition sm:px-5 " +
-                  (active ? "text-white" : "text-white/50 hover:text-white/80")
+                  "relative px-4 py-3 text-sm font-medium transition focus-visible:rounded-t focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset sm:px-5 " +
+                  (active ? "text-white" : "text-white/55 hover:text-white/85")
                 }
               >
                 {tab.label}
@@ -176,6 +214,9 @@ export default function App() {
         </div>
 
         <div className="pt-8">
+          {activeTab === "weather" && (
+            <HeroBanner location={forecast?.location} />
+          )}
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -210,6 +251,15 @@ export default function App() {
                     />
                   </div>
                 </>
+              )}
+              {activeTab === "insights" && (
+                <InsightsSection
+                  data={dealsData}
+                  loading={dealsLoading}
+                  error={errors.deals}
+                  onRefresh={() => fetchDeals(true, activeZips)}
+                  onUploadComplete={() => fetchDeals(false, activeZips)}
+                />
               )}
               {activeTab === "trending" && (
                 <TrendingSection

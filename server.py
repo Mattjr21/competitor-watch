@@ -24,6 +24,7 @@ import sales
 import weather
 import events as local_events
 import forecast
+import outreach
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PUBLIC = os.path.join(ROOT, "frontend/dist")
@@ -239,6 +240,181 @@ def gather_combos(cfg, zips, latino_list):
 def cheapest_priced(deals):
     priced = [d for d in deals if isinstance(d.get("price"), (int, float))]
     return priced[0] if priced else None
+
+
+def market_price_stats(deals):
+    """Low / median / high from priced competitor ads in a category."""
+    priced = sorted(
+        [float(d["price"]) for d in deals if isinstance(d.get("price"), (int, float))]
+    )
+    if not priced:
+        return None
+    mid = len(priced) // 2
+    median = priced[mid] if len(priced) % 2 else (priced[mid - 1] + priced[mid]) / 2
+    cheap = cheapest_priced(deals)
+    return {
+        "low": round(priced[0], 2),
+        "median": round(median, 2),
+        "high": round(priced[-1], 2),
+        "count": len(priced),
+        "cheapest_merchant": cheap["merchant"] if cheap else None,
+        "cheapest_deal": cheap["name"] if cheap else None,
+        "cheapest_unit": cheap.get("unit") if cheap else None,
+    }
+
+
+def build_price_comparison(cfg, deals_by_cat, facts):
+    """Compare La Bodega category averages to live competitor ad prices."""
+    own = facts.get("own_price_by_cat") or {}
+    rows = []
+    for cat in cfg["categories"]:
+        key = cat["key"]
+        stats = market_price_stats(deals_by_cat.get(key, []))
+        own_avg = own.get(key)
+        if own_avg is None and not stats:
+            continue
+
+        position = "no_data"
+        gap_pct = None
+        suggested = "Upload sales CSV to see your average price in this category."
+
+        if own_avg is not None and stats:
+            low = stats["low"]
+            gap_pct = round(100 * (own_avg - low) / low, 1) if low else None
+            if own_avg <= low * 1.03:
+                position = "competitive"
+                suggested = f"You are at or below the market floor (${low}). Hold price; promote availability."
+            elif own_avg <= stats["median"] * 1.05:
+                position = "mid_market"
+                suggested = (
+                    f"Near market median (${stats['median']}). Match weekend ads on {stats['cheapest_merchant']} "
+                    f"or bundle with high-margin add-ons."
+                )
+            else:
+                position = "above_market"
+                suggested = (
+                    f"Above market low by {gap_pct}%+. Consider a weekend-only promo near ${low} "
+                    f"or highlight quality/freshness vs {stats['cheapest_merchant']}."
+                )
+        elif stats and own_avg is None:
+            suggested = (
+                f"Market low ${stats['low']} at {stats['cheapest_merchant']}. "
+                "Upload sales data to compare your shelf price."
+            )
+        elif own_avg is not None and not stats:
+            suggested = "No competitor ads this week — you set the price."
+
+        rows.append(
+            {
+                "key": key,
+                "label": cat["label"],
+                "own_avg": own_avg,
+                "market": stats,
+                "position": position,
+                "gap_vs_low_pct": gap_pct,
+                "suggested_action": suggested,
+            }
+        )
+    return rows
+
+
+def build_segment_deal_suggestions(cfg, deals_by_cat, facts, recommendations):
+    """Tailor week vs weekend promos to customer segments from sales data."""
+    ca = facts.get("customer_analytics") or {}
+    attach = facts.get("attach_rates_pct") or {}
+    suggestions = {"weekday": [], "weekend": []}
+
+    wd = facts.get("weekday_rev_per_day") or 0
+    we = facts.get("weekend_rev_per_day") or 0
+    if wd and we and we > wd * 1.2:
+        suggestions["weekday"].append(
+            {
+                "segment": "All shoppers",
+                "title": "2× loyalty points Tue & Wed",
+                "reason": f"Weekdays earn ${wd:,.0f}/day vs ${we:,.0f} on weekends — pull trips midweek.",
+                "action": "Run double points on slow days; keep meat promos for Sat/Sun.",
+            }
+        )
+
+    for tier in ca.get("loyalty_tiers") or []:
+        if tier["key"] == "new":
+            suggestions["weekend"].append(
+                {
+                    "segment": tier["label"],
+                    "title": "Welcome bundle on first meat purchase",
+                    "reason": f"{tier['pct']}% of identified shoppers are one-time visitors.",
+                    "action": "Sat/Sun: free salsa or tortillas with first $40+ meat basket.",
+                }
+            )
+        elif tier["key"] in ("loyal", "champion"):
+            suggestions["weekday"].append(
+                {
+                    "segment": tier["label"],
+                    "title": "VIP early access on produce",
+                    "reason": f"{tier['count']} shoppers averaging ${tier['avg_spend']} lifetime spend.",
+                    "action": "Text Tue AM with fresh produce picks before weekend rush.",
+                }
+            )
+
+    for rhythm in ca.get("rhythm_segments") or []:
+        if rhythm["key"] == "weekend_primary":
+            suggestions["weekend"].append(
+                {
+                    "segment": rhythm["label"],
+                    "title": "Weekend taquiza pack",
+                    "reason": f"{rhythm['pct']}% of customers shop mostly Sat/Sun.",
+                    "action": "Bundle hero meat + tortillas + charcoal at one weekend price.",
+                }
+            )
+        elif rhythm["key"] == "weekday_primary":
+            suggestions["weekday"].append(
+                {
+                    "segment": rhythm["label"],
+                    "title": "Quick dinner attach",
+                    "reason": f"{rhythm['pct']}% prefer weekday trips — smaller baskets, less time.",
+                    "action": "Hot food + soda combo near checkout Mon–Thu.",
+                }
+            )
+
+    low_attach = sorted(
+        ((k, v) for k, v in attach.items() if k != "meat"),
+        key=lambda x: x[1],
+    )[:2]
+    for key, rate in low_attach:
+        cat = next((c for c in cfg["categories"] if c["key"] == key), None)
+        if not cat:
+            continue
+        cheap = cheapest_priced(deals_by_cat.get(key, []))
+        suggestions["weekend"].append(
+            {
+                "segment": "Meat shoppers",
+                "title": f"Stack {cat['label']} at the meat case",
+                "reason": f"Only {rate}% attach rate — room to grow baskets.",
+                "action": (
+                    f"Weekend endcap + bonus points. "
+                    + (
+                        f"Competitors advertising {cat['label'].lower()} at ${cheap['price']}."
+                        if cheap
+                        else "No competitor ad — easy impulse add-on."
+                    )
+                ),
+            }
+        )
+
+    for rec in recommendations or []:
+        tone = rec.get("tone")
+        bucket = "weekend" if tone in ("anchor", "attach", "protect") else "weekday"
+        suggestions[bucket].append(
+            {
+                "segment": rec.get("goal") or "Market-driven",
+                "title": rec.get("title"),
+                "reason": rec.get("plain") or rec.get("tag"),
+                "action": rec.get("body", "")[:220] + ("…" if len(rec.get("body", "")) > 220 else ""),
+                "from_recommendation": True,
+            }
+        )
+
+    return suggestions
 
 
 def gather_search(query, zips, latino_list, competitor_filter=None, latino_only=False, limit=50):
@@ -667,6 +843,8 @@ def build_payload(cfg, zips=None):
     facts = load_facts(cfg)
     recs = build_recommendations(cfg, deals_by_cat, combos, facts)
     week_signal = build_week_signal(deals_by_cat, combos)
+    price_comparison = build_price_comparison(cfg, deals_by_cat, facts)
+    segment_suggestions = build_segment_deal_suggestions(cfg, deals_by_cat, facts, recs)
     return {
         "store_name": cfg["store_name"],
         "primary_zip": cfg["primary_zip"],
@@ -682,6 +860,8 @@ def build_payload(cfg, zips=None):
         "week_signal": week_signal,
         "facts": facts,
         "data_source": facts.get("source_label", "default"),
+        "price_comparison": price_comparison,
+        "segment_suggestions": segment_suggestions,
         "search_hints": cfg.get("trending_terms", [])[:10],
     }
 
@@ -786,7 +966,13 @@ class Handler(BaseHTTPRequestHandler):
         try:
             fname = self.headers.get("X-Filename", "uploaded sales data")
             cfg = load_config()
-            facts = sales.analyze(raw, cfg["categories"], cfg.get("weather_categories"))
+            facts = sales.analyze(
+                raw,
+                cfg["categories"],
+                cfg.get("weather_categories"),
+                store_location=cfg.get("store_location"),
+                zip_centroids=cfg.get("zip_centroids"),
+            )
             label = f"{fname} ({facts['orders']:,} orders, ${facts['total_revenue']:,.0f})"
             save_facts(facts, label)
             print(f"[upload] {label}")
@@ -803,6 +989,23 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if not self._authed():
+            return
+
+        if route == "/api/meta":
+            try:
+                cfg = load_config()
+                self._send_json(outreach.build_meta(cfg))
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=500)
+            return
+
+        if route == "/api/outreach":
+            try:
+                cfg = load_config()
+                facts = load_facts(cfg)
+                self._send_json(outreach.build_outreach_payload(cfg, facts=facts))
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=500)
             return
 
         if route == "/api/forecast":

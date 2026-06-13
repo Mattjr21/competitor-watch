@@ -15,8 +15,6 @@ export default function CombosSection({ data }) {
     return rows;
   }, [combos, zipFilter, latinoOnly]);
 
-  if (!combos.length) return null;
-
   return (
     <section className="mb-14">
       <Eyebrow>Weekend packs</Eyebrow>
@@ -27,6 +25,14 @@ export default function CombosSection({ data }) {
         Bundle / multi-buy deals running near your ZIP codes — copy the ideas for Sat &amp; Sun
       </p>
 
+      {!combos.length ? (
+        <div className="mt-6">
+          <EmptyState>
+            No weekend pack deals near your markets this week. Check back after the next ad refresh.
+          </EmptyState>
+        </div>
+      ) : (
+        <>
       <div className="mt-6 flex flex-wrap items-center gap-4">
         <label className="flex items-center gap-2 text-sm text-white/60">
           <span>Area</span>
@@ -69,6 +75,8 @@ export default function CombosSection({ data }) {
             <DealCard key={`${deal.merchant}-${deal.name}-${i}`} d={{ ...deal, catLabel: "combo" }} />
           ))}
         </div>
+      )}
+        </>
       )}
     </section>
   );

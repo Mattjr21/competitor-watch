@@ -40,6 +40,20 @@
     "longitude": -84.9510,
     "timezone": "America/New_York"
   },
+  "zip_centroids": {
+    "30701": [34.5037, -84.9510],
+    "30705": [34.4865, -84.9378],
+    "30719": [34.8162, -85.0102],
+    "30720": [34.7698, -84.9702],
+    "30721": [34.8720, -84.8672],
+    "30722": [34.7748, -84.9702],
+    "30733": [34.4051, -85.0411],
+    "30734": [34.6112, -84.8788],
+    "30735": [34.5804, -84.9433],
+    "30746": [34.5176, -85.1060],
+    "30103": [34.3687, -84.9341],
+    "30139": [34.4226, -84.8752]
+  },
   "weather_categories": [
     {"key": "grocery", "label": "Grocery", "own_match": ["rice", "arroz", "beans", "frijol", "flour", "harina", "oil", "aceite", "pasta", "cereal", "canned", "maseca", "masa"]},
     {"key": "meat", "label": "Meat / Carne", "own_match": ["meat", "carne", "pollo", "chicken", "beef", "pork", "puerco", "res", "costilla", "chorizo", "bistec", "milanesa", "asada", "barbacoa", "carnitas"]},
@@ -165,5 +179,51 @@
     "hero_seller": "El Milagro Corn Tortillas",
     "hero_basket_avg": 52.18,
     "prepared_weekend_rev": 1711
+  },
+  "outreach": {
+    "channel": "whatsapp",
+    "crm_app_url": "https://wacrm-i9f2.vercel.app/login",
+    "demo_period": "Last 30 days (sample)",
+    "demo_language_mix": [
+      {"language": "Spanish", "pct": 68.0},
+      {"language": "English", "pct": 32.0}
+    ],
+    "demo_campaigns": [
+      {
+        "name": "Weekend carnitas promo",
+        "sent": 420,
+        "read_rate_pct": 74.0,
+        "reply_rate_pct": 12.0,
+        "visit_match_pct": 9.0,
+        "language": "Spanish"
+      },
+      {
+        "name": "Tuesday produce picks",
+        "sent": 310,
+        "read_rate_pct": 68.0,
+        "reply_rate_pct": 8.0,
+        "visit_match_pct": 5.0,
+        "language": "Spanish"
+      },
+      {
+        "name": "New loyalty welcome",
+        "sent": 280,
+        "read_rate_pct": 81.0,
+        "reply_rate_pct": 19.0,
+        "visit_match_pct": 11.0,
+        "language": "English"
+      },
+      {
+        "name": "Rainy-day comfort food",
+        "sent": 230,
+        "read_rate_pct": 65.0,
+        "reply_rate_pct": 6.0,
+        "visit_match_pct": 4.0,
+        "language": "Spanish"
+      }
+    ],
+    "supabase": {
+      "messages_table": "whatsapp_messages"
+    }
   }
 }

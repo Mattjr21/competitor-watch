@@ -114,7 +114,13 @@ export default function DealsSection({ data, loading, error, onRefresh }) {
 
   }, [deals, search, sortBy, catFilter, merchFilter, latinoOnly]);
 
-
+  const hasFilters = search || catFilter || merchFilter || latinoOnly;
+  const clearFilters = () => {
+    setSearch("");
+    setCatFilter("");
+    setMerchFilter("");
+    setLatinoOnly(false);
+  };
 
   if (error && !data) return <ErrorState message={error} onRetry={onRefresh} />;
 
@@ -214,7 +220,7 @@ export default function DealsSection({ data, loading, error, onRefresh }) {
 
             onChange={(e) => setSearch(e.target.value)}
 
-            className="w-52 rounded-full border border-white/15 bg-ink-2 py-2.5 pl-10 pr-9 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-white/40"
+            className="w-52 rounded-full border border-white/15 bg-ink-2 py-2.5 pl-10 pr-9 text-sm text-white placeholder:text-white/40 outline-none transition focus:border-white/40 focus-visible:ring-2 focus-visible:ring-brand"
 
           />
 
@@ -244,7 +250,7 @@ export default function DealsSection({ data, loading, error, onRefresh }) {
 
           onChange={(e) => setCatFilter(e.target.value)}
 
-          className="cursor-pointer rounded-full border border-white/15 bg-ink-2 px-4 py-2.5 text-sm text-white outline-none"
+          className="cursor-pointer rounded-full border border-white/15 bg-ink-2 px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-brand"
 
         >
 
@@ -270,7 +276,7 @@ export default function DealsSection({ data, loading, error, onRefresh }) {
 
           onChange={(e) => setMerchFilter(e.target.value)}
 
-          className="cursor-pointer rounded-full border border-white/15 bg-ink-2 px-4 py-2.5 text-sm text-white outline-none"
+          className="cursor-pointer rounded-full border border-white/15 bg-ink-2 px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-brand"
 
         >
 
@@ -296,7 +302,7 @@ export default function DealsSection({ data, loading, error, onRefresh }) {
 
           onChange={(e) => setSortBy(e.target.value)}
 
-          className="cursor-pointer rounded-full border border-white/15 bg-ink-2 px-4 py-2.5 text-sm text-white outline-none"
+          className="cursor-pointer rounded-full border border-white/15 bg-ink-2 px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-brand"
 
         >
 
@@ -355,21 +361,26 @@ export default function DealsSection({ data, loading, error, onRefresh }) {
 
 
       {grouped.length === 0 && (
-
         <div className="mt-10">
-
           <EmptyState>
-
-            {search || catFilter || merchFilter || latinoOnly
-
-              ? "No deals match these filters."
-
-              : "No deals available for this area."}
-
+            <div className="space-y-4">
+              <p>
+                {hasFilters
+                  ? "No deals match these filters."
+                  : "No deals available for this area."}
+              </p>
+              {hasFilters && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/80 transition hover:border-white/40 hover:text-white focus-visible:ring-2 focus-visible:ring-brand"
+                >
+                  Clear all filters
+                </button>
+              )}
+            </div>
           </EmptyState>
-
         </div>
-
       )}
 
 
