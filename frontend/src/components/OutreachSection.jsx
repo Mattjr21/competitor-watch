@@ -23,7 +23,7 @@ function RateTile({ label, value, suffix = "", hint, accent = "text-white" }) {
   );
 }
 
-export default function OutreachSection({ facts }) {
+export default function OutreachSection({ facts, compactDemo = false }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -65,34 +65,10 @@ export default function OutreachSection({ facts }) {
 
   const s = data.summary || {};
   const campaigns = data.campaigns || [];
+  const hideDetails = compactDemo || data.demo_mode;
 
   return (
     <div className="space-y-6">
-      {data.demo_mode && (
-        <div
-          role="status"
-          className="flex flex-wrap items-start gap-3 rounded-xl border border-sky-500/30 bg-sky-500/10 px-4 py-3 text-sm text-sky-100"
-        >
-          <Shield size={18} className="mt-0.5 shrink-0" />
-          <div>
-            <span className="font-semibold">Demo mode</span> — sample outreach totals for review.
-            {data.crm_app_url ? (
-              <>
-                {" "}
-                <a
-                  href={data.crm_app_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-semibold text-white underline underline-offset-2"
-                >
-                  Open production CRM <ExternalLink size={13} />
-                </a>
-              </>
-            ) : null}
-          </div>
-        </div>
-      )}
-
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-wider text-white/55">
@@ -102,14 +78,14 @@ export default function OutreachSection({ facts }) {
             <p className="mt-1 text-xs text-leaf">Live aggregates from Supabase</p>
           )}
         </div>
-        {data.crm_app_url && !data.demo_mode && (
+        {data.crm_app_url && (
           <a
             href={data.crm_app_url}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-sm text-white/70 underline-offset-2 hover:text-white hover:underline"
           >
-            Full CRM <ExternalLink size={14} />
+            Open production CRM <ExternalLink size={14} />
           </a>
         )}
       </div>
@@ -126,7 +102,7 @@ export default function OutreachSection({ facts }) {
         />
       </div>
 
-      {data.language_mix?.length > 0 && (
+      {data.language_mix?.length > 0 && !hideDetails && (
         <div className="rounded-2xl border border-white/10 bg-ink-2 p-6">
           <h4 className="text-sm font-semibold text-white/80">Campaign language mix</h4>
           <div className="mt-4 flex flex-wrap gap-4">
@@ -140,7 +116,7 @@ export default function OutreachSection({ facts }) {
         </div>
       )}
 
-      {campaigns.length > 0 && (
+      {campaigns.length > 0 && !hideDetails && (
         <div className="overflow-hidden rounded-2xl border border-white/10">
           <div className="border-b border-white/8 bg-white/5 px-4 py-3 sm:px-5">
             <h4 className="text-sm font-semibold text-white/80">Recent campaigns (aggregates)</h4>
@@ -174,10 +150,10 @@ export default function OutreachSection({ facts }) {
         </div>
       )}
 
-      {data.visit_match_note && (
+      {data.visit_match_note && !hideDetails && (
         <p className="text-xs leading-relaxed text-white/50">{data.visit_match_note}</p>
       )}
-      {data.privacy_note && (
+      {data.privacy_note && !hideDetails && (
         <p className="flex items-start gap-2 text-xs leading-relaxed text-white/45">
           <Shield size={14} className="mt-0.5 shrink-0" />
           {data.privacy_note}

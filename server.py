@@ -319,73 +319,90 @@ def build_price_comparison(cfg, deals_by_cat, facts):
 
 
 def build_segment_deal_suggestions(cfg, deals_by_cat, facts, recommendations):
-    """Tailor week vs weekend promos to customer segments from sales data."""
+    """Tailor week vs weekend promos — capped, deduped, segment-first."""
     ca = facts.get("customer_analytics") or {}
     attach = facts.get("attach_rates_pct") or {}
     suggestions = {"weekday": [], "weekend": []}
+    seen_titles = set()
+
+    def _title_key(title):
+        return (title or "").lower().strip()[:80]
+
+    def _add(bucket, item):
+        key = _title_key(item.get("title"))
+        if not key or key in seen_titles:
+            return
+        seen_titles.add(key)
+        suggestions[bucket].append(item)
 
     wd = facts.get("weekday_rev_per_day") or 0
     we = facts.get("weekend_rev_per_day") or 0
     if wd and we and we > wd * 1.2:
-        suggestions["weekday"].append(
+        _add(
+            "weekday",
             {
                 "segment": "All shoppers",
                 "title": "2× loyalty points Tue & Wed",
                 "reason": f"Weekdays earn ${wd:,.0f}/day vs ${we:,.0f} on weekends — pull trips midweek.",
                 "action": "Run double points on slow days; keep meat promos for Sat/Sun.",
-            }
+            },
         )
 
     for tier in ca.get("loyalty_tiers") or []:
         if tier["key"] == "new":
-            suggestions["weekend"].append(
+            _add(
+                "weekend",
                 {
                     "segment": tier["label"],
                     "title": "Welcome bundle on first meat purchase",
                     "reason": f"{tier['pct']}% of identified shoppers are one-time visitors.",
                     "action": "Sat/Sun: free salsa or tortillas with first $40+ meat basket.",
-                }
+                },
             )
         elif tier["key"] in ("loyal", "champion"):
-            suggestions["weekday"].append(
+            _add(
+                "weekday",
                 {
                     "segment": tier["label"],
                     "title": "VIP early access on produce",
                     "reason": f"{tier['count']} shoppers averaging ${tier['avg_spend']} lifetime spend.",
                     "action": "Text Tue AM with fresh produce picks before weekend rush.",
-                }
+                },
             )
 
     for rhythm in ca.get("rhythm_segments") or []:
         if rhythm["key"] == "weekend_primary":
-            suggestions["weekend"].append(
+            _add(
+                "weekend",
                 {
                     "segment": rhythm["label"],
                     "title": "Weekend taquiza pack",
                     "reason": f"{rhythm['pct']}% of customers shop mostly Sat/Sun.",
                     "action": "Bundle hero meat + tortillas + charcoal at one weekend price.",
-                }
+                },
             )
         elif rhythm["key"] == "weekday_primary":
-            suggestions["weekday"].append(
+            _add(
+                "weekday",
                 {
                     "segment": rhythm["label"],
                     "title": "Quick dinner attach",
                     "reason": f"{rhythm['pct']}% prefer weekday trips — smaller baskets, less time.",
                     "action": "Hot food + soda combo near checkout Mon–Thu.",
-                }
+                },
             )
 
     low_attach = sorted(
         ((k, v) for k, v in attach.items() if k != "meat"),
         key=lambda x: x[1],
-    )[:2]
+    )[:1]
     for key, rate in low_attach:
         cat = next((c for c in cfg["categories"] if c["key"] == key), None)
         if not cat:
             continue
         cheap = cheapest_priced(deals_by_cat.get(key, []))
-        suggestions["weekend"].append(
+        _add(
+            "weekend",
             {
                 "segment": "Meat shoppers",
                 "title": f"Stack {cat['label']} at the meat case",
@@ -398,21 +415,28 @@ def build_segment_deal_suggestions(cfg, deals_by_cat, facts, recommendations):
                         else "No competitor ad — easy impulse add-on."
                     )
                 ),
-            }
+            },
         )
 
+    # At most one market-driven card per bucket — skip if segment logic already filled it
     for rec in recommendations or []:
         tone = rec.get("tone")
         bucket = "weekend" if tone in ("anchor", "attach", "protect") else "weekday"
-        suggestions[bucket].append(
+        if len(suggestions[bucket]) >= 3:
+            continue
+        _add(
+            bucket,
             {
                 "segment": rec.get("goal") or "Market-driven",
                 "title": rec.get("title"),
                 "reason": rec.get("plain") or rec.get("tag"),
-                "action": rec.get("body", "")[:220] + ("…" if len(rec.get("body", "")) > 220 else ""),
+                "action": rec.get("body", "")[:180] + ("…" if len(rec.get("body", "")) > 180 else ""),
                 "from_recommendation": True,
-            }
+            },
         )
+
+    for bucket in suggestions:
+        suggestions[bucket] = suggestions[bucket][:3]
 
     return suggestions
 

@@ -7,17 +7,24 @@ import {
   Minus,
   Users,
   ShoppingBasket,
-  Calendar,
   Sparkles,
   RefreshCw,
   MapPin,
   MessageSquare,
+  Lock,
 } from "lucide-react";
 import { Eyebrow, CountUp, EmptyState, ErrorState, EASE } from "../lib/ui";
 import TradeAreaCard from "./TradeAreaCard";
 import OutreachSection from "./OutreachSection";
 
 const API = import.meta.env.VITE_API_URL || "";
+
+const INSIGHTS_NAV = [
+  { id: "insights-pricing", label: "Pricing" },
+  { id: "insights-outreach", label: "Outreach" },
+  { id: "insights-customers", label: "Customers" },
+  { id: "insights-ideas", label: "Ideas" },
+];
 
 function positionMeta(position) {
   switch (position) {
@@ -78,6 +85,35 @@ function StatCard({ label, value, suffix = "", hint }) {
   );
 }
 
+function UploadUnlock({ title, detail }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-white/15 bg-ink-2/50 px-6 py-10 text-center">
+      <Lock size={22} className="mx-auto text-white/35" />
+      <p className="mt-3 font-medium text-white/85">{title}</p>
+      <p className="mx-auto mt-2 max-w-md text-sm text-white/55">{detail}</p>
+    </div>
+  );
+}
+
+function InsightsSubNav() {
+  return (
+    <nav
+      aria-label="Your Store sections"
+      className="sticky top-[7.25rem] z-40 -mx-1 flex gap-1 overflow-x-auto border-b border-white/10 bg-ink/95 py-2 backdrop-blur-md"
+    >
+      {INSIGHTS_NAV.map((item) => (
+        <a
+          key={item.id}
+          href={`#${item.id}`}
+          className="shrink-0 rounded-full px-4 py-2 text-sm font-medium text-white/55 transition hover:bg-white/8 hover:text-white focus-visible:ring-2 focus-visible:ring-brand"
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+  );
+}
+
 export default function InsightsSection({ data, loading, error, onRefresh, onUploadComplete }) {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
@@ -91,6 +127,7 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
   const priceRows = data?.price_comparison || [];
   const suggestions = data?.segment_suggestions || { weekday: [], weekend: [] };
   const isSampleData = /default/i.test(data?.data_source || "");
+  const hasUploadedData = !isSampleData;
   const marketCount = data?.zips?.length || 0;
 
   const categoryLabels = useMemo(() => {
@@ -148,8 +185,8 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
               Price & customer intelligence
             </h2>
             <p className="mt-3 max-w-2xl text-sm text-white/60">
-              Upload your POS export to compare shelf prices against live competitor ads, analyze baskets,
-              and get week vs weekend deal ideas by customer segment.
+              Compare your shelf prices to live competitor ads, then layer in basket, customer, and
+              WhatsApp outreach insights.
             </p>
           </div>
           {onRefresh && (
@@ -164,25 +201,7 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
         </div>
       </div>
 
-      {isSampleData && (
-        <div
-          role="status"
-          className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
-        >
-          <span className="font-semibold">Demo mode</span> — basket and pricing figures are samples
-          until you upload your POS export below.
-        </div>
-      )}
-
-      {marketCount > 0 && (
-        <p className="text-xs text-white/55">
-          Competitor pricing based on {marketCount} market{marketCount !== 1 ? "s" : ""}
-          {data.generated_at ? ` · weekly ads updated ${data.generated_at}` : ""}. Change markets on
-          the Deals tab.
-        </p>
-      )}
-
-      {/* Upload */}
+      {/* Upload — always first */}
       <div className="rounded-2xl border border-dashed border-white/20 bg-ink-2/80 p-6 sm:p-8">
         <div className="flex flex-wrap items-start gap-6">
           <div className="grid h-12 w-12 place-items-center rounded-xl bg-brand/15 text-brand">
@@ -191,8 +210,8 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
           <div className="min-w-0 flex-1">
             <h3 className="font-display text-xl font-semibold">Upload sales CSV</h3>
             <p className="mt-1 text-sm text-white/60">
-              Use a standard order-line export from your POS. For loyalty and top-customer views,
-              include your in-store shopper ID. For trade-area reach, include ZIP or postal code.
+              Use a standard order-line export from your POS. Include shopper ID and ZIP for customer
+              and trade-area views.
               {data.data_source && (
                 <>
                   {" "}
@@ -218,183 +237,10 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
         </div>
       </div>
 
-      {/* Basket overview */}
-      <div>
-        <div className="mb-6 flex items-center gap-2">
-          <ShoppingBasket size={18} className="text-brand" />
-          <h3 className="font-display text-2xl font-semibold">Basket analysis</h3>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Avg basket" value={facts.avg_basket} suffix="" hint="All orders" />
-          <StatCard
-            label="With meat"
-            value={facts.meat_basket_avg}
-            hint={`vs $${facts.nonmeat_basket_avg} without meat`}
-          />
-          <StatCard label="Weekend basket" value={facts.weekend_avg_basket} hint="Sat & Sun trips" />
-          <StatCard label="Weekday basket" value={facts.weekday_avg_basket} hint="Mon–Fri trips" />
-        </div>
+      <InsightsSubNav />
 
-        {ca.basket_segments?.length > 0 && (
-          <div className="mt-6 rounded-2xl border border-white/10 bg-ink-2 p-6">
-            <h4 className="text-sm font-semibold text-white/80">Basket size mix</h4>
-            <div className="mt-4">
-              <SegmentBar items={ca.basket_segments} valueKey="pct" color="#ff6a3d" />
-            </div>
-          </div>
-        )}
-
-        {facts.attach_rates_pct && (
-          <div className="mt-6 rounded-2xl border border-white/10 bg-ink-2 p-6">
-            <h4 className="text-sm font-semibold text-white/80">Add-on attach rates (meat baskets)</h4>
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {Object.entries(facts.attach_rates_pct).map(([key, pct]) => (
-                <div key={key} className="rounded-xl border border-white/8 bg-white/4 px-3 py-2.5">
-                  <div className="text-[10px] uppercase tracking-wider text-white/55">
-                    {categoryLabels[key] || key}
-                  </div>
-                  <div className="font-display text-xl font-bold text-leaf">{pct}%</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Customer segments */}
-      <div>
-        <div className="mb-6 flex items-center gap-2">
-          <Users size={18} className="text-sky" />
-          <h3 className="font-display text-2xl font-semibold">Retention & loyalty</h3>
-        </div>
-
-        {!ca.has_customer_ids ? (
-          <div className="rounded-2xl border border-white/10 bg-ink-2 px-6 py-8 text-sm text-white/60">
-            Loyalty tiers, retention, and shopping rhythm views need a customer ID on each order in
-            your export — the same identifier you already use for rewards or receipts. Basket metrics
-            above are based on order totals only.
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <StatCard label="Unique customers" value={ca.unique_customers} />
-              <StatCard
-                label="Retention rate"
-                value={ca.retention_rate_pct}
-                suffix="%"
-                hint="Shoppers with 2+ visits"
-              />
-              <StatCard label="Orders linked" value={ca.orders_with_customer} hint="Orders with a shopper ID" />
-            </div>
-
-            <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-ink-2 p-6">
-                <h4 className="text-sm font-semibold text-white/80">Loyalty tiers</h4>
-                <div className="mt-4">
-                  <SegmentBar items={ca.loyalty_tiers} color="#34c759" />
-                </div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-ink-2 p-6">
-                <h4 className="text-sm font-semibold text-white/80">Spend segments</h4>
-                <div className="mt-4">
-                  <SegmentBar items={ca.segments} color="#4aa3ff" />
-                </div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-ink-2 p-6">
-                <h4 className="text-sm font-semibold text-white/80">Shopping rhythm</h4>
-                <div className="mt-4">
-                  <SegmentBar items={ca.rhythm_segments} color="#f0b429" />
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Top customers */}
-      <div>
-        <div className="mb-6 flex items-center gap-2">
-          <Users size={18} className="text-brand" />
-          <h3 className="font-display text-2xl font-semibold">Top customers</h3>
-        </div>
-
-        {topCustomers.length > 0 ? (
-          <div className="overflow-hidden rounded-2xl border border-white/10">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[520px] text-left text-sm">
-                <thead className="bg-white/5 text-[11px] uppercase tracking-wider text-white/55">
-                  <tr>
-                    <th className="px-4 py-3 font-semibold sm:px-5">Customer</th>
-                    <th className="px-4 py-3 font-semibold sm:px-5">Visits</th>
-                    <th className="px-4 py-3 font-semibold sm:px-5">Spend</th>
-                    <th className="px-4 py-3 font-semibold sm:px-5">Avg basket</th>
-                    <th className="px-4 py-3 font-semibold sm:px-5">Last visit</th>
-                    <th className="px-4 py-3 font-semibold sm:px-5">Segment</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {topCustomers.map((row, i) => (
-                    <tr key={i} className="border-t border-white/8">
-                      <td className="px-4 py-3 font-mono text-xs text-white/80 sm:px-5">{row.id_masked}</td>
-                      <td className="px-4 py-3 tabular-nums text-white/75 sm:px-5">{row.orders}</td>
-                      <td className="px-4 py-3 font-semibold tabular-nums text-white sm:px-5">
-                        ${row.spend?.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 tabular-nums text-white/75 sm:px-5">${row.avg_basket}</td>
-                      <td className="px-4 py-3 text-white/55 sm:px-5">{row.last_visit || "—"}</td>
-                      <td className="px-4 py-3 sm:px-5">
-                        <span className="rounded-full bg-white/8 px-2 py-0.5 text-[11px] font-semibold text-white/70">
-                          {row.tier}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="border-t border-white/8 px-4 py-2 text-[11px] text-white/45 sm:px-5">
-              IDs are masked for privacy · ranked by lifetime spend
-            </p>
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-white/10 bg-ink-2 px-6 py-8 text-sm text-white/60">
-            {ca.has_customer_ids
-              ? "No ranked customers yet for this period."
-              : "Top customer rankings need a shopper ID on each order in your POS export — the same loyalty or account number you use in-store."}
-          </div>
-        )}
-      </div>
-
-      {/* Trade area */}
-      <div>
-        <div className="mb-6 flex items-center gap-2">
-          <MapPin size={18} className="text-sky" />
-          <h3 className="font-display text-2xl font-semibold">Trade area</h3>
-        </div>
-
-        {tradeArea.has_zip_data ? (
-          <div className="rounded-2xl border border-white/10 bg-ink-2 p-6">
-            <TradeAreaCard tradeArea={tradeArea} />
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-white/10 bg-ink-2 px-6 py-8 text-sm text-white/60">
-            {tradeArea.note ||
-              "Include ZIP or postal codes in your sales export to see how far your shoppers travel."}
-          </div>
-        )}
-      </div>
-
-      {/* WhatsApp outreach — demo-safe aggregates */}
-      <div>
-        <div className="mb-6 flex items-center gap-2">
-          <MessageSquare size={18} className="text-leaf" />
-          <h3 className="font-display text-2xl font-semibold">WhatsApp outreach</h3>
-        </div>
-        <OutreachSection facts={facts} />
-      </div>
-
-      {/* Price comparison */}
-      <div>
+      {/* Pricing — above the fold */}
+      <div id="insights-pricing" className="scroll-mt-36">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div className="flex items-center gap-2">
             <TrendingUp size={18} className="text-leaf" />
@@ -403,7 +249,7 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
           {marketCount > 0 && (
             <p className="text-xs text-white/55">
               vs {marketCount} market{marketCount !== 1 ? "s" : ""}
-              {data.generated_at ? ` · ${data.generated_at}` : ""}
+              {data.generated_at ? ` · ${data.generated_at}` : ""} · change markets on Deals tab
             </p>
           )}
         </div>
@@ -462,49 +308,251 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
         )}
       </div>
 
-      {/* Segment deal suggestions */}
-      <div>
+      {/* Outreach */}
+      <div id="insights-outreach" className="scroll-mt-36">
         <div className="mb-6 flex items-center gap-2">
-          <Calendar size={18} className="text-brand" />
-          <h3 className="font-display text-2xl font-semibold">Suggested deals by segment</h3>
+          <MessageSquare size={18} className="text-leaf" />
+          <h3 className="font-display text-2xl font-semibold">WhatsApp outreach</h3>
+        </div>
+        <OutreachSection facts={facts} compactDemo={isSampleData} />
+      </div>
+
+      {/* Customers — basket, loyalty, top customers, trade area */}
+      <div id="insights-customers" className="scroll-mt-36 space-y-14">
+        <div>
+          <div className="mb-6 flex items-center gap-2">
+            <ShoppingBasket size={18} className="text-brand" />
+            <h3 className="font-display text-2xl font-semibold">Basket analysis</h3>
+          </div>
+          {!hasUploadedData ? (
+            <UploadUnlock
+              title="Upload POS data to unlock basket metrics"
+              detail="Avg basket, meat attach rates, and basket size mix appear after you upload your sales export."
+            />
+          ) : (
+            <>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <StatCard label="Avg basket" value={facts.avg_basket} hint="All orders" />
+                <StatCard
+                  label="With meat"
+                  value={facts.meat_basket_avg}
+                  hint={`vs $${facts.nonmeat_basket_avg} without meat`}
+                />
+                <StatCard label="Weekend basket" value={facts.weekend_avg_basket} hint="Sat & Sun trips" />
+                <StatCard label="Weekday basket" value={facts.weekday_avg_basket} hint="Mon–Fri trips" />
+              </div>
+              {ca.basket_segments?.length > 0 && (
+                <div className="mt-6 rounded-2xl border border-white/10 bg-ink-2 p-6">
+                  <h4 className="text-sm font-semibold text-white/80">Basket size mix</h4>
+                  <div className="mt-4">
+                    <SegmentBar items={ca.basket_segments} valueKey="pct" color="#ff6a3d" />
+                  </div>
+                </div>
+              )}
+              {facts.attach_rates_pct && (
+                <div className="mt-6 rounded-2xl border border-white/10 bg-ink-2 p-6">
+                  <h4 className="text-sm font-semibold text-white/80">Add-on attach rates (meat baskets)</h4>
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                    {Object.entries(facts.attach_rates_pct).map(([key, pct]) => (
+                      <div key={key} className="rounded-xl border border-white/8 bg-white/4 px-3 py-2.5">
+                        <div className="text-[10px] uppercase tracking-wider text-white/55">
+                          {categoryLabels[key] || key}
+                        </div>
+                        <div className="font-display text-xl font-bold text-leaf">{pct}%</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          {[
-            { key: "weekday", title: "Weekday promos", icon: "📅", items: suggestions.weekday },
-            { key: "weekend", title: "Weekend promos", icon: "🌮", items: suggestions.weekend },
-          ].map((block) => (
-            <div key={block.key}>
-              <h4 className="mb-4 font-display text-lg font-semibold">
-                {block.icon} {block.title}
-              </h4>
-              {block.items?.length ? (
-                <div className="space-y-3">
-                  {block.items.slice(0, 6).map((s, i) => (
-                    <div
-                      key={`${block.key}-${i}`}
-                      className="rounded-2xl border border-white/10 bg-ink-2 p-4"
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/55">
-                          {s.segment}
-                        </span>
-                        {s.from_recommendation && (
-                          <Sparkles size={12} className="text-brand" aria-label="Market-driven" />
-                        )}
-                      </div>
-                      <div className="mt-2 font-medium text-white/90">{s.title}</div>
-                      <p className="mt-1 text-xs text-white/55">{s.reason}</p>
-                      <p className="mt-2 text-sm leading-relaxed text-white/70">{s.action}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState>No {block.key} suggestions yet — upload sales data.</EmptyState>
-              )}
+        <div>
+          <div className="mb-6 flex items-center gap-2">
+            <Users size={18} className="text-sky" />
+            <h3 className="font-display text-2xl font-semibold">Retention & loyalty</h3>
+          </div>
+          {!hasUploadedData ? (
+            <UploadUnlock
+              title="Upload POS data to unlock loyalty segments"
+              detail="Include a shopper ID on each order to see retention, tiers, and shopping rhythm."
+            />
+          ) : !ca.has_customer_ids ? (
+            <div className="rounded-2xl border border-white/10 bg-ink-2 px-6 py-8 text-sm text-white/60">
+              Loyalty tiers, retention, and shopping rhythm need a shopper ID on each order in your
+              export — the same identifier you use for rewards or receipts.
             </div>
-          ))}
+          ) : (
+            <>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <StatCard label="Unique customers" value={ca.unique_customers} />
+                <StatCard
+                  label="Retention rate"
+                  value={ca.retention_rate_pct}
+                  suffix="%"
+                  hint="Shoppers with 2+ visits"
+                />
+                <StatCard
+                  label="Orders linked"
+                  value={ca.orders_with_customer}
+                  hint="Orders with a shopper ID"
+                />
+              </div>
+              <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <div className="rounded-2xl border border-white/10 bg-ink-2 p-6">
+                  <h4 className="text-sm font-semibold text-white/80">Loyalty tiers</h4>
+                  <div className="mt-4">
+                    <SegmentBar items={ca.loyalty_tiers} color="#34c759" />
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-ink-2 p-6">
+                  <h4 className="text-sm font-semibold text-white/80">Spend segments</h4>
+                  <div className="mt-4">
+                    <SegmentBar items={ca.segments} color="#4aa3ff" />
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-ink-2 p-6">
+                  <h4 className="text-sm font-semibold text-white/80">Shopping rhythm</h4>
+                  <div className="mt-4">
+                    <SegmentBar items={ca.rhythm_segments} color="#f0b429" />
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
+
+        <div>
+          <div className="mb-6 flex items-center gap-2">
+            <Users size={18} className="text-brand" />
+            <h3 className="font-display text-2xl font-semibold">Top customers</h3>
+          </div>
+          {!hasUploadedData ? (
+            <UploadUnlock
+              title="Upload POS data to unlock top customers"
+              detail="Ranked shoppers appear after upload. IDs are always masked for privacy."
+            />
+          ) : topCustomers.length > 0 ? (
+            <div className="overflow-hidden rounded-2xl border border-white/10">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[520px] text-left text-sm">
+                  <thead className="bg-white/5 text-[11px] uppercase tracking-wider text-white/55">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold sm:px-5">Customer</th>
+                      <th className="px-4 py-3 font-semibold sm:px-5">Visits</th>
+                      <th className="px-4 py-3 font-semibold sm:px-5">Spend</th>
+                      <th className="px-4 py-3 font-semibold sm:px-5">Avg basket</th>
+                      <th className="px-4 py-3 font-semibold sm:px-5">Last visit</th>
+                      <th className="px-4 py-3 font-semibold sm:px-5">Segment</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {topCustomers.map((row, i) => (
+                      <tr key={i} className="border-t border-white/8">
+                        <td className="px-4 py-3 font-mono text-xs text-white/80 sm:px-5">{row.id_masked}</td>
+                        <td className="px-4 py-3 tabular-nums text-white/75 sm:px-5">{row.orders}</td>
+                        <td className="px-4 py-3 font-semibold tabular-nums text-white sm:px-5">
+                          ${row.spend?.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 tabular-nums text-white/75 sm:px-5">${row.avg_basket}</td>
+                        <td className="px-4 py-3 text-white/55 sm:px-5">{row.last_visit || "—"}</td>
+                        <td className="px-4 py-3 sm:px-5">
+                          <span className="rounded-full bg-white/8 px-2 py-0.5 text-[11px] font-semibold text-white/70">
+                            {row.tier}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="border-t border-white/8 px-4 py-2 text-[11px] text-white/45 sm:px-5">
+                IDs are masked for privacy · ranked by lifetime spend
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-white/10 bg-ink-2 px-6 py-8 text-sm text-white/60">
+              {ca.has_customer_ids
+                ? "No ranked customers yet for this period."
+                : "Top customer rankings need a shopper ID on each order in your POS export."}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <div className="mb-6 flex items-center gap-2">
+            <MapPin size={18} className="text-sky" />
+            <h3 className="font-display text-2xl font-semibold">Trade area</h3>
+          </div>
+          {!hasUploadedData ? (
+            <UploadUnlock
+              title="Upload POS data to unlock trade area"
+              detail="Include ZIP or postal codes in your export to see reach and top ZIP codes."
+            />
+          ) : tradeArea.has_zip_data ? (
+            <div className="rounded-2xl border border-white/10 bg-ink-2 p-6">
+              <TradeAreaCard tradeArea={tradeArea} />
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-white/10 bg-ink-2 px-6 py-8 text-sm text-white/60">
+              {tradeArea.note ||
+                "Include ZIP or postal codes in your sales export to see how far your shoppers travel."}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Promo ideas */}
+      <div id="insights-ideas" className="scroll-mt-36">
+        <div className="mb-6 flex items-center gap-2">
+          <Sparkles size={18} className="text-brand" />
+          <h3 className="font-display text-2xl font-semibold">This week&apos;s promo ideas</h3>
+        </div>
+
+        {!hasUploadedData ? (
+          <UploadUnlock
+            title="Upload POS data to unlock promo ideas"
+            detail="Ideas combine your sales patterns with live competitor ads — upload first for tailored suggestions."
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            {[
+              { key: "weekday", title: "Weekday promos", icon: "📅", items: suggestions.weekday },
+              { key: "weekend", title: "Weekend promos", icon: "🌮", items: suggestions.weekend },
+            ].map((block) => (
+              <div key={block.key}>
+                <h4 className="mb-4 font-display text-lg font-semibold">
+                  {block.icon} {block.title}
+                </h4>
+                {block.items?.length ? (
+                  <div className="space-y-3">
+                    {block.items.slice(0, 3).map((s, i) => (
+                      <div
+                        key={`${block.key}-${i}`}
+                        className="rounded-2xl border border-white/10 bg-ink-2 p-4"
+                      >
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/55">
+                            {s.segment}
+                          </span>
+                          {s.from_recommendation && (
+                            <Sparkles size={12} className="text-brand" aria-label="Market-driven" />
+                          )}
+                        </div>
+                        <div className="mt-2 font-medium text-white/90">{s.title}</div>
+                        <p className="mt-1 text-xs text-white/55">{s.reason}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-white/70">{s.action}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState>No {block.key} ideas yet.</EmptyState>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
