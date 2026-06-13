@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 import { EASE } from "../lib/ui";
 
-const HERO_SRC = "/hero-la-bodega.png";
+const HERO_SRC = "/hero-la-bodega.png?v=6";
 
 export default function HeroBanner({ location }) {
   const city = location?.city || "Calhoun";
