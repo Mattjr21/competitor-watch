@@ -151,14 +151,57 @@ def clean_item(raw, latino_list=None, zip_code=""):
     }
 
 
+MEAT_AD_NOISE = (
+    "hungry-man",
+    "salisbury",
+    "banquet ",
+    "marie callender",
+    "tv dinner",
+    "hot pocket",
+    "dog food",
+    "cat food",
+    "pet food",
+    "breaded",
+    "battered",
+    " nugget",
+    "popcorn chicken",
+    "chicken patty",
+    "chicken burger",
+    "chicken sausage",
+    "piece baked",
+    "rotisserie",
+    "fully cooked",
+    "precooked",
+    "pre-cooked",
+    " beef patty",
+    " beef burger",
+    " beef slider",
+    "frozen patty",
+    "frozen patties",
+    "marinated pork",
+    "marinated filet",
+    "breakfast sausage",
+    "smoked sausage",
+    " bacon",
+)
+
+
+def _is_meat_ad_noise(name):
+    n = (name or "").lower()
+    return any(bad in n for bad in MEAT_AD_NOISE)
+
+
 def gather_category(cat, zips, competitor_filter, latino_list):
     """Aggregate, dedupe and sort deals for one category across all ZIPs."""
     seen = set()
     out = []
+    filter_meat_noise = cat.get("key") == "meat"
     for term in cat["terms"]:
         for z in zips:
             for raw in flipp_search(term, z):
                 item = clean_item(raw, latino_list, z)
+                if filter_meat_noise and _is_meat_ad_noise(item["name"]):
+                    continue
                 if competitor_filter and item["merchant"] not in competitor_filter:
                     continue
                 if item["price"] is None and not item["sale_story"]:

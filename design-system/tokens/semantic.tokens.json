@@ -1,0 +1,77 @@
+{
+  "surface": {
+    "page": { "$type": "color", "$value": "{color.ink.DEFAULT}" },
+    "panel": { "$type": "color", "$value": "rgba(17,22,29,0.60)", "$description": "PANEL bg-ink-2/60" },
+    "panelMuted": { "$type": "color", "$value": "rgba(17,22,29,0.40)", "$description": "PANEL_MUTED" },
+    "inset": { "$type": "color", "$value": "rgba(255,255,255,0.04)", "$description": "PANEL_INSET" }
+  },
+  "text": {
+    "heading": { "$type": "color", "$value": "{color.text.DEFAULT}" },
+    "body": { "$type": "color", "$value": "{color.text.muted}" },
+    "label": { "$type": "color", "$value": "{color.text.subtle}" },
+    "price": { "$type": "color", "$value": "{color.leaf}" },
+    "link": { "$type": "color", "$value": "{color.sky}" }
+  },
+  "action": {
+    "primaryBg": { "$type": "color", "$value": "#ffffff", "$description": "BTN_PRIMARY background" },
+    "primaryText": { "$type": "color", "$value": "{color.ink.DEFAULT}" },
+    "primaryHoverBg": { "$type": "color", "$value": "{color.brand}" },
+    "ghostBorder": { "$type": "color", "$value": "{color.border.strong}" },
+    "ghostText": { "$type": "color", "$value": "rgba(255,255,255,0.80)" },
+    "focusRing": { "$type": "color", "$value": "{color.brand}" }
+  },
+  "typography": {
+    "pageTitle": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.display}",
+        "fontWeight": "{font.weight.bold}",
+        "fontSize": "{font.size.4xl}",
+        "lineHeight": "1.1",
+        "letterSpacing": "-0.02em"
+      },
+      "$description": "PAGE_TITLE · PageHeader"
+    },
+    "sectionTitle": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.display}",
+        "fontWeight": "{font.weight.semibold}",
+        "fontSize": "{font.size.2xl}",
+        "lineHeight": "1.2"
+      },
+      "$description": "SECTION_TITLE · SectionHeader"
+    },
+    "eyebrow": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontWeight": "{font.weight.semibold}",
+        "fontSize": "{font.size.xs}",
+        "lineHeight": "1.4",
+        "letterSpacing": "{font.letterSpacing.eyebrow}",
+        "textCase": "uppercase"
+      },
+      "$description": "Eyebrow component"
+    },
+    "labelCaps": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{font.family.sans}",
+        "fontWeight": "{font.weight.semibold}",
+        "fontSize": "11px",
+        "lineHeight": "1.4",
+        "letterSpacing": "{font.letterSpacing.caps}",
+        "textCase": "uppercase"
+      },
+      "$description": "TABLE_HEAD · FILTER_LABEL (proposed unified token)"
+    }
+  },
+  "spacing": {
+    "sectionGap": { "$type": "dimension", "$value": "48px", "$description": "TAB_SECTION_SPACE base" },
+    "sectionGapLg": { "$type": "dimension", "$value": "56px", "$description": "TAB_SECTION_SPACE sm+" },
+    "panelPadding": { "$type": "dimension", "$value": "16px" },
+    "panelPaddingSm": { "$type": "dimension", "$value": "20px" },
+    "panelPaddingLg": { "$type": "dimension", "$value": "24px" }
+  }
+}

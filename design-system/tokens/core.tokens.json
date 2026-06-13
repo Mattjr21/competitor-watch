@@ -1,0 +1,248 @@
+{
+  "color": {
+    "ink": {
+      "2": {
+        "$type": "color",
+        "$value": "#11161d",
+        "$description": "Panel / elevated surface"
+      },
+      "3": {
+        "$type": "color",
+        "$value": "#1a212b",
+        "$description": "Skeleton / subtle fill"
+      },
+      "DEFAULT": {
+        "$type": "color",
+        "$value": "#080b0f",
+        "$description": "App background"
+      }
+    },
+    "brand": {
+      "$type": "color",
+      "$value": "#ff6a3d",
+      "$description": "Primary accent · CTAs · focus ring"
+    },
+    "leaf": {
+      "$type": "color",
+      "$value": "#34c759",
+      "$description": "Prices · success · fresh cut"
+    },
+    "sky": {
+      "$type": "color",
+      "$value": "#4aa3ff",
+      "$description": "Links · secondary accent"
+    },
+    "text": {
+      "DEFAULT": {
+        "$type": "color",
+        "$value": "#f4f6f8",
+        "$description": "Body text on ink"
+      },
+      "muted": {
+        "$type": "color",
+        "$value": "rgba(255,255,255,0.65)"
+      },
+      "subtle": {
+        "$type": "color",
+        "$value": "rgba(255,255,255,0.55)"
+      },
+      "faint": {
+        "$type": "color",
+        "$value": "rgba(255,255,255,0.45)"
+      }
+    },
+    "border": {
+      "DEFAULT": {
+        "$type": "color",
+        "$value": "rgba(255,255,255,0.10)"
+      },
+      "strong": {
+        "$type": "color",
+        "$value": "rgba(255,255,255,0.15)"
+      },
+      "subtle": {
+        "$type": "color",
+        "$value": "rgba(255,255,255,0.08)"
+      }
+    },
+    "status": {
+      "amber": {
+        "$type": "color",
+        "$value": "#fbbf24",
+        "$description": "Week signal · spread badge"
+      },
+      "red": {
+        "$type": "color",
+        "$value": "#f87171",
+        "$description": "Error states"
+      }
+    }
+  },
+  "font": {
+    "family": {
+      "sans": {
+        "$type": "fontFamily",
+        "$value": "Inter\", ui-sans-serif, system-ui, sans-serif"
+      },
+      "display": {
+        "$type": "fontFamily",
+        "$value": "Space Grotesk\", \"Inter\", sans-serif"
+      }
+    },
+    "weight": {
+      "regular": {
+        "$type": "fontWeight",
+        "$value": "400"
+      },
+      "medium": {
+        "$type": "fontWeight",
+        "$value": "500"
+      },
+      "semibold": {
+        "$type": "fontWeight",
+        "$value": "600"
+      },
+      "bold": {
+        "$type": "fontWeight",
+        "$value": "700"
+      }
+    },
+    "size": {
+      "xs": {
+        "$type": "dimension",
+        "$value": "12px"
+      },
+      "sm": {
+        "$type": "dimension",
+        "$value": "14px"
+      },
+      "base": {
+        "$type": "dimension",
+        "$value": "16px"
+      },
+      "lg": {
+        "$type": "dimension",
+        "$value": "18px"
+      },
+      "xl": {
+        "$type": "dimension",
+        "$value": "20px"
+      },
+      "2xl": {
+        "$type": "dimension",
+        "$value": "24px"
+      },
+      "3xl": {
+        "$type": "dimension",
+        "$value": "30px"
+      },
+      "4xl": {
+        "$type": "dimension",
+        "$value": "36px"
+      },
+      "5xl": {
+        "$type": "dimension",
+        "$value": "48px"
+      }
+    },
+    "letterSpacing": {
+      "eyebrow": {
+        "$type": "letterSpacing",
+        "$value": "0.22em"
+      },
+      "caps": {
+        "$type": "letterSpacing",
+        "$value": "0.05em"
+      }
+    }
+  },
+  "radius": {
+    "sm": {
+      "$type": "borderRadius",
+      "$value": "8px"
+    },
+    "md": {
+      "$type": "borderRadius",
+      "$value": "12px"
+    },
+    "lg": {
+      "$type": "borderRadius",
+      "$value": "16px"
+    },
+    "xl": {
+      "$type": "borderRadius",
+      "$value": "24px"
+    },
+    "full": {
+      "$type": "borderRadius",
+      "$value": "9999px"
+    }
+  },
+  "spacing": {
+    "1": {
+      "$type": "dimension",
+      "$value": "4px"
+    },
+    "2": {
+      "$type": "dimension",
+      "$value": "8px"
+    },
+    "3": {
+      "$type": "dimension",
+      "$value": "12px"
+    },
+    "4": {
+      "$type": "dimension",
+      "$value": "16px"
+    },
+    "5": {
+      "$type": "dimension",
+      "$value": "20px"
+    },
+    "6": {
+      "$type": "dimension",
+      "$value": "24px"
+    },
+    "8": {
+      "$type": "dimension",
+      "$value": "32px"
+    },
+    "12": {
+      "$type": "dimension",
+      "$value": "48px"
+    },
+    "14": {
+      "$type": "dimension",
+      "$value": "56px"
+    },
+    "gutter": {
+      "$type": "dimension",
+      "$value": "clamp(1rem, 3.5vw, 1.5rem)",
+      "$description": "--app-gutter"
+    },
+    "panel": {
+      "$type": "dimension",
+      "$value": "clamp(1rem, 2.5vw, 1.5rem)",
+      "$description": "--app-panel"
+    }
+  },
+  "layout": {
+    "shellMaxWidth": {
+      "$type": "dimension",
+      "$value": "80rem",
+      "$description": "max-w-7xl / .app-shell"
+    },
+    "touchTarget": {
+      "$type": "dimension",
+      "$value": "44px",
+      "$description": "Minimum tap target"
+    },
+    "toolbarHeight": {
+      "$type": "dimension",
+      "$value": "44px",
+      "$description": ".toolbar-control height"
+    }
+  },
+  "$exportedAt": "2026-06-13T05:01:08.267Z",
+  "$source": "frontend/src/index.css @theme"
+}

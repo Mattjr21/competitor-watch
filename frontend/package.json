@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tokens:export": "node ../design-system/scripts/export-tokens.mjs",
+    "tokens:import": "node ../design-system/scripts/import-tokens.mjs",
+    "tokens:check": "node ../design-system/scripts/check-sync.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.1",

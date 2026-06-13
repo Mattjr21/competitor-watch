@@ -2,9 +2,11 @@ import { useId, useMemo, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { Search, X, RefreshCw, Download } from "lucide-react";
 import DealCard from "./DealCard";
+import BestDealsPanel from "./BestDealsPanel";
 import CombosSection from "./CombosSection";
 import { customZipsFromCsv } from "./AreaSelector";
 import { exportDealsCsv } from "../lib/export";
+import { computeCategoryWinners } from "../lib/dealWinners";
 import { Eyebrow, CardSkeletonGrid, ErrorState, EmptyState, EASE } from "../lib/ui";
 import {
   PANEL,
@@ -81,12 +83,13 @@ function DealGrid({ deals, compact = false, showMerchant = true, reduceMotion = 
 
 export default function DealsSection({ data, loading, error, onRefresh }) {
   const reduceMotion = useReducedMotion();
+  const bestPanelId = useId();
   const dealsPanelId = useId();
   const combosPanelId = useId();
   const resultsLiveId = useId();
   const latinoFilterId = useId();
 
-  const [dealsView, setDealsView] = useState("all");
+  const [dealsView, setDealsView] = useState("best");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("merchant");
   const [catFilter, setCatFilter] = useState("");
@@ -116,6 +119,11 @@ export default function DealsSection({ data, loading, error, onRefresh }) {
     [filteredDeals, sortBy]
   );
 
+  const categoryWinners = useMemo(
+    () => computeCategoryWinners(data?.deals_by_category, data?.categories || []),
+    [data]
+  );
+
   const hasFilters = search || catFilter || merchFilter || latinoOnly;
   const useFlatGrid = hasFilters && filteredDeals.length <= FLAT_RESULT_LIMIT;
   const comboCount = data?.combos?.length || 0;
@@ -141,6 +149,14 @@ export default function DealsSection({ data, loading, error, onRefresh }) {
     setSearch("");
     setCatFilter("");
     setMerchFilter("");
+    setLatinoOnly(false);
+  };
+
+  const viewDealInStore = (merchant, catKey = "", searchHint = "") => {
+    setDealsView("all");
+    setMerchFilter(merchant || "");
+    setCatFilter(catKey || "");
+    setSearch(searchHint || "");
     setLatinoOnly(false);
   };
 
@@ -193,10 +209,12 @@ export default function DealsSection({ data, loading, error, onRefresh }) {
       <div className="mt-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-white/10">
         <div role="tablist" aria-label="Deal views" className="-mb-px flex gap-0.5">
           {[
-            { id: "all", label: "Deals by store", count: deals.length, panelId: dealsPanelId },
-            { id: "combos", label: "Combo packs", count: comboCount, panelId: combosPanelId },
+            { id: "best", label: "Best near you", count: categoryWinners.length, countSuffix: "winners", panelId: bestPanelId },
+            { id: "all", label: "Deals by store", count: deals.length, countSuffix: "deals", panelId: dealsPanelId },
+            { id: "combos", label: "Combo packs", count: comboCount, countSuffix: "packs", panelId: combosPanelId },
           ].map((tab) => {
             const active = dealsView === tab.id;
+            const tabIcon = tab.id === "best" ? "🔥 " : tab.id === "all" ? "🏷️ " : "🎁 ";
             return (
               <button
                 key={tab.id}
@@ -211,14 +229,16 @@ export default function DealsSection({ data, loading, error, onRefresh }) {
                   (active ? "text-white" : "text-white/55 hover:text-white/85")
                 }
               >
-                {tab.id === "all" ? "🏷️ " : "🎁 "}
+                {tabIcon}
                 {tab.label}
                 {tab.count > 0 && (
                   <span className="ml-1 text-white/50" aria-hidden>
-                    ({tab.count})
+                    ({tab.count} {tab.countSuffix})
                   </span>
                 )}
-                <span className="sr-only">{tab.count} items</span>
+                <span className="sr-only">
+                  {tab.count} {tab.countSuffix}
+                </span>
                 {active && !reduceMotion && (
                   <motion.span
                     layoutId="deals-subtab"
@@ -233,6 +253,12 @@ export default function DealsSection({ data, loading, error, onRefresh }) {
             );
           })}
         </div>
+        {dealsView === "best" && (
+          <p className="pb-3 text-xs text-white/50 sm:text-sm" aria-hidden>
+            {categoryWinners.length} winner{categoryWinners.length !== 1 ? "s" : ""} · {grouped.length} stores
+            {data.generated_at && <span className="text-white/40"> · {data.generated_at}</span>}
+          </p>
+        )}
         {dealsView === "all" && (
           <p className="pb-3 text-xs text-white/50 sm:text-sm" aria-hidden>
             {filteredDeals.length} deals · {grouped.length} stores
@@ -241,7 +267,22 @@ export default function DealsSection({ data, loading, error, onRefresh }) {
         )}
       </div>
 
-      {dealsView === "combos" ? (
+      {dealsView === "best" ? (
+        <div
+          id={bestPanelId}
+          role="tabpanel"
+          aria-labelledby="tab-best"
+          aria-live="polite"
+          className="mt-6"
+        >
+          <BestDealsPanel
+            data={data}
+            onViewDeal={viewDealInStore}
+            onBrowseByStore={() => setDealsView("all")}
+            reduceMotion={reduceMotion}
+          />
+        </div>
+      ) : dealsView === "combos" ? (
         <div
           id={combosPanelId}
           role="tabpanel"

@@ -1,0 +1,64 @@
+{
+  "panel": {
+    "radius": { "$type": "borderRadius", "$value": "{radius.xl}" },
+    "border": { "$type": "color", "$value": "{color.border.DEFAULT}" },
+    "padding": { "$type": "dimension", "$value": "{spacing.panelPadding}" },
+    "paddingSm": { "$type": "dimension", "$value": "{spacing.panelPaddingSm}" },
+    "paddingLg": { "$type": "dimension", "$value": "{spacing.panelPaddingLg}" }
+  },
+  "button": {
+    "primary": {
+      "height": { "$type": "dimension", "$value": "{layout.touchTarget}" },
+      "radius": { "$type": "borderRadius", "$value": "{radius.full}" },
+      "paddingX": { "$type": "dimension", "$value": "20px" },
+      "paddingY": { "$type": "dimension", "$value": "10px" }
+    },
+    "ghost": {
+      "height": { "$type": "dimension", "$value": "{layout.touchTarget}" },
+      "radius": { "$type": "borderRadius", "$value": "{radius.full}" },
+      "border": { "$type": "color", "$value": "{action.ghostBorder}" }
+    },
+    "toolbar": {
+      "height": { "$type": "dimension", "$value": "{layout.toolbarHeight}" },
+      "radius": { "$type": "borderRadius", "$value": "{radius.full}" },
+      "border": { "$type": "color", "$value": "{color.border.strong}" }
+    }
+  },
+  "tab": {
+    "underline": {
+      "height": { "$type": "dimension", "$value": "2px" },
+      "activeColor": { "$type": "color", "$value": "{color.brand}" },
+      "inactiveText": { "$type": "color", "$value": "{color.text.subtle}" }
+    },
+    "pill": {
+      "radius": { "$type": "borderRadius", "$value": "{radius.full}" },
+      "activeBg": { "$type": "color", "$value": "{color.brand}" },
+      "inactiveBorder": { "$type": "color", "$value": "{color.border.DEFAULT}" }
+    }
+  },
+  "badge": {
+    "sample": {
+      "radius": { "$type": "borderRadius", "$value": "{radius.full}" },
+      "border": { "$type": "color", "$value": "rgba(255,255,255,0.12)" },
+      "bg": { "$type": "color", "$value": "rgba(255,255,255,0.05)" }
+    },
+    "spread": {
+      "radius": { "$type": "borderRadius", "$value": "{radius.full}" },
+      "border": { "$type": "color", "$value": "rgba(251,191,36,0.25)" },
+      "bg": { "$type": "color", "$value": "rgba(251,191,36,0.10)" },
+      "text": { "$type": "color", "$value": "#fde68a" }
+    },
+    "freshCut": {
+      "radius": { "$type": "borderRadius", "$value": "{radius.full}" },
+      "border": { "$type": "color", "$value": "rgba(52,199,89,0.25)" },
+      "bg": { "$type": "color", "$value": "rgba(52,199,89,0.10)" },
+      "text": { "$type": "color", "$value": "{color.leaf}" }
+    }
+  },
+  "table": {
+    "headBg": { "$type": "color", "$value": "rgba(255,255,255,0.05)" },
+    "rowBorder": { "$type": "color", "$value": "{color.border.subtle}" },
+    "cellPaddingX": { "$type": "dimension", "$value": "16px" },
+    "cellPaddingY": { "$type": "dimension", "$value": "12px" }
+  }
+}

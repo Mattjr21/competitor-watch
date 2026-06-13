@@ -1,0 +1,13 @@
+[
+  {
+    "id": "competitor-watch-dark",
+    "name": "Competitor Watch · Dark",
+    "selectedTokenSets": {
+      "core": "enabled",
+      "semantic": "enabled",
+      "component": "enabled"
+    },
+    "$figmaStyleReferences": {},
+    "$figmaVariableReferences": {}
+  }
+]

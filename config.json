@@ -103,7 +103,18 @@
       "key": "meat",
       "label": "Meat / Carne",
       "role": "anchor",
-      "terms": ["carne asada", "beef chuck roast", "pork spareribs", "chicken leg quarters", "ground beef"],
+      "terms": [
+        "ground beef",
+        "beef chuck roast",
+        "chicken breast",
+        "whole chicken",
+        "chicken",
+        "pork chops",
+        "pork loin",
+        "pork",
+        "pollo",
+        "carne asada"
+      ],
       "own_match": ["meat", "carne", "pollo", "chicken", "beef", "pork", "puerco", "res", "costilla", "chorizo", "bistec", "milanesa", "parrilla", "asada"],
       "unit": "lb"
     },

@@ -1,0 +1,132 @@
+{
+  "name": "La Bodega · Competitor Watch",
+  "version": "1.0.0",
+  "figma": {
+    "fileName": "Competitor Watch · Design System",
+    "pageStructure": [
+      "🎨 Foundations",
+      "🧩 Components",
+      "📱 Screens",
+      "📐 Specs"
+    ]
+  },
+  "components": [
+    {
+      "id": "page-header",
+      "figmaName": "PageHeader",
+      "codePath": "frontend/src/lib/sectionUi.jsx",
+      "variant": "default",
+      "anatomy": ["Eyebrow", "Title (PAGE_TITLE)", "Description (PAGE_LEDE)", "RefreshButton?"],
+      "tokens": ["typography.pageTitle", "typography.eyebrow", "button.ghost"]
+    },
+    {
+      "id": "section-header",
+      "figmaName": "SectionHeader",
+      "codePath": "frontend/src/lib/sectionUi.jsx",
+      "anatomy": ["Icon 20px", "Title (SECTION_TITLE)", "Description (SECTION_LEDE)"],
+      "tokens": ["typography.sectionTitle"]
+    },
+    {
+      "id": "panel",
+      "figmaName": "Panel / Default",
+      "codePath": "frontend/src/lib/layout.js",
+      "tailwind": "PANEL",
+      "tokens": ["panel.radius", "panel.border", "surface.panel"]
+    },
+    {
+      "id": "panel-muted",
+      "figmaName": "Panel / Muted",
+      "codePath": "frontend/src/lib/layout.js",
+      "tailwind": "PANEL_MUTED",
+      "tokens": ["surface.panelMuted"]
+    },
+    {
+      "id": "btn-primary",
+      "figmaName": "Button / Primary",
+      "codePath": "frontend/src/lib/sectionUi.jsx",
+      "tailwind": "BTN_PRIMARY",
+      "states": ["default", "hover", "disabled", "focus"],
+      "tokens": ["button.primary", "action.primaryBg"]
+    },
+    {
+      "id": "btn-ghost",
+      "figmaName": "Button / Ghost",
+      "codePath": "frontend/src/lib/sectionUi.jsx",
+      "tailwind": "BTN_GHOST",
+      "states": ["default", "hover", "disabled", "focus"],
+      "tokens": ["button.ghost"]
+    },
+    {
+      "id": "toolbar-control",
+      "figmaName": "Toolbar / Control",
+      "codePath": "frontend/src/index.css",
+      "cssClass": ".toolbar-control",
+      "usedIn": ["DealsSection filters", "CombosSection", "AreaSelector"],
+      "tokens": ["button.toolbar"]
+    },
+    {
+      "id": "tab-underline",
+      "figmaName": "Tab / Underline",
+      "codePath": "frontend/src/App.jsx",
+      "alsoUsedIn": ["DealsSection subtabs"],
+      "tokens": ["tab.underline"]
+    },
+    {
+      "id": "tab-pill",
+      "figmaName": "Tab / Pill",
+      "codePath": "frontend/src/components/InsightsSection.jsx",
+      "note": "Inconsistent with underline tabs — consolidate in code",
+      "tokens": ["tab.pill"]
+    },
+    {
+      "id": "table-head",
+      "figmaName": "Table / Head row",
+      "codePath": "frontend/src/lib/sectionUi.jsx",
+      "tailwind": "TABLE_HEAD",
+      "tokens": ["table.headBg", "typography.labelCaps"]
+    },
+    {
+      "id": "stat-card",
+      "figmaName": "StatCard",
+      "codePath": "frontend/src/lib/sectionUi.jsx",
+      "tokens": ["panel", "typography.labelCaps"]
+    },
+    {
+      "id": "deal-card",
+      "figmaName": "DealCard / Compact",
+      "codePath": "frontend/src/components/DealCard.jsx",
+      "note": "Uses inline border recipe — should map to Panel token",
+      "tokens": ["surface.panel", "color.leaf"]
+    },
+    {
+      "id": "locked-footer",
+      "figmaName": "LockedFooter",
+      "codePath": "frontend/src/lib/sectionUi.jsx",
+      "usedIn": ["DemoInsightPreview", "TradeAreaMapPreview"]
+    },
+    {
+      "id": "empty-state",
+      "figmaName": "EmptyState",
+      "codePath": "frontend/src/lib/ui.jsx"
+    },
+    {
+      "id": "spread-badge",
+      "figmaName": "Badge / Spread",
+      "codePath": "frontend/src/components/BestDealsPanel.jsx",
+      "tokens": ["badge.spread"]
+    },
+    {
+      "id": "fresh-cut-badge",
+      "figmaName": "Badge / Fresh cut",
+      "codePath": "frontend/src/components/BestDealsPanel.jsx",
+      "tokens": ["badge.freshCut"]
+    }
+  ],
+  "screens": [
+    { "id": "daily-ops", "tab": "weather", "components": ["HeroBanner", "PageHeader", "WeatherDayCard", "Table"] },
+    { "id": "deals-best", "tab": "deals", "subtab": "best", "components": ["AreaSelector", "BestDealsPanel", "Tab underline"] },
+    { "id": "deals-by-store", "tab": "deals", "subtab": "all", "components": ["DealsSection filters", "DealCard", "PANEL_MUTED store groups"] },
+    { "id": "your-store", "tab": "insights", "components": ["PageHeader", "Tab pill", "StatCard", "DemoInsightPreview", "LockedFooter"] },
+    { "id": "trending", "tab": "trending", "components": ["PageHeader", "TrendCard"] }
+  ]
+}
