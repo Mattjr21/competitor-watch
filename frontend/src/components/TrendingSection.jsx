@@ -17,6 +17,19 @@ function TrendCard({ item, rank, accent }) {
       whileHover={{ y: -4 }}
       className={"flex flex-col gap-2 transition-colors hover:border-white/25 " + PANEL + " p-4 sm:p-5"}
     >
+      {item.image && (
+        <div className="overflow-hidden rounded-xl border border-white/8 bg-white/5">
+          <img
+            src={item.image}
+            alt=""
+            loading="lazy"
+            className="aspect-[4/3] w-full object-cover"
+            onError={(e) => {
+              e.currentTarget.parentElement.style.display = "none";
+            }}
+          />
+        </div>
+      )}
       <div className="flex items-start gap-2.5">
         <span className="font-display text-sm font-bold" style={{ color: accent }}>
           #{rank}

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "motion/react";
 import { Sun, CloudRain, Snowflake, CloudSun } from "lucide-react";
 import { ErrorState, EmptyState, EASE } from "../lib/ui";
@@ -77,7 +78,9 @@ export default function WeatherSection({ forecast, loading, error, onRefresh }) 
 
   const days = forecast.weather_days || [];
   const targets = forecast.targets || {};
-  const todayTargets = (targets.days || [])[0];
+  const targetDays = targets.days || [];
+  const [targetDayIdx, setTargetDayIdx] = useState(0);
+  const activeTargets = targetDays[targetDayIdx] || targetDays[0];
   const loc = forecast.location || {};
 
   return (
@@ -98,13 +101,35 @@ export default function WeatherSection({ forecast, loading, error, onRefresh }) 
         </div>
       </div>
 
-      {todayTargets && (
+      {activeTargets && (
         <div>
           <SectionHeader
-            title="Today's sales targets"
+            title="Sales targets by day"
             description={targets.note}
             className="mb-6"
           />
+
+          {targetDays.length > 1 && (
+            <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Target days">
+              {targetDays.map((day, i) => (
+                <button
+                  key={day.label || i}
+                  type="button"
+                  role="tab"
+                  aria-selected={targetDayIdx === i}
+                  onClick={() => setTargetDayIdx(i)}
+                  className={
+                    "min-h-[44px] rounded-full border px-4 py-2 text-sm font-medium transition focus-visible:ring-2 focus-visible:ring-brand " +
+                    (targetDayIdx === i
+                      ? "border-brand bg-brand/15 text-white"
+                      : "border-white/12 text-white/60 hover:border-white/30 hover:text-white/85")
+                  }
+                >
+                  {day.label || `Day ${i + 1}`}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className={"mt-6 overflow-hidden rounded-2xl border border-white/10 md:block hidden"}>
             <table className="w-full text-left text-sm">
@@ -117,7 +142,7 @@ export default function WeatherSection({ forecast, loading, error, onRefresh }) 
                 </tr>
               </thead>
               <tbody>
-                {(todayTargets.categories || []).map((r, i) => (
+                {(activeTargets.categories || []).map((r, i) => (
                   <tr key={i} className="border-t border-white/8">
                     <td className="px-5 py-3 font-medium text-white/90">{r.label}</td>
                     <td className="px-5 py-3 text-white/55 tabular-nums">${r.baseline?.toLocaleString()}</td>
@@ -137,7 +162,7 @@ export default function WeatherSection({ forecast, loading, error, onRefresh }) 
           </div>
 
           <div className="mt-6 space-y-3 md:hidden">
-            {(todayTargets.categories || []).map((r, i) => (
+            {(activeTargets.categories || []).map((r, i) => (
               <div key={i} className="rounded-2xl border border-white/10 bg-ink-2 p-4">
                 <div className="font-medium text-white/90">{r.label}</div>
                 <div className="mt-3 grid grid-cols-2 gap-3 text-sm">

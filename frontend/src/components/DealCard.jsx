@@ -125,7 +125,15 @@ export default function DealCard({ d, compact = false, showMerchant = true }) {
       <div className={compact ? "min-h-[1.75rem] shrink-0" : "min-h-[2.5rem] shrink-0"}>
         {displayPrice ? (
           <>
-            <AnimatedPrice value={displayPrice} unit={d.unit} compact={compact} />
+            <div className="flex flex-wrap items-baseline gap-2">
+              {d.original_price != null &&
+                parseFloat(d.original_price) > parseFloat(displayPrice) && (
+                  <span className="text-sm tabular-nums text-white/40 line-through">
+                    ${parseFloat(d.original_price).toFixed(2).replace(/\.00$/, "")}
+                  </span>
+                )}
+              <AnimatedPrice value={displayPrice} unit={d.unit} compact={compact} />
+            </div>
             {!compact && (
               <p className="mt-0.5 line-clamp-2 min-h-[1.25rem] text-[11px] leading-snug text-white/60">
                 {condition || "\u00A0"}

@@ -33,6 +33,7 @@ import TradeAreaCard from "./TradeAreaCard";
 import TradeAreaMapPreview from "./TradeAreaMapPreview";
 import OutreachSection from "./OutreachSection";
 import { CompareBars, DonutChart, RankedBars, RetentionGauge, SegmentBar } from "./InsightCharts";
+import RecommendationCards from "./RecommendationCards";
 import {
   BasketAnalysisDemoPreview,
   RetentionLoyaltyDemoPreview,
@@ -769,7 +770,14 @@ export default function InsightsSection({ data, loading, error, onRefresh, onUpl
           description="Segment-targeted promos based on your sales patterns and live competitor ads."
         />
 
-        {!hasUploadedData ? (
+        {!hasUploadedData && data?.recommendations?.length > 0 ? (
+          <RecommendationCards
+            recommendations={data.recommendations}
+            title="Weekend plan from live ads"
+            description="Upload POS data below for segment-specific weekday and weekend promos."
+            compact
+          />
+        ) : !hasUploadedData ? (
           <UploadUnlock
             title="Upload POS data to unlock promo ideas"
             detail="Ideas combine your sales patterns with live competitor ads — upload first for tailored suggestions."

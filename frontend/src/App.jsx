@@ -1,21 +1,23 @@
 import { useState, useEffect, useId } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { RefreshCw } from "lucide-react";
-import AreaSelector, { DEFAULT_LOCAL_ZIPS } from "./components/AreaSelector";
+import AreaSelector from "./components/AreaSelector";
 import DealsSection from "./components/DealsSection";
 import WeatherSection from "./components/WeatherSection";
 import TrendingSection from "./components/TrendingSection";
 import InsightsSection from "./components/InsightsSection";
-import HeroBanner from "./components/HeroBanner";
+import DashboardSection from "./components/DashboardSection";
 import AppFooter from "./components/AppFooter";
 import { DemoModeBanner } from "./components/OutreachSection";
 import { LoadProgress, EASE } from "./lib/ui";
 import { BTN_GHOST, BTN_PRIMARY } from "./lib/sectionUi";
 import { APP_ICON_SRC } from "./lib/brand";
+import { DEFAULT_LOCAL_ZIPS } from "./lib/marketAreas";
 
 const API = import.meta.env.VITE_API_URL || "";
 
 const TABS = [
+  { id: "home", label: "🏠 Dashboard" },
   { id: "weather", label: "☀️ Daily Ops" },
   { id: "deals", label: "🏪 Deals" },
   { id: "insights", label: "📊 Your Store" },
@@ -24,11 +26,13 @@ const TABS = [
 
 export default function App() {
   const reduceMotion = useReducedMotion();
+  const homePanelId = useId();
   const weatherPanelId = useId();
   const dealsPanelId = useId();
   const insightsPanelId = useId();
   const trendingPanelId = useId();
   const tabPanelIds = {
+    home: homePanelId,
     weather: weatherPanelId,
     deals: dealsPanelId,
     insights: insightsPanelId,
@@ -42,7 +46,7 @@ export default function App() {
   const [dealsLoading, setDealsLoading] = useState(true);
   const [trendingLoading, setTrendingLoading] = useState(true);
   const [errors, setErrors] = useState({});
-  const [activeTab, setActiveTab] = useState("weather");
+  const [activeTab, setActiveTab] = useState("home");
   const [activeZips, setActiveZips] = useState(DEFAULT_LOCAL_ZIPS);
 
   const setErr = (k, v) => setErrors((e) => ({ ...e, [k]: v }));
@@ -109,9 +113,18 @@ export default function App() {
   };
 
   const refreshCurrentTab = () => {
+    if (activeTab === "home") {
+      refreshAll();
+      return;
+    }
     if (activeTab === "weather") fetchForecast(true);
     else if (activeTab === "trending") fetchTrending(true);
     else fetchDeals(true, activeZips);
+  };
+
+  const navigateToTab = (tabId) => {
+    setActiveTab(tabId);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const openUploadGuide = () => {
@@ -122,6 +135,7 @@ export default function App() {
   };
 
   const tabRefreshLabel = {
+    home: "Refresh dashboard",
     weather: "Refresh forecast",
     deals: "Refresh deals",
     insights: "Refresh data",
@@ -129,11 +143,13 @@ export default function App() {
   }[activeTab];
 
   const tabRefreshLoading =
-    activeTab === "weather"
-      ? weatherLoading
-      : activeTab === "trending"
-        ? trendingLoading
-        : dealsLoading;
+    activeTab === "home"
+      ? anyLoading
+      : activeTab === "weather"
+        ? weatherLoading
+        : activeTab === "trending"
+          ? trendingLoading
+          : dealsLoading;
 
   const marketCount = dealsData?.zips?.length || 0;
   const headerDesc = dealsData
@@ -264,11 +280,26 @@ export default function App() {
         </nav>
 
         <div className="pt-6 sm:pt-8">
-          {activeTab === "weather" && (
-            <HeroBanner location={forecast?.location} />
-          )}
           <AnimatePresence mode="wait">
             <TabContent key={activeTab} {...tabContentProps}>
+              {activeTab === "home" && (
+                <div
+                  id={homePanelId}
+                  role="tabpanel"
+                  aria-labelledby="main-tab-home"
+                  tabIndex={0}
+                >
+                  <DashboardSection
+                    forecast={forecast}
+                    dealsData={dealsData}
+                    trendingData={trendingData}
+                    loading={anyLoading}
+                    onNavigate={navigateToTab}
+                    onUploadGuide={openUploadGuide}
+                    reduceMotion={reduceMotion}
+                  />
+                </div>
+              )}
               {activeTab === "weather" && (
                 <div
                   id={weatherPanelId}
@@ -294,6 +325,7 @@ export default function App() {
                   <AreaSelector
                     isLoading={dealsLoading}
                     appliedZips={activeZips}
+                    areaPresets={dealsData?.area_presets}
                     onApply={(zips) => {
                       setActiveZips(zips);
                       fetchDeals(false, zips);

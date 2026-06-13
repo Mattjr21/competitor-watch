@@ -4,7 +4,8 @@ import { Search, X, RefreshCw, Download } from "lucide-react";
 import DealCard from "./DealCard";
 import BestDealsPanel from "./BestDealsPanel";
 import CombosSection from "./CombosSection";
-import { customZipsFromCsv } from "./AreaSelector";
+import DealSearchPanel from "./DealSearchPanel";
+import { customZipsFromCsv, marketAreasFromPresets } from "../lib/marketAreas";
 import { exportDealsCsv } from "../lib/export";
 import { computeCategoryWinners } from "../lib/dealWinners";
 import { Eyebrow, CardSkeletonGrid, ErrorState, EmptyState, EASE } from "../lib/ui";
@@ -129,8 +130,8 @@ export default function DealsSection({ data, loading, error, onRefresh }) {
   const comboCount = data?.combos?.length || 0;
   const activeZips = data?.zips || [];
   const customZips = useMemo(
-    () => customZipsFromCsv(activeZips.join(",")),
-    [activeZips]
+    () => customZipsFromCsv(activeZips.join(","), marketAreasFromPresets(data?.area_presets)),
+    [activeZips, data?.area_presets]
   );
   const noDealsLoaded = deals.length === 0;
 
@@ -293,6 +294,13 @@ export default function DealsSection({ data, loading, error, onRefresh }) {
         </div>
       ) : (
         <div id={dealsPanelId} role="tabpanel" aria-labelledby="tab-all">
+          <div className="mt-6 space-y-6">
+            <DealSearchPanel
+              zips={activeZips.join(",")}
+              searchHints={data.search_hints}
+            />
+          </div>
+
           <div className={`mt-6 ${PANEL}`}>
             <form
               className="space-y-5 sm:space-y-6"

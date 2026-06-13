@@ -1,45 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, MapPin, X } from "lucide-react";
 import { PANEL, PANEL_INSET } from "../lib/layout";
+import {
+  DEFAULT_LOCAL_ZIPS,
+  MARKET_GROUPS,
+  areasFromSelection,
+  buildZipsCsv,
+  customZipsFromCsv,
+  hasAnyMarket,
+  initialSelected,
+  marketAreasFromPresets,
+  selectionDiff,
+  selectionFromZips,
+} from "../lib/marketAreas";
+
+export { DEFAULT_LOCAL_ZIPS, customZipsFromCsv } from "../lib/marketAreas";
 
 const PANEL_X = "px-4 sm:px-5 lg:px-6";
-
-const AREAS = [
-  { id: "30701", label: "Calhoun GA", zips: ["30701"], group: "local", flag: "🏠" },
-  { id: "30735", label: "Resaca GA", zips: ["30735"], group: "local", flag: "🏠" },
-  { id: "30733", label: "Plainville GA", zips: ["30733"], group: "local", flag: "🏠" },
-  { id: "30746", label: "Sugar Valley GA", zips: ["30746"], group: "local", flag: "🏠" },
-  { id: "30103", label: "Adairsville GA", zips: ["30103"], group: "local", flag: "🏠" },
-  { id: "30720", label: "Dalton GA", zips: ["30720"], group: "local", flag: "🏠" },
-  { id: "houston", label: "Houston TX", zips: ["77001", "77002", "77003"], group: "texas", flag: "🤠" },
-  { id: "dallas", label: "Dallas TX", zips: ["75201", "75202", "76101"], group: "texas", flag: "🤠" },
-  { id: "sanantonio", label: "San Antonio TX", zips: ["78201", "78202", "78203"], group: "texas", flag: "🤠" },
-  { id: "rgv", label: "Rio Grande Valley TX", zips: ["78501", "78502", "78503"], group: "texas", flag: "🤠" },
-  { id: "hialeah", label: "Hialeah / Miami FL", zips: ["33010", "33012", "33016"], group: "florida", flag: "🌴" },
-  { id: "orlando", label: "Orlando FL", zips: ["32801", "32805", "32808"], group: "florida", flag: "🌴" },
-];
-
-const GROUPS = [
-  { id: "local", label: "🏠 Your local area" },
-  { id: "texas", label: "🤠 Texas markets" },
-  { id: "florida", label: "🌴 Florida markets" },
-];
-
-const PRESET_ZIP_SET = new Set(AREAS.flatMap((a) => a.zips));
 const MAX_CUSTOM_ZIPS = 5;
 
-/** Default local market ZIPs — matches AreaSelector’s initial selection. */
-export const DEFAULT_LOCAL_ZIPS = AREAS.filter((a) => a.group === "local")
-  .flatMap((a) => a.zips)
-  .join(",");
-
-function initialSelected() {
-  const init = {};
-  AREAS.forEach((a) => (init[a.id] = a.group === "local"));
-  return init;
-}
-
-export function parseCustomZips(input) {
+function parseCustomZips(input) {
   const tokens = (input || "").split(/[,\s]+/).map((z) => z.trim()).filter(Boolean);
   const valid = [];
   const invalid = [];
@@ -59,57 +39,19 @@ export function parseCustomZips(input) {
   };
 }
 
-export function customZipsFromCsv(zipsCsv) {
-  return (zipsCsv || "")
-    .split(",")
-    .map((z) => z.trim())
-    .filter((z) => z && !PRESET_ZIP_SET.has(z));
-}
+export default function AreaSelector({ onApply, isLoading, appliedZips, areaPresets }) {
+  const areas = useMemo(() => marketAreasFromPresets(areaPresets), [areaPresets]);
+  const visibleGroups = useMemo(
+    () => MARKET_GROUPS.filter((g) => areas.some((a) => a.group === g.id)),
+    [areas]
+  );
 
-function selectionFromZips(zipsCsv) {
-  const zipSet = new Set((zipsCsv || "").split(",").map((z) => z.trim()).filter(Boolean));
-  if (zipSet.size === 0) return initialSelected();
-  const sel = {};
-  let anyPreset = false;
-  AREAS.forEach((a) => {
-    sel[a.id] = a.zips.some((z) => zipSet.has(z));
-    if (sel[a.id]) anyPreset = true;
-  });
-  const custom = [...zipSet].filter((z) => !PRESET_ZIP_SET.has(z));
-  if (!anyPreset && custom.length === 0) return initialSelected();
-  return sel;
-}
-
-function buildZipsCsv(selected, customZips) {
-  const preset = AREAS.filter((a) => selected[a.id]).flatMap((a) => a.zips);
-  const merged = [...preset];
-  for (const z of customZips) {
-    if (!merged.includes(z)) merged.push(z);
-  }
-  return merged.join(",");
-}
-
-function areasFromSelection(selected) {
-  return AREAS.filter((a) => selected[a.id]);
-}
-
-function selectionDiff(applied, draft) {
-  const added = AREAS.filter((a) => draft[a.id] && !applied[a.id]);
-  const removed = AREAS.filter((a) => applied[a.id] && !draft[a.id]);
-  return { added, removed };
-}
-
-function hasAnyMarket(selected, customZips) {
-  return Object.values(selected).some(Boolean) || customZips.length > 0;
-}
-
-export default function AreaSelector({ onApply, isLoading, appliedZips }) {
   const [expanded, setExpanded] = useState(false);
   const loadedSelection = useMemo(
-    () => (appliedZips ? selectionFromZips(appliedZips) : initialSelected()),
-    [appliedZips]
+    () => (appliedZips ? selectionFromZips(appliedZips, areas) : initialSelected(areas)),
+    [appliedZips, areas]
   );
-  const loadedCustom = useMemo(() => customZipsFromCsv(appliedZips), [appliedZips]);
+  const loadedCustom = useMemo(() => customZipsFromCsv(appliedZips, areas), [appliedZips, areas]);
 
   const [draft, setDraft] = useState(loadedSelection);
   const [applied, setApplied] = useState(loadedSelection);
@@ -176,8 +118,8 @@ export default function AreaSelector({ onApply, isLoading, appliedZips }) {
     if (customInvalid.length > 0) return;
     if (!hasAnyMarket(draft, draftCustom)) return;
     applyingRef.current = { selection: { ...draft }, custom: [...draftCustom] };
-    onApply(buildZipsCsv(draft, draftCustom));
-  }, [draft, draftCustom, customInvalid, onApply]);
+    onApply(buildZipsCsv(draft, draftCustom, areas));
+  }, [draft, draftCustom, customInvalid, onApply, areas]);
 
   const toggle = (id) =>
     setDraft((prev) => {
@@ -189,14 +131,14 @@ export default function AreaSelector({ onApply, isLoading, appliedZips }) {
   const setGroup = (group, value) =>
     setDraft((prev) => {
       const next = { ...prev };
-      AREAS.filter((a) => a.group === group).forEach((a) => (next[a.id] = value));
+      areas.filter((a) => a.group === group).forEach((a) => (next[a.id] = value));
       if (!hasAnyMarket(next, draftCustom)) return prev;
       return next;
     });
 
-  const loadedAreas = areasFromSelection(applied);
-  const draftAreas = areasFromSelection(draft);
-  const { added, removed } = selectionDiff(applied, draft);
+  const loadedAreas = areasFromSelection(applied, areas);
+  const draftAreas = areasFromSelection(draft, areas);
+  const { added, removed } = selectionDiff(applied, draft, areas);
   const customAdded = draftCustom.filter((z) => !appliedCustom.includes(z));
   const customRemoved = appliedCustom.filter((z) => !draftCustom.includes(z));
 
@@ -322,7 +264,7 @@ export default function AreaSelector({ onApply, isLoading, appliedZips }) {
           </div>
 
           <div className="mt-5 space-y-5">
-            {GROUPS.map((group) => (
+            {visibleGroups.map((group) => (
               <div key={group.id}>
                 <div className="mb-2.5 flex items-center gap-3">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">
@@ -344,7 +286,7 @@ export default function AreaSelector({ onApply, isLoading, appliedZips }) {
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {AREAS.filter((a) => a.group === group.id).map((area) => {
+                  {areas.filter((a) => a.group === group.id).map((area) => {
                     const selected = draft[area.id];
                     return (
                       <button
