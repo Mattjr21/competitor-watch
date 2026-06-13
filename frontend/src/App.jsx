@@ -17,7 +17,12 @@ import { LoadProgress, EASE } from "./lib/ui";
 import { BTN_GHOST, BTN_PRIMARY } from "./lib/sectionUi";
 import { APP_ICON_SRC } from "./lib/brand";
 import { DEFAULT_LOCAL_ZIPS, HOME_MARKET_ZIPS, describeLoadedMarkets } from "./lib/marketAreas";
-import { resolveAreaPresets } from "./lib/benchmarkProfiles";
+import {
+  resolveAreaPresets,
+  getDefaultBenchmarkZips,
+  getDefaultBenchmarkLabel,
+  getProfileLabel,
+} from "./lib/benchmarkProfiles";
 
 const API = import.meta.env.VITE_API_URL || "";
 
@@ -65,6 +70,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("home");
   const [activeZips, setActiveZips] = useState(DEFAULT_LOCAL_ZIPS);
   const [benchmarkProfile, setBenchmarkProfile] = useState(getStoredBenchmarkProfile);
+  const [profileSwitchNotice, setProfileSwitchNotice] = useState(null);
   const headerRef = useRef(null);
   const dealsRequestRef = useRef(0);
   const trendingRequestRef = useRef(0);
@@ -129,9 +135,25 @@ export default function App() {
   }
 
   function handleBenchmarkProfileChange(profileId) {
+    const nextZips = getDefaultBenchmarkZips(profileId);
+    const nextLabel = getDefaultBenchmarkLabel(profileId);
     setBenchmarkProfile(profileId);
     setStoredBenchmarkProfile(profileId);
+    setTrendingData(null);
+    setDealsData(null);
+    setActiveZips(nextZips);
+    setProfileSwitchNotice(
+      profileId === "latino"
+        ? `Switched to ${getProfileLabel(profileId)} — benchmark market set to ${nextLabel}.`
+        : `Switched to ${getProfileLabel(profileId)} — loading ads for ${nextLabel} (playbook still uses Calhoun).`
+    );
   }
+
+  useEffect(() => {
+    if (!profileSwitchNotice) return;
+    const t = setTimeout(() => setProfileSwitchNotice(null), 12000);
+    return () => clearTimeout(t);
+  }, [profileSwitchNotice]);
 
   function refreshNationalRanking() {
     fetchDeals(false, activeZips, benchmarkProfile, true);
@@ -226,10 +248,9 @@ export default function App() {
           ? trendingLoading
           : dealsLoading;
 
-  const activeProfileId = dealsData?.benchmark_profile || benchmarkProfile;
   const areaPresets = useMemo(
-    () => resolveAreaPresets(dealsData?.area_presets, activeProfileId, dealsData?.benchmark_profile),
-    [dealsData?.area_presets, dealsData?.benchmark_profile, activeProfileId]
+    () => resolveAreaPresets(dealsData?.area_presets, benchmarkProfile, dealsData?.benchmark_profile),
+    [dealsData?.area_presets, dealsData?.benchmark_profile, benchmarkProfile]
   );
 
   const marketSummary = describeLoadedMarkets(
@@ -239,8 +260,15 @@ export default function App() {
   const pendingMarketSummary = describeLoadedMarkets(activeZips, areaPresets);
   const dealsScopeMismatch =
     dealsLoading &&
-    dealsData?.zips?.length &&
-    zipsKey(dealsData.zips) !== zipsKey(activeZips);
+    (!dealsData ||
+      dealsData.benchmark_profile !== benchmarkProfile ||
+      (dealsData?.zips?.length && zipsKey(dealsData.zips) !== zipsKey(activeZips)));
+  const trendingScopeMismatch =
+    trendingLoading &&
+    (!trendingData ||
+      trendingData.profile_id !== benchmarkProfile ||
+      zipsKey(trendingData.scanned_zips) !== zipsKey(activeZips));
+  const activeProfileLabel = getProfileLabel(benchmarkProfile);
   const homeMarketSummary = useMemo(
     () => describeLoadedMarkets(HOME_MARKET_ZIPS, areaPresets),
     [areaPresets]
@@ -383,8 +411,30 @@ export default function App() {
             profiles={dealsData?.benchmark_profiles || []}
             activeProfile={dealsData?.benchmark_profile || benchmarkProfile}
             onChange={handleBenchmarkProfileChange}
-            disabled={dealsLoading}
+            disabled={dealsLoading || trendingLoading}
           />
+          {profileSwitchNotice && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="rounded-xl border border-brand/30 bg-brand/10 px-4 py-3 text-xs leading-relaxed text-white/75"
+            >
+              {profileSwitchNotice}
+            </div>
+          )}
+          {(dealsLoading || trendingLoading) && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs text-white/60"
+            >
+              <RefreshCw size={13} className="mr-2 inline animate-spin" aria-hidden />
+              Scanning{" "}
+              <span className="font-medium text-white/85">{activeProfileLabel}</span> ads in{" "}
+              <span className="font-medium text-white/85">{compareMarketSummary.short}</span>
+              … first load can take up to 60 seconds.
+            </div>
+          )}
           <AreaSelector
             isLoading={dealsLoading}
             appliedZips={activeZips}
@@ -459,6 +509,7 @@ export default function App() {
                     error={errors.deals}
                     marketLabel={pendingMarketSummary.short}
                     homeMarketLabel={homeMarketSummary.short}
+                    profileLabel={activeProfileLabel}
                     isBenchmarking={isBenchmarking}
                     pendingMarket={dealsScopeMismatch}
                     onRefresh={() => fetchDeals(true, activeZips, benchmarkProfile)}
@@ -493,15 +544,13 @@ export default function App() {
                   tabIndex={0}
                 >
                   <TrendingSection
-                    data={trendingData}
+                    data={trendingScopeMismatch ? null : trendingData}
                     loading={trendingLoading}
+                    pendingScope={trendingScopeMismatch}
                     error={errors.trending}
-                    marketLabel={marketSummary.short}
-                    profileLabel={
-                      dealsData?.benchmark_profile_label ||
-                      trendingData?.profile_label ||
-                      "Latino grocery"
-                    }
+                    marketLabel={compareMarketSummary.short}
+                    profileLabel={activeProfileLabel}
+                    profileId={benchmarkProfile}
                     onRefresh={() => fetchTrending(true, activeZips, benchmarkProfile)}
                   />
                 </div>

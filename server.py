@@ -128,16 +128,56 @@ def flipp_search(term, zip_code):
         return []
 
 
+def _merchant_words(name):
+    return [w for w in re.split(r"[^a-z0-9]+", (name or "").lower()) if w]
+
+
+def _merchant_keyword_match(merchant, keyword):
+    """Match ethnic chain names without false positives (e.g. h mart vs Health Mart)."""
+    m = (merchant or "").lower().strip()
+    kw = (keyword or "").lower().strip()
+    if not kw or not m:
+        return False
+    if " " in kw:
+        parts = [p for p in re.split(r"[^a-z0-9]+", kw) if p]
+        words = _merchant_words(m)
+        if len(parts) > 1:
+            for i in range(len(words) - len(parts) + 1):
+                if words[i : i + len(parts)] == parts:
+                    return True
+            return False
+    words = _merchant_words(m)
+    if len(kw) <= 4:
+        return kw in words
+    return kw in m or kw in words
+
+
 def is_latino_merchant(name, latino_list):
-    n = (name or "").lower()
-    return any(kw in n for kw in latino_list)
+    return any(_merchant_keyword_match(name, kw) for kw in latino_list)
+
+
+def _item_display_name(raw, item=None):
+    """Flipp often omits product titles for ethnic circulars — fall back to category."""
+    if item is None:
+        item = {}
+    for src in (item, raw):
+        for key in ("name", "sale_story", "pre"):
+            val = (src.get(key) if key != "pre" else src.get("pre_price_text")) or ""
+            val = val.strip()
+            if val:
+                return val
+    cat = (item.get("category_l2") or raw.get("_L2") or "").strip()
+    if cat:
+        return cat
+    return ""
 
 
 def clean_item(raw, latino_list=None, zip_code=""):
-    merchant = raw.get("merchant_name") or "Unknown"
+    merchant = (raw.get("merchant_name") or "Unknown").strip()
+    name = (raw.get("name") or "").strip()
     return {
         "merchant": merchant,
-        "name": raw.get("name") or "",
+        "name": name,
         "price": raw.get("current_price"),
         "original_price": raw.get("original_price"),
         "unit": raw.get("post_price_text") or "",
@@ -236,7 +276,10 @@ NONFOOD_NAME = (
 
 
 def _has_nonfood(item):
-    return any(bad in item["name"].lower() for bad in NONFOOD_NAME)
+    name = (item.get("name") or "").lower()
+    if not name:
+        return False
+    return any(bad in name for bad in NONFOOD_NAME)
 
 
 def _food_cat_match(item):
@@ -244,14 +287,10 @@ def _food_cat_match(item):
     return any(f in label for f in FOOD_CAT)
 
 
-def gather_combos(cfg, zips, latino_list):
-    """Find combo / multi-buy / weekend-pack style deals (food only), Latino-first.
-
-    Each combo carries the ZIP code(s) where it was seen so the team can read
-    deals by area.
-    """
+def gather_combos(cfg, zips, latino_list, search_terms=None, profile_id="latino"):
+    """Find combo / multi-buy / weekend-pack style deals (food only)."""
     combo_kw = [k.lower() for k in cfg.get("combo_keywords", [])]
-    search_terms = cfg.get("combo_search_terms") or [
+    search_terms = search_terms or cfg.get("combo_search_terms") or [
         "combo", "paquete", "fin de semana", "family pack", "carne asada",
     ]
     seen = {}
@@ -266,7 +305,9 @@ def gather_combos(cfg, zips, latino_list):
                 if _has_nonfood(item):
                     continue
                 # keep grocery combos, or any deal from a Latino grocer
-                if not (_food_cat_match(item) or item["is_latino"]):
+                if not (_food_cat_match(item) or _merchant_matches_profile(
+                    item["merchant"], latino_list, profile_id, item.get("is_latino")
+                )):
                     continue
                 key = (item["merchant"].lower(), item["name"].lower())
                 if key in seen:
@@ -276,8 +317,13 @@ def gather_combos(cfg, zips, latino_list):
                 item["zips"] = [z]
                 seen[key] = item
     out = list(seen.values())
-    # Latino groceries first, then priced
-    out.sort(key=lambda i: (not i["is_latino"], i["price"] is None, i["price"] if i["price"] is not None else 9e9))
+    out.sort(
+        key=lambda i: (
+            not _merchant_matches_profile(i["merchant"], latino_list, profile_id, i.get("is_latino")),
+            i["price"] is None,
+            i["price"] if i["price"] is not None else 9e9,
+        )
+    )
     return out[:60]
 
 
@@ -530,7 +576,7 @@ def _norm_product(name):
 
 def _trending_scope_key(profile_id, zips):
     z = ",".join(sorted(str(x) for x in zips))
-    return hashlib.md5(f"{profile_id}|{z}".encode()).hexdigest()[:16]
+    return hashlib.md5(f"{profile_id}|{z}|flipp-discover-v3".encode()).hexdigest()[:16]
 
 
 def _trending_cache_path(scope_key):
@@ -562,10 +608,102 @@ def _write_trending_cache(scope_key, obj):
 
 
 def _merchant_matches_profile(merchant, merchant_list, profile_id, is_latino_flag):
-    m = (merchant or "").lower()
-    if any(k in m for k in merchant_list):
+    if any(_merchant_keyword_match(merchant, kw) for kw in merchant_list):
         return True
     return profile_id == "latino" and bool(is_latino_flag)
+
+
+MERCHANT_DISCOVERY_TTL = 60 * 60 * 24  # 24 hours
+
+
+def _merchant_discovery_cache_path(scope_key):
+    return os.path.join(DATA_DIR, f"flipp_merchants_{scope_key}.json")
+
+
+def _read_merchant_discovery_cache(scope_key):
+    path = _merchant_discovery_cache_path(scope_key)
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            obj = json.load(f)
+        if time.time() - obj.get("_epoch", 0) <= MERCHANT_DISCOVERY_TTL:
+            return obj.get("merchants") or []
+    except Exception:
+        pass
+    return None
+
+
+def _write_merchant_discovery_cache(scope_key, merchants):
+    try:
+        with open(_merchant_discovery_cache_path(scope_key), "w", encoding="utf-8") as f:
+            json.dump({"merchants": merchants, "_epoch": time.time()}, f)
+    except Exception:
+        pass
+
+
+def _merchant_flipp_queries(merchant_name):
+    """Build Flipp q= strings for a discovered store (exact name + short form)."""
+    name = (merchant_name or "").strip()
+    if not name:
+        return []
+    queries = [name]
+    words = _merchant_words(name)
+    if len(words) >= 2:
+        short = " ".join(words[: min(3, len(words))])
+        if short.lower() != name.lower():
+            queries.append(short)
+    return list(dict.fromkeys(queries))
+
+
+def discover_flipp_merchants(
+    profile, profile_id, zips, merchant_list, cfg, latino_list, refresh=False, scope_key=None
+):
+    """Find ethnic grocer names actually advertising on Flipp in selected ZIPs.
+
+    Step 1: probe known chain seeds + product terms to learn which stores exist.
+    Step 2: callers search Flipp again using these exact store names for deals.
+    """
+    if scope_key and not refresh:
+        cached = _read_merchant_discovery_cache(scope_key)
+        if cached is not None:
+            return cached
+
+    latino_list = latino_list or []
+    seeds = list(
+        dict.fromkeys(
+            (benchmark.profile_merchant_search_terms(profile) or [])
+            + [kw for kw in merchant_list if len(kw) >= 5 and " " in kw]
+        )
+    )
+    product_terms = benchmark.profile_trending_terms(profile, cfg)[:8]
+    if not product_terms:
+        product_terms = (cfg.get("trending_terms") or [])[:8]
+
+    hits = {}  # merchant_name -> ad count
+
+    def _note(raw, zip_code):
+        item = clean_item(raw, latino_list, zip_code)
+        name = item["merchant"]
+        if not name or name == "Unknown":
+            return
+        if _merchant_matches_profile(name, merchant_list, profile_id, item.get("is_latino")):
+            hits[name] = hits.get(name, 0) + 1
+
+    for seed in seeds:
+        for z in zips:
+            for raw in flipp_search(seed, z):
+                _note(raw, z)
+
+    for term in product_terms:
+        for z in zips:
+            for raw in flipp_search(term, z):
+                _note(raw, z)
+
+    merchants = [m for m, _ in sorted(hits.items(), key=lambda kv: (-kv[1], kv[0].lower()))][:16]
+    if scope_key:
+        _write_merchant_discovery_cache(scope_key, merchants)
+    return merchants
 
 
 def gather_trending(cfg, refresh=False, zips=None, profile_id=None):
@@ -597,32 +735,62 @@ def gather_trending(cfg, refresh=False, zips=None, profile_id=None):
         if cached is not None:
             return cached
 
-    terms = cfg.get("trending_terms", [])
+    latino_list = [k.lower() for k in cfg.get("latino_merchants", [])]
+    discovered_merchants = discover_flipp_merchants(
+        profile,
+        active_pid,
+        zips,
+        merchant_list,
+        cfg,
+        latino_list,
+        refresh=refresh,
+        scope_key=scope_key,
+    )
+
+    product_terms = benchmark.profile_trending_terms(profile, cfg)
+    if not product_terms:
+        product_terms = cfg.get("trending_terms", [])
+
+    # Prefer discovered store names (exact Flipp spelling) over static seeds.
+    merchant_queries = []
+    for merchant in discovered_merchants:
+        merchant_queries.extend(_merchant_flipp_queries(merchant))
+    seed_terms = benchmark.profile_merchant_search_terms(profile)
+    search_terms = list(dict.fromkeys(merchant_queries + seed_terms + product_terms))
+    merchant_term_set = set(merchant_queries) | set(seed_terms)
     ethnic_b, main_b = {}, {}
     seen = set()
-    for term in terms:
+    for term in search_terms:
+        from_merchant_search = term in merchant_term_set or any(
+            term.lower() in m.lower() or m.lower() in term.lower() for m in discovered_merchants
+        )
         for z in zips:
             for raw in flipp_search(term, z):
                 item = clean_item(raw, merchant_list, z)
-                if not item["name"] or _has_nonfood(item):
+                display_name = _item_display_name(raw, item)
+                if not display_name:
+                    continue
+                if _has_nonfood({**item, "name": display_name}):
                     continue
                 is_ethnic = _merchant_matches_profile(
                     item["merchant"], merchant_list, active_pid, item.get("is_latino")
                 )
-                if not is_ethnic and not _food_cat_match(item):
+                if from_merchant_search and is_ethnic:
+                    pass  # merchant-chain search: keep ethnic bucket items
+                elif not is_ethnic and not _food_cat_match(item):
                     continue
-                ddk = (item["merchant"].lower(), item["name"].lower(), z)
+                ddk = (item["merchant"].lower(), display_name.lower(), z)
                 if ddk in seen:
                     continue
                 seen.add(ddk)
-                key = _norm_product(item["name"])
+                key = _norm_product(display_name)
                 if not key:
                     continue
                 bucket = ethnic_b if is_ethnic else main_b
                 e = bucket.get(key)
                 if e is None:
                     e = {
-                        "name": item["name"],
+                        "name": display_name[:52],
                         "count": 0,
                         "merchants": set(),
                         "areas": set(),
@@ -660,6 +828,7 @@ def gather_trending(cfg, refresh=False, zips=None, profile_id=None):
         "profile_id": active_pid,
         "profile_label": profile_label,
         "scanned_zips": zips,
+        "discovered_merchants": discovered_merchants,
         "ethnic": ethnic_rows,
         "mainstream": top(main_b),
         "latino": ethnic_rows,
@@ -949,13 +1118,14 @@ def _zips_key(zips):
     return ",".join(sorted(_normalize_zips(zips)))
 
 
-def _gather_market_data(cfg, zips, cfilter, merchant_list):
+def _gather_market_data(cfg, zips, cfilter, merchant_list, categories=None, combo_terms=None, profile_id="latino"):
+    cats = categories or cfg.get("categories", [])
     deals_by_cat = {}
-    for cat in cfg["categories"]:
+    for cat in cats:
         print(f"  gathering: {cat['label']} ({len(zips)} ZIPs) ...")
         deals_by_cat[cat["key"]] = gather_category(cat, zips, cfilter, merchant_list)
     print("  gathering: combos & weekend packs ...")
-    combos = gather_combos(cfg, zips, merchant_list)
+    combos = gather_combos(cfg, zips, merchant_list, search_terms=combo_terms, profile_id=profile_id)
     return deals_by_cat, combos
 
 
@@ -969,16 +1139,33 @@ def build_payload(cfg, zips=None, profile_id=None, refresh_national=False, home_
     else:
         merchant_list = [k.lower() for k in cfg.get("latino_merchants", [])]
 
+    compare_categories = benchmark.profile_categories(profile, cfg)
+    home_categories = cfg.get("categories", [])
+    compare_combo_terms = benchmark.profile_combo_terms(profile, cfg)
+    home_combo_terms = cfg.get("combo_search_terms") or []
+
     compare_deals, compare_combos = _gather_market_data(
-        cfg, compare_zips, cfilter, merchant_list
+        cfg,
+        compare_zips,
+        cfilter,
+        merchant_list,
+        compare_categories,
+        compare_combo_terms,
+        active_pid,
     )
 
-    if _zips_key(compare_zips) == _zips_key(home_zips):
+    if _zips_key(compare_zips) == _zips_key(home_zips) and active_pid == "latino":
         home_deals, home_combos = compare_deals, compare_combos
     else:
         print(f"  gathering home-market intel ({len(home_zips)} ZIPs) for recommendations ...")
         home_deals, home_combos = _gather_market_data(
-            cfg, home_zips, cfilter, merchant_list
+            cfg,
+            home_zips,
+            cfilter,
+            merchant_list,
+            home_categories,
+            home_combo_terms,
+            "latino",
         )
 
     all_deals = [d for deals in compare_deals.values() for d in deals]
@@ -1011,7 +1198,8 @@ def build_payload(cfg, zips=None, profile_id=None, refresh_national=False, home_
         "home_zips": home_zips,
         "benchmarking_other_market": _zips_key(compare_zips) != _zips_key(home_zips),
         "generated_at": time.strftime("%Y-%m-%d %H:%M"),
-        "categories": cfg["categories"],
+        "categories": compare_categories,
+        "home_categories": home_categories,
         "deals_by_category": compare_deals,
         "merchants": merchants,
         "latino_merchants": latino_merchants,
@@ -1027,7 +1215,8 @@ def build_payload(cfg, zips=None, profile_id=None, refresh_national=False, home_
         "price_comparison": price_comparison,
         "national_ranking": national_ranking,
         "segment_suggestions": segment_suggestions,
-        "search_hints": cfg.get("trending_terms", [])[:10],
+        "search_hints": benchmark.profile_trending_terms(profile, cfg)[:10]
+        or cfg.get("trending_terms", [])[:10],
     }
 
 

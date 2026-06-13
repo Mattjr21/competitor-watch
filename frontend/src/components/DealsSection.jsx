@@ -89,6 +89,7 @@ export default function DealsSection({
   onRefresh,
   marketLabel = "your market",
   homeMarketLabel,
+  profileLabel = "Latino grocery",
   isBenchmarking = false,
   pendingMarket = false,
 }) {
@@ -181,6 +182,12 @@ export default function DealsSection({
         >
           <RefreshCw size={14} className="mr-2 inline animate-spin" aria-hidden />
           Loading competitor ads for <span className="font-semibold text-white">{marketLabel}</span>
+          {profileLabel && (
+            <>
+              {" "}
+              (<span className="font-semibold text-white">{profileLabel}</span> search terms)
+            </>
+          )}
           … first load can take up to 60 seconds.
         </div>
         <CardSkeletonGrid count={8} />

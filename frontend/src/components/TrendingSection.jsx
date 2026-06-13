@@ -1,5 +1,7 @@
+import { RefreshCw } from "lucide-react";
 import { motion } from "motion/react";
 import { ErrorState, EmptyState, EASE } from "../lib/ui";
+import { getSuggestedBenchmarkPresets } from "../lib/benchmarkProfiles";
 import { PageHeader, PANEL, SectionHeader, TAB_SECTION_SPACE } from "../lib/sectionUi";
 
 function TrendCard({ item, rank, accent }) {
@@ -50,15 +52,28 @@ function TrendCard({ item, rank, accent }) {
   );
 }
 
-function TrendGrid({ items, loading, accent, emptyMsg }) {
-  if (loading && !items?.length)
+function TrendGrid({ items, loading, accent, emptyMsg, loadingMsg }) {
+  if (loading && !items?.length) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="skeleton h-32" />
-        ))}
+      <div>
+        {loadingMsg && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="mb-4 flex items-center gap-2 rounded-xl border border-brand/25 bg-brand/10 px-4 py-3 text-sm text-white/75"
+          >
+            <RefreshCw size={14} className="animate-spin shrink-0" aria-hidden />
+            {loadingMsg}
+          </div>
+        )}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="skeleton h-32" />
+          ))}
+        </div>
       </div>
     );
+  }
   if (!items?.length) return <EmptyState>{emptyMsg}</EmptyState>;
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -72,14 +87,44 @@ function TrendGrid({ items, loading, accent, emptyMsg }) {
 export default function TrendingSection({
   data,
   loading,
+  pendingScope = false,
   error,
   onRefresh,
   marketLabel = "your selected market",
   profileLabel = "Latino grocery",
+  profileId = "latino",
 }) {
   if (error) return <ErrorState message={error} onRetry={onRefresh} />;
 
-  const ethnicLabel = data?.profile_label || profileLabel;
+  if (pendingScope || (loading && !data)) {
+    return (
+      <section className={TAB_SECTION_SPACE}>
+        <PageHeader
+          eyebrow="Trending"
+          title="What's being advertised in your market."
+          description={`Loading ${profileLabel.toLowerCase()} vs mainstream trends in ${marketLabel}…`}
+          onRefresh={onRefresh}
+          loading={true}
+        />
+        <div
+          role="status"
+          aria-live="polite"
+          className="rounded-xl border border-brand/30 bg-brand/10 px-4 py-3 text-sm text-white/80"
+        >
+          <RefreshCw size={14} className="mr-2 inline animate-spin" aria-hidden />
+          Scanning Flipp ads for <span className="font-semibold text-white">{profileLabel}</span> in{" "}
+          <span className="font-semibold text-white">{marketLabel}</span> — can take up to 60 seconds.
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="skeleton h-32" />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  const ethnicLabel = profileLabel;
   const ethnicItems = data?.ethnic || data?.latino || [];
   const zipCount = data?.scanned_zips?.length || 0;
   const scopeLine =
@@ -88,6 +133,21 @@ export default function TrendingSection({
       : zipCount
         ? `${zipCount} ZIP${zipCount !== 1 ? "s" : ""}`
         : "selected ZIP codes";
+
+  const suggestedMarkets = getSuggestedBenchmarkPresets(profileId, 3);
+  const marketHint =
+    suggestedMarkets.length > 0
+      ? `Try a denser Flipp market preset (e.g. ${suggestedMarkets.join(", ")}).`
+      : "Try a larger ethnic market preset from Compare markets.";
+
+  const ethnicEmptyMsg =
+    ethnicItems.length === 0 && !loading
+      ? `No ${ethnicLabel.toLowerCase()} weekly ads found in ${scopeLine} on Flipp. ${marketHint} Pick one market preset at a time for best results. Flipp often lists ethnic circulars without product titles — category-level signals are shown when available.`
+      : `No ${ethnicLabel.toLowerCase()} ads in ${scopeLine} yet.`;
+
+  const loadingMsg = loading
+    ? `Scanning ${ethnicLabel.toLowerCase()} ads in ${scopeLine}…`
+    : null;
 
   return (
     <section className={TAB_SECTION_SPACE}>
@@ -104,7 +164,7 @@ export default function TrendingSection({
         className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs leading-relaxed text-white/60"
       >
         Scanning <span className="font-medium text-white/80">{scopeLine}</span>
-        {zipCount > 0 && (
+        {zipCount > 0 && data?.scanned_zips && (
           <>
             {" "}
             · <span className="font-mono text-white/50">{data.scanned_zips.join(", ")}</span>
@@ -112,6 +172,20 @@ export default function TrendingSection({
         )}
         {data?.generated_at && (
           <span className="text-white/40"> · updated {data.generated_at}</span>
+        )}
+        {data?.discovered_merchants?.length > 0 && (
+          <>
+            {" "}
+            ·{" "}
+            <span className="text-white/55">
+              {data.discovered_merchants.length} Flipp{" "}
+              {ethnicLabel.toLowerCase()} grocer{data.discovered_merchants.length !== 1 ? "s" : ""}:{" "}
+              {data.discovered_merchants.slice(0, 4).join(", ")}
+              {data.discovered_merchants.length > 4
+                ? ` +${data.discovered_merchants.length - 4} more`
+                : ""}
+            </span>
+          </>
         )}
       </div>
 
@@ -124,7 +198,8 @@ export default function TrendingSection({
           items={ethnicItems}
           loading={loading}
           accent="#ff6a3d"
-          emptyMsg={`Scanning ${ethnicLabel.toLowerCase()} ads in ${scopeLine}…`}
+          emptyMsg={ethnicEmptyMsg}
+          loadingMsg={loadingMsg}
         />
       </div>
 
@@ -137,7 +212,8 @@ export default function TrendingSection({
           items={data?.mainstream}
           loading={loading}
           accent="#4aa3ff"
-          emptyMsg={`Scanning mainstream ads in ${scopeLine}…`}
+          emptyMsg={`No mainstream ads found in ${scopeLine}.`}
+          loadingMsg={loading ? `Scanning mainstream ads in ${scopeLine}…` : null}
         />
       </div>
     </section>

@@ -49,7 +49,37 @@ def resolve_profile(profile_id=None):
         "area_presets": p.get("area_presets", []),
         "trending_zips": p.get("trending_zips", []),
         "national_benchmark_zips": p.get("national_benchmark_zips", []),
+        "trending_terms": p.get("trending_terms") or [],
+        "merchant_search_terms": p.get("merchant_search_terms") or [],
+        "combo_search_terms": p.get("combo_search_terms") or [],
+        "categories": p.get("categories") or [],
     }, pid
+
+
+def profile_categories(profile, cfg):
+    """Categories for compare-market deal scans; falls back to config Latino set."""
+    if profile and profile.get("categories"):
+        return profile["categories"]
+    return cfg.get("categories", [])
+
+
+def profile_trending_terms(profile, cfg):
+    if profile and profile.get("trending_terms"):
+        return profile["trending_terms"]
+    return cfg.get("trending_terms", [])
+
+
+def profile_merchant_search_terms(profile):
+    """Flipp q= strings for ethnic chains (often the only way to surface their circulars)."""
+    if profile and profile.get("merchant_search_terms"):
+        return profile["merchant_search_terms"]
+    return []
+
+
+def profile_combo_terms(profile, cfg):
+    if profile and profile.get("combo_search_terms"):
+        return profile["combo_search_terms"]
+    return cfg.get("combo_search_terms") or []
 
 
 def _national_cache_path(profile_id):
@@ -91,7 +121,7 @@ def gather_national_benchmarks(cfg, profile, gather_category_fn, market_price_st
     cfilter = cfg.get("competitor_filter") or []
     by_cat = {}
 
-    for cat in cfg.get("categories", []):
+    for cat in benchmark.profile_categories(profile, cfg):
         deals = []
         for z in zips:
             deals.extend(gather_category_fn(cat, [z], cfilter, merchants))

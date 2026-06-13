@@ -9,7 +9,11 @@
         "vallarta", "northgate", "presidente", "sedano", "bravo", "fresco y mas",
         "fresco y m", "el ahorro", "cardenas", "superior grocers", "supermercado",
         "carniceria", "el rio grande", "la fiesta", "compare foods", "rancho market",
-        "mariano", "el mariachi", "morelia", "chapala", "guadalajara"
+        "mariano", "el mariachi", "morelia", "chapala", "guadalajara",
+        "food bazaar", "shop compare foods", "compare foods", "el super"
+      ],
+      "merchant_search_terms": [
+        "el super", "food bazaar", "compare foods", "cardenas", "vallarta", "fiesta", "sedano"
       ],
       "trending_zips": [
         "77036", "75211", "78207", "78521", "90255", "60632", "85009", "33012",
@@ -113,10 +117,23 @@
       "merchants": [
         "halal", "mediterranean", "middle east", "al-safa", "ziyad", "cortas",
         "sahadi", "kalustyan", "patel brothers", "world market", "istanbul",
-        "jerusalem", "lebanese", "syrian", "turkish", "persian", "afghan"
+        "jerusalem", "lebanese", "syrian", "turkish", "persian", "afghan",
+        "food bazaar", "western beef", "ferndale foods", "mike's fresh", "apollo market"
+      ],
+      "merchant_search_terms": [
+        "food bazaar", "western beef", "ferndale foods", "mike fresh", "apollo market"
       ],
       "trending_zips": ["48126", "48124", "11209", "60645", "77081", "07501"],
       "national_benchmark_zips": ["48126", "48124", "11209", "60645", "77081", "07501", "22101"],
+      "trending_terms": ["lamb", "pita", "tahini", "halal chicken", "hummus", "olive oil", "dates", "feta", "bulgur", "zaatar", "labneh", "sumac"],
+      "combo_search_terms": ["family pack", "combo", "weekend", "bundle", "ramadan", "iftar"],
+      "categories": [
+        {"key": "meat", "label": "Halal Meat", "role": "anchor", "terms": ["lamb", "halal chicken", "goat", "ground beef", "beef stew meat"], "unit": "lb"},
+        {"key": "bread", "label": "Pita & Bread", "role": "protect", "terms": ["pita", "naan", "flatbread", "lavash"]},
+        {"key": "dairy", "label": "Dairy & Spreads", "role": "attach", "terms": ["feta", "labneh", "yogurt", "halloumi"]},
+        {"key": "pantry", "label": "Pantry & Spices", "role": "attach", "terms": ["tahini", "olive oil", "dates", "bulgur", "couscous", "zaatar"]},
+        {"key": "produce", "label": "Produce", "role": "support", "terms": ["eggplant", "parsley", "lemon", "tomato", "cucumber"]}
+      ],
       "area_presets": [
         {
           "label": "Dearborn MI",
@@ -156,10 +173,23 @@
       "merchants": [
         "h mart", "hmart", "99 ranch", "ranch 99", "seafood city", "zion",
         "great wall", "hong kong", "vietnamese", "filipino", "japanese", "korean",
-        "chinatown", "mitsuwa", "nijiya", "uwajimaya", "lotte", "galleria"
+        "chinatown", "mitsuwa", "nijiya", "uwajimaya", "lotte", "galleria",
+        "jons", "baja ranch", "el super fresh", "ranch market"
+      ],
+      "merchant_search_terms": [
+        "h mart", "99 ranch", "jons", "seafood city", "zion market", "mitsuwa", "baja ranch"
       ],
       "trending_zips": ["91754", "94108", "11355", "77036", "60616", "98036"],
       "national_benchmark_zips": ["91754", "94108", "11355", "77036", "60616", "98036", "96817"],
+      "trending_terms": ["jasmine rice", "ramen", "soy sauce", "kimchi", "nori", "udon", "fish sauce", "bok choy", "pork belly", "dumpling", "miso"],
+      "combo_search_terms": ["family pack", "combo", "weekend", "bundle", "hot pot", "bbq"],
+      "categories": [
+        {"key": "meat", "label": "Meat & Seafood", "role": "anchor", "terms": ["pork belly", "chicken thigh", "short rib", "salmon", "shrimp", "ground pork"], "unit": "lb"},
+        {"key": "rice", "label": "Rice & Noodles", "role": "protect", "terms": ["jasmine rice", "sushi rice", "ramen", "udon", "rice noodle"]},
+        {"key": "sauce", "label": "Sauces & Seasonings", "role": "attach", "terms": ["soy sauce", "fish sauce", "oyster sauce", "gochujang", "miso"]},
+        {"key": "produce", "label": "Produce", "role": "support", "terms": ["bok choy", "napa cabbage", "ginger", "garlic", "green onion"]},
+        {"key": "snacks", "label": "Snacks & Drinks", "role": "attach", "terms": ["bubble tea", "ramune", "pocky", "seaweed snack"]}
+      ],
       "area_presets": [
         {
           "label": "Los Angeles (Monterey Park)",
@@ -204,10 +234,22 @@
       "merchants": [
         "patel", "patel brothers", "india bazaar", "subzi mandi", "apna",
         "indian", "pakistani", "bangladesh", "sri lankan", "nepali", "desi",
-        "raja", "khan", "swad", "deep", "haldiram"
+        "raja", "khan", "swad", "deep", "haldiram", "h mart", "hmart"
+      ],
+      "merchant_search_terms": [
+        "h mart", "india bazaar", "patel brothers", "apna bazaar", "subzi mandi"
       ],
       "trending_zips": ["08817", "94538", "77074", "60659", "11375", "75038"],
       "national_benchmark_zips": ["08817", "94538", "77074", "60659", "11375", "75038", "30084"],
+      "trending_terms": ["basmati rice", "atta", "paneer", "toor dal", "ghee", "turmeric", "cumin", "naan", "yogurt", "masala", "chickpea", "mango pulp"],
+      "combo_search_terms": ["family pack", "combo", "weekend", "bundle", "diwali", "puja"],
+      "categories": [
+        {"key": "meat", "label": "Meat & Protein", "role": "anchor", "terms": ["goat", "lamb", "chicken breast", "halal chicken", "ground beef"], "unit": "lb"},
+        {"key": "staples", "label": "Rice & Flour", "role": "protect", "terms": ["basmati rice", "atta", "rice flour", "toor dal", "chana dal"]},
+        {"key": "dairy", "label": "Dairy", "role": "attach", "terms": ["paneer", "ghee", "yogurt", "lassi"]},
+        {"key": "spices", "label": "Spices & Masala", "role": "attach", "terms": ["turmeric", "cumin", "garam masala", "coriander", "red chili"]},
+        {"key": "produce", "label": "Produce", "role": "support", "terms": ["cilantro", "curry leaf", "onion", "potato", "cauliflower"]}
+      ],
       "area_presets": [
         {
           "label": "Edison NJ",
@@ -252,10 +294,23 @@
       "merchants": [
         "caribbean", "jamaican", "haitian", "african", "ethiopian", "nigerian",
         "ghana", "west indian", "island", "tropical", "exotic", "patty",
-        "golden krust", "flatbush", "crown heights", "little caribbean"
+        "golden krust", "flatbush", "crown heights", "little caribbean",
+        "food bazaar", "compare foods", "shop compare foods", "western beef"
+      ],
+      "merchant_search_terms": [
+        "food bazaar", "compare foods", "western beef", "shop compare foods"
       ],
       "trending_zips": ["30310", "33142", "10456", "77091", "20017", "11226"],
       "national_benchmark_zips": ["30310", "33142", "10456", "77091", "20017", "11226", "30087"],
+      "trending_terms": ["plantain", "goat meat", "scotch bonnet", "yams", "callaloo", "jerk seasoning", "coconut milk", "rice and peas", "saltfish", "plantain chips"],
+      "combo_search_terms": ["family pack", "combo", "weekend", "bundle", "jerk", "bbq"],
+      "categories": [
+        {"key": "meat", "label": "Meat & Fish", "role": "anchor", "terms": ["goat", "oxtail", "chicken", "saltfish", "mackerel", "turkey wings"], "unit": "lb"},
+        {"key": "produce", "label": "Tropical Produce", "role": "protect", "terms": ["plantain", "yams", "callaloo", "scotch bonnet", "coconut"]},
+        {"key": "pantry", "label": "Pantry & Seasonings", "role": "attach", "terms": ["jerk seasoning", "coconut milk", "rice", "beans", "curry powder"]},
+        {"key": "snacks", "label": "Snacks & Drinks", "role": "attach", "terms": ["ginger beer", "plantain chips", "juice", "sorrel"]},
+        {"key": "bread", "label": "Bread & Baked", "role": "support", "terms": ["hard dough bread", "coco bread", "patty"]}
+      ],
       "area_presets": [
         {
           "label": "Atlanta SW",

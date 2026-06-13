@@ -39,7 +39,10 @@ export default function BenchmarkProfileSelector({
         </label>
         <p id={descId} className="mt-1 max-w-2xl text-xs leading-relaxed text-white/65">
           {active?.description ||
-            "Pick your ethnic grocery focus — market presets and national ranking update to match."}
+            "Pick your ethnic grocery focus — market presets and national ranking update to match."}{" "}
+          <span className="text-white/45">
+            Changing type auto-selects a relevant benchmark market and reloads deals.
+          </span>
         </p>
       </div>
       <select
