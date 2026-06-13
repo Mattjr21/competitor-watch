@@ -14,6 +14,10 @@
   --color-sky: #4aa3ff;
 }
 
+html {
+  color-scheme: dark;
+}
+
 html,
 body,
 #root {
