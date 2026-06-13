@@ -1,4 +1,4 @@
-/** Single app icon — only /app-icon.jpeg (from user-provided compressedImage). */
-export const BRAND_VERSION = "15";
+/** App icon — round La Bodega logo at /app-icon.jpeg */
+export const BRAND_VERSION = "17";
 
 export const APP_ICON_SRC = `/app-icon.jpeg?v=${BRAND_VERSION}`;

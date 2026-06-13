@@ -152,13 +152,11 @@ export default function App() {
         <DemoModeBanner />
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <div className="shrink-0 rounded-lg bg-white px-2.5 py-1.5 shadow-sm ring-1 ring-black/10">
-              <img
-                src={APP_ICON_SRC}
-                alt="La Bodega Supermercado y Restaurante"
-                className="h-12 w-auto max-w-[min(240px,55vw)] object-contain object-left sm:h-14 sm:max-w-[280px]"
-              />
-            </div>
+            <img
+              src={APP_ICON_SRC}
+              alt="La Bodega Supermercado y Restaurante"
+              className="h-11 w-11 shrink-0 rounded-lg bg-white object-contain p-0.5 shadow-sm ring-1 ring-black/10 sm:h-12 sm:w-12"
+            />
             <div className="min-w-0 border-l border-white/10 pl-3 sm:pl-4">
               <h1 className="font-display text-base font-bold tracking-tight sm:text-lg">
                 Competitor Watch
