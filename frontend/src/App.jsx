@@ -155,7 +155,7 @@ export default function App() {
             <img
               src={APP_ICON_SRC}
               alt="La Bodega Supermercado y Restaurante"
-              className="h-11 w-11 shrink-0 rounded-lg bg-white object-contain p-0.5 shadow-sm ring-1 ring-black/10 sm:h-12 sm:w-12"
+              className="h-14 w-14 shrink-0 rounded-full object-contain sm:h-16 sm:w-16"
             />
             <div className="min-w-0 border-l border-white/10 pl-3 sm:pl-4">
               <h1 className="font-display text-base font-bold tracking-tight sm:text-lg">
