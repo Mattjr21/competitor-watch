@@ -934,6 +934,14 @@ class Handler(BaseHTTPRequestHandler):
         self._send_cors()
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
+        rel = os.path.basename(path).lower()
+        ext = os.path.splitext(path)[1].lower()
+        if rel == "index.html":
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        elif "/assets/" in path.replace("\\", "/") and ext in (".js", ".css"):
+            self.send_header("Cache-Control", "public, max-age=31536000, immutable")
+        else:
+            self.send_header("Cache-Control", "no-cache")
         self.end_headers()
         self.wfile.write(body)
 
