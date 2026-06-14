@@ -1,6 +1,6 @@
 import { useId, useMemo, useState, lazy, Suspense } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
-import { Search, X, RefreshCw, Download, Flame, Tags, Gift } from "lucide-react";
+import { Search, X, RefreshCw, Download, Flame, Tags, Gift, Trophy } from "lucide-react";
 import DealCard from "./DealCard";
 import BestDealsPanel from "./BestDealsPanel";
 import CombosSection from "./CombosSection";
@@ -16,7 +16,7 @@ import {
   FILTER_GRID,
   FILTER_ACTIONS,
 } from "../lib/layout";
-import { PageHeader, TAB_SECTION_SPACE } from "../lib/sectionUi";
+import { PageHeader, TAB_SECTION_SPACE, NAV_LINK } from "../lib/sectionUi";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -102,13 +102,13 @@ export default function DealsSection({
   profileLabel = "Latino grocery",
   isBenchmarking = false,
   pendingMarket = false,
-  onRefreshNational,
   onUploadGuide,
 }) {
   const reduceMotion = useReducedMotion();
   const bestPanelId = useId();
   const dealsPanelId = useId();
   const combosPanelId = useId();
+  const nationalPanelId = useId();
   const resultsLiveId = useId();
   const latinoFilterId = useId();
 
@@ -150,6 +150,11 @@ export default function DealsSection({
   const hasFilters = search || catFilter || merchFilter || latinoOnly;
   const useFlatGrid = hasFilters && filteredDeals.length <= FLAT_RESULT_LIMIT;
   const comboCount = data?.combos?.length || 0;
+  const nationalRankReady = Boolean(
+    data?.national_ranking &&
+      ((data.national_ranking.rows || []).some((r) => r.national_low != null || r.own_avg != null) ||
+        data.national_ranking.overall_score)
+  );
   const activeZips = data?.zips || [];
   const customZips = useMemo(
     () => customZipsFromCsv(activeZips.join(","), marketAreasFromPresets(data?.area_presets)),
@@ -240,8 +245,6 @@ export default function DealsSection({
             ? `${marketLabel} · ${data.merchants?.length || 0} retailers · synced ${data.generated_at}`
             : undefined
         }
-        onRefresh={onRefresh}
-        loading={loading && !!data}
       />
 
       {loading && data && (
@@ -287,6 +290,18 @@ export default function DealsSection({
             { id: "best", label: "Best near you", icon: Flame, count: categoryWinners.length, countSuffix: "winners", panelId: bestPanelId },
             { id: "all", label: "Deals by store", icon: Tags, count: deals.length, countSuffix: "deals", panelId: dealsPanelId },
             { id: "combos", label: "Combo packs", icon: Gift, count: comboCount, countSuffix: "packs", panelId: combosPanelId },
+            ...(nationalRankReady
+              ? [
+                  {
+                    id: "national",
+                    label: "National rank",
+                    icon: Trophy,
+                    count: data.national_ranking?.overall_score ?? data.national_ranking?.categories_ranked ?? 0,
+                    countSuffix: data.national_ranking?.overall_score ? "score" : "categories",
+                    panelId: nationalPanelId,
+                  },
+                ]
+              : []),
           ].map((tab) => {
             const active = dealsView === tab.id;
             const TabIcon = tab.icon;
@@ -365,6 +380,24 @@ export default function DealsSection({
           className="mt-6"
         >
           <CombosSection data={data} embedded />
+        </div>
+      ) : dealsView === "national" ? (
+        <div
+          id={nationalPanelId}
+          role="tabpanel"
+          aria-labelledby="tab-national"
+          className="mt-6"
+        >
+          <Suspense
+            fallback={
+              <div className="space-y-3 rounded-2xl border border-border p-4 sm:p-5">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-24 w-full" />
+              </div>
+            }
+          >
+            <NationalRankPanel ranking={data.national_ranking} onUploadGuide={onUploadGuide} />
+          </Suspense>
         </div>
       ) : (
         <div id={dealsPanelId} role="tabpanel" aria-labelledby="tab-all">
@@ -473,26 +506,13 @@ export default function DealsSection({
                     <button
                       type="button"
                       onClick={clearFilters}
-                      className="inline-flex h-11 shrink-0 items-center self-start px-3 text-sm font-medium text-sky underline-offset-2 hover:underline focus-visible:rounded focus-visible:ring-2 focus-visible:ring-brand sm:self-auto"
+                      className={"inline-flex h-11 shrink-0 items-center self-start px-3 text-sm " + NAV_LINK + " sm:self-auto"}
                     >
                       Clear filters
                     </button>
                   )}
 
                   <div className={FILTER_ACTIONS}>
-                    {onRefresh && (
-                      <button
-                        type="button"
-                        onClick={onRefresh}
-                        disabled={loading}
-                        aria-busy={loading}
-                        className="toolbar-control w-full shrink-0 sm:w-auto"
-                      >
-                        <RefreshCw size={14} className={loading ? "animate-spin" : ""} aria-hidden />
-                        Refresh deals
-                      </button>
-                    )}
-
                     {filteredDeals.length > 0 && (
                       <button
                         type="button"
@@ -569,18 +589,7 @@ export default function DealsSection({
                     >
                       Clear all filters
                     </button>
-                  ) : (
-                    onRefresh && (
-                      <button
-                        type="button"
-                        onClick={onRefresh}
-                        className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground/90 transition hover:border-border hover:text-foreground focus-visible:ring-2 focus-visible:ring-brand"
-                      >
-                        <RefreshCw size={14} aria-hidden />
-                        Refresh deals
-                      </button>
-                    )
-                  )}
+                  ) : null}
                 </div>
               </EmptyState>
             </div>
@@ -646,24 +655,6 @@ export default function DealsSection({
             </div>
           )}
         </div>
-      )}
-
-      {data.national_ranking && (
-        <Suspense
-          fallback={
-            <div className="space-y-3 rounded-2xl border border-border p-4 sm:p-5">
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-24 w-full" />
-            </div>
-          }
-        >
-          <NationalRankPanel
-            ranking={data.national_ranking}
-            onRefresh={onRefreshNational}
-            loading={loading}
-            onUploadGuide={onUploadGuide}
-          />
-        </Suspense>
       )}
     </section>
   );

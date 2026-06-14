@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { APP_ICON_SRC } from "@/lib/brand";
 import { APP_NAV } from "@/lib/nav";
+import { TAG_BADGE } from "@/lib/sectionUi";
 import {
   Sidebar,
   SidebarContent,
@@ -98,10 +99,7 @@ export default function AppSidebar({
                         </span>
                       )}
                       {isDeals && nationalRankReady && (
-                        <span
-                          className="ml-auto hidden rounded-full bg-brand/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-brand group-data-[collapsible=icon]:hidden"
-                          title="National price ranking available"
-                        >
+                        <span className={"ml-auto hidden group-data-[collapsible=icon]:hidden " + TAG_BADGE} title="National price ranking available">
                           Nat
                         </span>
                       )}
@@ -129,9 +127,9 @@ export default function AppSidebar({
       <SidebarFooter className="border-t border-sidebar-border">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={onUploadGuide} tooltip="Upload sales CSV">
+            <SidebarMenuButton onClick={onUploadGuide} tooltip="Sales summary and data connect">
               <Upload />
-              <span>Upload sales CSV</span>
+              <span>Connect store data</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

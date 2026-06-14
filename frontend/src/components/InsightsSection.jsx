@@ -30,6 +30,8 @@ import {
   TAB_SECTION_SPACE,
   TABLE_HEAD,
   UploadCtaLink,
+  NAV_LINK_SEMIBOLD,
+  NAV_LINK,
 } from "../lib/sectionUi";
 import TradeAreaCard from "./TradeAreaCard";
 import TradeAreaMapPreview from "./TradeAreaMapPreview";
@@ -37,6 +39,7 @@ import OutreachSection from "./OutreachSection";
 import { CompareBars, DonutChart, RankedBars, RetentionGauge, SegmentBar } from "./InsightCharts";
 import RecommendationCards from "./RecommendationCards";
 import StoreDataConnectPanel from "./StoreDataConnectPanel";
+import StorePulsePanel from "./StorePulsePanel";
 import { describeLoadedMarkets } from "../lib/marketAreas";
 import {
   BasketAnalysisDemoPreview,
@@ -54,6 +57,7 @@ const INSIGHTS_CUSTOMER_NAV = [
 const INSIGHTS_CUSTOMER_IDS = INSIGHTS_CUSTOMER_NAV.map((item) => item.id);
 
 function customerTabForHash(hash) {
+  if (hash === "insights-pulse") return "sales";
   if (["insights-outreach", "insights-ideas"].includes(hash)) return "actions";
   if (INSIGHTS_CUSTOMER_IDS.includes(hash)) return "customers";
   if (hash === "insights-pricing") return "competitive";
@@ -217,7 +221,7 @@ function PriceComparisonSection({ priceRows, hasUploadedData, marketLabel, gener
         <button
           type="button"
           onClick={() => setShowAll(true)}
-          className="mt-3 text-sm font-medium text-sky underline-offset-2 hover:underline focus-visible:rounded focus-visible:ring-2 focus-visible:ring-brand"
+          className={"mt-3 text-sm " + NAV_LINK}
         >
           Show all {priceRows.length} categories
         </button>
@@ -270,7 +274,7 @@ function InsightsCustomersSubNav() {
   return (
     <nav
       aria-label="Customer analytics sections"
-      className="no-print mb-6 flex gap-1 overflow-x-auto border-b border-border pb-2 [scrollbar-width:thin]"
+      className="no-print sticky top-[var(--app-header-height)] z-30 -mx-1 mb-6 flex gap-1 overflow-x-auto border-b border-border bg-background/95 px-1 pb-2 backdrop-blur supports-[backdrop-filter]:bg-background/85 [scrollbar-width:thin]"
     >
       {INSIGHTS_CUSTOMER_NAV.map((item) => {
         const active = activeId === item.id;
@@ -305,7 +309,7 @@ export default function InsightsSection({
   isBenchmarking = false,
   pendingMarket = false,
 }) {
-  const [insightsTab, setInsightsTab] = useState("competitive");
+  const [insightsTab, setInsightsTab] = useState("sales");
 
   useEffect(() => {
     const syncFromHash = () => {
@@ -402,17 +406,15 @@ export default function InsightsSection({
         eyebrow="Your store data"
         eyebrowDot
         titleId="insights-page-title"
-        title="Price & customer intelligence"
+        title="Store sales & intelligence"
         description={
           isBenchmarking
             ? `Shelf prices vs competitors in ${marketLabel}. Competitor deals tab shows ${compareMarketLabel || "another market"} for research.`
-            : "Connect Odoo or upload CSVs, then use Competitive, Customers, and Actions tabs for pricing, analytics, and outreach."
+            : "Daily sales summary first — then pricing, customers, and outreach actions."
         }
-        onRefresh={onRefresh}
-        loading={loading}
       />
 
-      <StoreDataConnectPanel dataSource={data.data_source} onComplete={onUploadComplete} />
+      <StoreDataConnectPanel dataSource={data.data_source} onComplete={onUploadComplete} hasLiveData={hasUploadedData} />
 
       {!hasUploadedData && (
         <div
@@ -420,13 +422,19 @@ export default function InsightsSection({
           className="rounded-xl border border-brand/20 bg-brand/8 px-4 py-3 text-sm leading-relaxed text-foreground/85"
         >
           <strong className="text-foreground">Sample previews below</strong> use May sales analysis numbers.
-          Upload your CSV to replace them with your store&apos;s data.{" "}
-          <UploadCtaLink className="min-h-0 inline text-sm" />
+          Connect Odoo or upload CSVs to replace them — open the{" "}
+          <a href="#insights-pulse" className={NAV_LINK_SEMIBOLD}>
+            Sales summary
+          </a>{" "}
+          tab after loading data.{" "}
         </div>
       )}
 
       <Tabs value={insightsTab} onValueChange={setInsightsTab} className="gap-6">
         <TabsList className="no-print h-auto w-full flex-wrap justify-start gap-1 p-1">
+          <TabsTrigger value="sales" className="px-3 sm:px-4">
+            Sales summary
+          </TabsTrigger>
           <TabsTrigger value="competitive" className="px-3 sm:px-4">
             Competitive
           </TabsTrigger>
@@ -437,6 +445,12 @@ export default function InsightsSection({
             Actions
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="sales" className="mt-0">
+          <div id="insights-pulse" className={SCROLL_MT}>
+            <StorePulsePanel dealsData={data} compact={false} />
+          </div>
+        </TabsContent>
 
         <TabsContent value="competitive" className="mt-0">
           <div id="insights-pricing" className={SCROLL_MT}>

@@ -2,10 +2,10 @@ import { RefreshCw } from "lucide-react";
 import { motion } from "motion/react";
 import { ErrorState, EmptyState, EASE } from "../lib/ui";
 import { getSuggestedBenchmarkPresets } from "../lib/benchmarkProfiles";
-import { PageHeader, PANEL, SectionHeader, TAB_SECTION_SPACE } from "../lib/sectionUi";
+import { PageHeader, PANEL, SectionHeader, TAB_SECTION_SPACE, TAG_BADGE } from "../lib/sectionUi";
 
 const TRENDING_PAGE_LEDE =
-  "Most-advertised products by store count — ethnic vs mainstream chains. For lowest prices and category winners, see Competitor deals.";
+  "National Latino grocery ad scan — what chains advertise most, not your store’s daily sales. For lowest prices near you, see Competitor deals.";
 
 function TrendCard({ item, rank, accent }) {
   const price =
@@ -43,10 +43,7 @@ function TrendCard({ item, rank, accent }) {
       </div>
       {price && <span className="font-display text-lg font-bold text-leaf">{price}</span>}
       <div className="flex items-center gap-2">
-        <span
-          className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-          style={{ background: `${accent}1a`, color: accent }}
-        >
+        <span className={TAG_BADGE}>
           {item.stores ?? 0} {item.stores === 1 ? "store" : "stores"}
         </span>
       </div>
@@ -107,8 +104,6 @@ export default function TrendingSection({
           title="What's being advertised"
           description={TRENDING_PAGE_LEDE}
           meta={`Loading ${profileLabel.toLowerCase()} vs mainstream in ${marketLabel}…`}
-          onRefresh={onRefresh}
-          loading={true}
         />
         <div
           role="status"
@@ -160,8 +155,6 @@ export default function TrendingSection({
         title="What's being advertised"
         description={TRENDING_PAGE_LEDE}
         meta={`${scopeLine} · ${ethnicLabel.toLowerCase()} vs mainstream`}
-        onRefresh={onRefresh}
-        loading={loading}
       />
 
       <div

@@ -101,6 +101,7 @@ def _facts_label(facts, meta, prefix):
 def analyze_from_lines(lines, cfg, meta=None):
     extra = dict(meta or {})
     extra["loaded_at"] = time.strftime("%Y-%m-%d %H:%M")
+    extra.setdefault("combo_keywords", cfg.get("combo_keywords") or [])
     return sales.analyze_lines(
         lines,
         cfg["categories"],

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Cloud, FileSpreadsheet, RefreshCw, Upload, Plug, CheckCircle2 } from "lucide-react";
+import { Cloud, FileSpreadsheet, RefreshCw, Upload, Plug, CheckCircle2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -45,7 +45,7 @@ async function readJson(res) {
   return out;
 }
 
-export default function StoreDataConnectPanel({ dataSource, onComplete }) {
+export default function StoreDataConnectPanel({ dataSource, onComplete, hasLiveData = false }) {
   const [status, setStatus] = useState(DEFAULT_STATUS);
   const [apiReady, setApiReady] = useState(true);
   const [mode, setMode] = useState("api");
@@ -54,6 +54,7 @@ export default function StoreDataConnectPanel({ dataSource, onComplete }) {
   const [err, setErr] = useState(null);
   const [csvFiles, setCsvFiles] = useState({});
   const [form, setForm] = useState(() => defaultForm("odoo"));
+  const [expanded, setExpanded] = useState(true);
   const fileRefs = useRef({});
   const singleSalesRef = useRef(null);
 
@@ -67,6 +68,12 @@ export default function StoreDataConnectPanel({ dataSource, onComplete }) {
   const connection = status?.connection?.[activeId] || status?.connection?.odoo || {};
   const apiFields = activeProvider?.fields || [];
   const isConnected = Boolean(connection?.configured);
+  const isSampleSource = /default/i.test(dataSource || "");
+  const canCollapse = hasLiveData || isConnected || (!isSampleSource && Boolean(dataSource));
+
+  useEffect(() => {
+    if (canCollapse) setExpanded(false);
+  }, [canCollapse]);
 
   const loadStatus = useCallback(async () => {
     setErr(null);
@@ -269,22 +276,40 @@ export default function StoreDataConnectPanel({ dataSource, onComplete }) {
     }
   }
 
+  const syncHint = status?.last_sync_at ? `Last synced ${status.last_sync_at}` : null;
+  const sourceHint = isSampleSource ? "Sample data" : dataSource || "Not loaded yet";
+  const collapseSummary = [activeProvider.label, sourceHint, syncHint].filter(Boolean).join(" · ");
+
   return (
     <div
       id="insights-upload"
-      className="no-print rounded-2xl border border-dashed border-border bg-muted/80 p-4 sm:p-5 lg:p-6"
+      className={cn(
+        "no-print rounded-2xl border bg-muted/80",
+        expanded ? "border-dashed border-border p-4 sm:p-5 lg:p-6" : "border-border bg-card shadow-sm"
+      )}
     >
+      {canCollapse && !expanded ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">Data source</p>
+            <p className="truncate text-xs text-muted-foreground">{collapseSummary}</p>
+          </div>
+          <Button type="button" variant="outline" size="sm" className="min-h-10" onClick={() => setExpanded(true)}>
+            Manage connection
+          </Button>
+        </div>
+      ) : (
       <div className="flex flex-wrap items-start gap-6">
         <div className="grid h-12 w-12 place-items-center rounded-xl bg-brand/15 text-brand" aria-hidden>
           <Upload size={22} />
         </div>
         <div className="min-w-0 flex-1 space-y-4">
-          <div>
-            <h3 className="font-display text-xl font-semibold">Connect your ERP / POS</h3>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+            <h3 className="font-display text-xl font-semibold">Connect your system</h3>
             <p id="insights-upload-help" className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Link your system for live order data, or upload CSV exports manually. Works with Odoo today;
-              Square, Toast, and Clover adapters can be enabled per store.
-              {dataSource && (
+              Link Odoo or another POS for live orders, or upload CSV exports manually.
+              {dataSource && !isSampleSource && (
                 <>
                   {" "}
                   Current view:{" "}
@@ -292,13 +317,25 @@ export default function StoreDataConnectPanel({ dataSource, onComplete }) {
                 </>
               )}
             </p>
+            </div>
+            {canCollapse && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="min-h-10 shrink-0 gap-1"
+                onClick={() => setExpanded(false)}
+              >
+                Hide
+                <ChevronDown size={14} className="rotate-180" aria-hidden />
+              </Button>
+            )}
           </div>
 
           {!apiReady && (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-              API connect needs the latest backend deployed (route <code className="text-xs">/api/integration</code>{" "}
-              returned not found). Manual CSV upload may still work if <code className="text-xs">/api/upload</code> is
-              available.
+              Live API connect isn&apos;t available on this server yet. You can still upload CSV files below, or open
+              the <strong className="font-medium">Sales summary</strong> tab for sample analytics.
             </div>
           )}
 
@@ -553,6 +590,7 @@ export default function StoreDataConnectPanel({ dataSource, onComplete }) {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

@@ -343,6 +343,8 @@ def analyze_lines(lines, categories, weather_categories=None, store_location=Non
         customers, orders, store_location=store_location, zip_centroids=zip_centroids
     )
 
+    store_analytics = _build_store_analytics(orders, lines, categories, extra=extra)
+
     weather_baselines = {}
     for k in wkeys:
         by_dow = {}
@@ -376,6 +378,11 @@ def analyze_lines(lines, categories, weather_categories=None, store_location=Non
         "top_products": top_products,
         "customer_analytics": customer_analytics,
         "weather_baselines": weather_baselines,
+        "store_pulse": store_analytics.get("pulse"),
+        "product_movers": store_analytics.get("product_movers"),
+        "category_movers": store_analytics.get("category_movers"),
+        "promo_intelligence": store_analytics.get("promo_intelligence"),
+        "daily_sales": store_analytics.get("daily_sales"),
     }
     if extra:
         facts["integration_meta"] = extra
@@ -393,6 +400,240 @@ def analyze(csv_text, categories, weather_categories=None, store_location=None, 
         zip_centroids=zip_centroids,
         extra=extra,
     )
+
+
+def _period_stats(order_list):
+    if not order_list:
+        return {"revenue": 0, "orders": 0, "avg_basket": 0}
+    rev = sum(o["total"] for o in order_list)
+    n = len(order_list)
+    return {
+        "revenue": round(rev, 2),
+        "orders": n,
+        "avg_basket": round(rev / n, 2) if n else 0,
+    }
+
+
+def _wow_pct(current, previous):
+    if not previous:
+        return None
+    return round(100 * (current - previous) / previous, 1)
+
+
+def _build_store_analytics(orders, lines, categories, extra=None):
+    """Daily pulse, WoW movers, and promo-in-basket signals from dated order lines."""
+    extra = extra or {}
+    order_dates = {
+        oid: o["date"].date()
+        for oid, o in orders.items()
+        if o.get("date") and hasattr(o["date"], "date")
+    }
+    if len(order_dates) < 3:
+        return {
+            "pulse": {"has_date_data": False, "note": "Order dates required for store pulse — include Order Date on exports."},
+            "product_movers": {"has_data": False},
+            "category_movers": {"has_data": False},
+            "promo_intelligence": {"has_data": False},
+            "daily_sales": [],
+        }
+
+    anchor = max(order_dates.values())
+    day = lambda offset: anchor - datetime.timedelta(days=offset)
+
+    def orders_on(d):
+        return [o for oid, o in orders.items() if order_dates.get(oid) == d]
+
+    def orders_in_range(start, end):
+        return [o for oid, o in orders.items() if start <= order_dates.get(oid, anchor) <= end]
+
+    yesterday = orders_on(day(1))
+    last_7 = orders_in_range(day(6), anchor)
+    prior_7 = orders_in_range(day(13), day(7))
+
+    y_stats = _period_stats(yesterday)
+    l7 = _period_stats(last_7)
+    p7 = _period_stats(prior_7)
+
+    daily_sales = []
+    for offset in range(13, -1, -1):
+        d = day(offset)
+        lst = orders_on(d)
+        st = _period_stats(lst)
+        daily_sales.append(
+            {
+                "date": d.isoformat(),
+                "label": d.strftime("%a %m/%d"),
+                "revenue": st["revenue"],
+                "orders": st["orders"],
+                "avg_basket": st["avg_basket"],
+            }
+        )
+
+    pulse = {
+        "has_date_data": True,
+        "anchor_date": anchor.isoformat(),
+        "yesterday": y_stats,
+        "last_7_days": l7,
+        "prior_7_days": p7,
+        "wow_revenue_pct": _wow_pct(l7["revenue"], p7["revenue"]),
+        "wow_orders_pct": _wow_pct(l7["orders"], p7["orders"]),
+        "wow_avg_basket_pct": _wow_pct(l7["avg_basket"], p7["avg_basket"]),
+    }
+
+    prod_recent = {}
+    prod_prior = {}
+    cat_recent = {c["key"]: 0.0 for c in categories}
+    cat_prior = {c["key"]: 0.0 for c in categories}
+
+    for line in lines:
+        oid = line.get("order_id")
+        d = order_dates.get(oid)
+        if not d:
+            continue
+        name = (line.get("product") or "").strip()
+        rev = line.get("total") or 0.0
+        if day(6) <= d <= anchor:
+            if name:
+                prod_recent[name] = prod_recent.get(name, 0.0) + rev
+            for ck in _match_cat(name, categories):
+                cat_recent[ck] = cat_recent.get(ck, 0.0) + rev
+        elif day(13) <= d <= day(7):
+            if name:
+                prod_prior[name] = prod_prior.get(name, 0.0) + rev
+            for ck in _match_cat(name, categories):
+                cat_prior[ck] = cat_prior.get(ck, 0.0) + rev
+
+    movers = []
+    for name, recent_rev in prod_recent.items():
+        if recent_rev < 25:
+            continue
+        prior_rev = prod_prior.get(name, 0.0)
+        change = recent_rev - prior_rev
+        pct = _wow_pct(recent_rev, prior_rev) if prior_rev else (100.0 if recent_rev else None)
+        movers.append(
+            {
+                "name": name,
+                "recent_revenue": round(recent_rev, 2),
+                "prior_revenue": round(prior_rev, 2),
+                "change": round(change, 2),
+                "change_pct": pct,
+            }
+        )
+
+    rising = sorted(
+        [m for m in movers if (m["change_pct"] or 0) > 0],
+        key=lambda x: x["change_pct"] or 0,
+        reverse=True,
+    )[:5]
+    falling = sorted(
+        [m for m in movers if m["prior_revenue"] >= 25 and (m["change_pct"] or 0) < 0],
+        key=lambda x: x["change_pct"] or 0,
+    )[:5]
+
+    cat_labels = {c["key"]: c["label"] for c in categories}
+    cat_mover_rows = []
+    for key in cat_recent:
+        recent_rev = cat_recent.get(key, 0.0)
+        prior_rev = cat_prior.get(key, 0.0)
+        if recent_rev < 50 and prior_rev < 50:
+            continue
+        cat_mover_rows.append(
+            {
+                "key": key,
+                "label": cat_labels.get(key, key),
+                "recent_revenue": round(recent_rev, 2),
+                "prior_revenue": round(prior_rev, 2),
+                "change_pct": _wow_pct(recent_rev, prior_rev),
+            }
+        )
+    cat_rising = sorted(
+        [c for c in cat_mover_rows if (c["change_pct"] or 0) > 0],
+        key=lambda x: x["change_pct"] or 0,
+        reverse=True,
+    )[:4]
+    cat_falling = sorted(
+        [c for c in cat_mover_rows if (c["change_pct"] or 0) < 0],
+        key=lambda x: x["change_pct"] or 0,
+    )[:4]
+
+    promo_terms = []
+    for offer in extra.get("offers_parsed") or []:
+        term = (offer.get("product") or offer.get("label") or "").strip().lower()
+        if term and len(term) >= 3:
+            promo_terms.append({"term": term, "label": offer.get("label") or offer.get("product"), "source": "offers_csv"})
+    for kw in extra.get("combo_keywords") or []:
+        kw = str(kw).strip().lower()
+        if kw and len(kw) >= 3:
+            promo_terms.append({"term": kw, "label": kw, "source": "promo_keyword"})
+
+    promo_orders = set()
+    promo_items = {}
+    recent_order_ids = {oid for oid, d in order_dates.items() if day(6) <= d <= anchor}
+
+    for line in lines:
+        if line.get("order_id") not in recent_order_ids:
+            continue
+        name = (line.get("product") or "").strip()
+        low = name.lower()
+        matched = None
+        for p in promo_terms:
+            if p["term"] in low:
+                matched = p
+                break
+        if not matched:
+            continue
+        oid = line["order_id"]
+        promo_orders.add(oid)
+        key = name
+        bucket = promo_items.setdefault(
+            key,
+            {"name": name, "orders": set(), "revenue": 0.0, "source": matched["source"]},
+        )
+        bucket["orders"].add(oid)
+        bucket["revenue"] += line.get("total") or 0.0
+
+    promo_rows = []
+    for item in promo_items.values():
+        promo_rows.append(
+            {
+                "name": item["name"],
+                "orders": len(item["orders"]),
+                "revenue": round(item["revenue"], 2),
+                "source": item["source"],
+            }
+        )
+    promo_rows.sort(key=lambda x: x["revenue"], reverse=True)
+
+    recent_order_count = len(last_7) or 1
+    promo_intelligence = {
+        "has_data": bool(promo_rows),
+        "period_label": "Last 7 days",
+        "promo_order_pct": round(100 * len(promo_orders) / recent_order_count, 1) if promo_orders else 0,
+        "promo_orders": len(promo_orders),
+        "total_orders": recent_order_count,
+        "items_in_baskets": promo_rows[:8],
+        "note": None
+        if promo_rows
+        else "Upload an offers CSV or connect Odoo promos to track deal items in baskets.",
+    }
+
+    return {
+        "pulse": pulse,
+        "product_movers": {
+            "has_data": bool(rising or falling),
+            "period_label": "This week vs last week",
+            "rising": rising,
+            "falling": falling,
+        },
+        "category_movers": {
+            "has_data": bool(cat_rising or cat_falling),
+            "period_label": "This week vs last week",
+            "rising": cat_rising,
+            "falling": cat_falling,
+        },
+        "promo_intelligence": promo_intelligence,
+        "daily_sales": daily_sales,
+    }
 
 
 def _build_trade_area(customers, orders, store_location=None, zip_centroids=None):

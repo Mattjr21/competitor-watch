@@ -91,8 +91,6 @@ export default function WeatherSection({ forecast, loading, error, onRefresh }) 
           title="The weekend playbook"
           description="Weather-driven push and skip categories, plus daily sales targets for your store."
           meta={`${loc.city || "Calhoun"}, ${loc.state || "GA"} · updated ${forecast.generated_at}`}
-          onRefresh={onRefresh}
-          loading={loading}
         />
 
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

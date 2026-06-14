@@ -48,6 +48,23 @@ def _product_name_map(csv_text):
     return out
 
 
+def _parse_offers(csv_text):
+    """Parse offers/promotions export into match terms for promo-in-basket detection."""
+    headers, rows = _read_rows(csv_text)
+    c_label = sales._pick(headers, "Offer", "Promotion", "Name", "Campaign", "Deal")
+    c_prod = sales._pick(headers, "Product", "Product Name", "Item", "SKU")
+    if not (c_label or c_prod):
+        return []
+    out = []
+    for r in rows:
+        label = (r.get(c_label) or "").strip() if c_label else ""
+        prod = (r.get(c_prod) or "").strip() if c_prod else ""
+        if not (label or prod):
+            continue
+        out.append({"label": label or prod, "product": prod or label})
+    return out
+
+
 def _summarize_auxiliary(csv_text, kind):
     headers, rows = _read_rows(csv_text)
     return {"kind": kind, "rows": len(rows), "columns": headers[:12]}
@@ -86,10 +103,18 @@ def build_lines_from_bundle(files):
             meta["products_mapped"] = len(pmap)
         meta["files_loaded"].append("products")
 
-    for kind in ("loyalty", "offers", "pricelist"):
+    for kind in ("loyalty", "pricelist"):
         text = (files.get(kind) or "").strip()
         if text:
             meta[kind] = _summarize_auxiliary(text, kind)
             meta["files_loaded"].append(kind)
+
+    offers_text = (files.get("offers") or "").strip()
+    if offers_text:
+        parsed = _parse_offers(offers_text)
+        if parsed:
+            meta["offers_parsed"] = parsed
+        meta["offers"] = _summarize_auxiliary(offers_text, "offers")
+        meta["files_loaded"].append("offers")
 
     return lines, meta

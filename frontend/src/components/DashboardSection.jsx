@@ -1,11 +1,14 @@
 import { ArrowRight, Beef, CloudSun, Sparkles } from "lucide-react";
 import HeroBanner from "./HeroBanner";
 import WeekDigestPanel from "./WeekDigestPanel";
+import StorePulsePanel from "./StorePulsePanel";
 import {
   PageHeader,
   StatCard,
   PANEL,
   TAB_SECTION_SPACE,
+  NAV_LINK_SEMIBOLD,
+  META_CHIP,
 } from "../lib/sectionUi";
 import { APP_NAV } from "../lib/nav";
 import { computeCategoryWinners, formatDealPrice, MEAT_TYPES } from "../lib/dealWinners";
@@ -44,7 +47,7 @@ function WeekendStrip({ days }) {
       {days.map((day) => (
         <span
           key={day.label}
-          className="rounded-full border border-border bg-muted/60 px-3 py-1.5 text-xs text-muted-foreground"
+          className={META_CHIP}
         >
           <strong className="font-semibold text-foreground">{day.label}</strong>
           {" · "}
@@ -189,7 +192,18 @@ export default function DashboardSection({
 
       <HeroBanner location={forecast?.location || { city: "Calhoun", state: "GA" }} compactOnMobile />
 
-      <WeekDigestPanel dealsData={dealsData} forecast={forecast} storeName={storeName} />
+      <WeekDigestPanel
+        dealsData={dealsData}
+        forecast={forecast}
+        storeName={storeName}
+        onGoActions={() => onGoInsightsSection?.("insights-ideas") ?? onNavigate("insights")}
+      />
+
+      <StorePulsePanel
+        dealsData={dealsData}
+        compact
+        onGoFullAnalytics={() => onGoInsightsSection?.("insights-pulse") ?? onNavigate("insights")}
+      />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <StatCard
@@ -224,9 +238,13 @@ export default function DashboardSection({
           }
         />
         <StatCard
-          label="Your data"
+          label="Store data"
           value={hasUploadedData ? "Live" : "Sample"}
-          hint={hasUploadedData ? "POS CSV connected" : "Upload to unlock"}
+          hint={
+            hasUploadedData
+              ? "Sales summary uses your uploads"
+              : "May sample — connect or upload to replace"
+          }
           accentClass={hasUploadedData ? "text-leaf" : "text-muted-foreground"}
         />
       </div>
@@ -246,11 +264,19 @@ export default function DashboardSection({
             <button
               type="button"
               onClick={() => onNavigate("insights")}
-              className="font-semibold text-primary underline-offset-2 hover:underline"
+              className={NAV_LINK_SEMIBOLD}
             >
               Your store data
             </button>{" "}
-            to unlock basket analysis, retention, and trade area maps.
+            to replace sample pulse with your store&apos;s daily trends. See{" "}
+            <button
+              type="button"
+              onClick={() => onGoInsightsSection?.("insights-pulse") ?? onNavigate("insights")}
+              className={NAV_LINK_SEMIBOLD}
+            >
+              Sales summary
+            </button>
+            .
           </p>
         </div>
       )}

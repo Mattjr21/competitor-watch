@@ -21,6 +21,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { TAB_LABELS } from "./lib/nav";
+import { META_CHIP, META_CHIP_ACCENT } from "./lib/sectionUi";
 
 const DashboardSection = lazy(() => import("./components/DashboardSection"));
 const WeatherSection = lazy(() => import("./components/WeatherSection"));
@@ -153,10 +154,6 @@ export default function App() {
     return () => clearTimeout(t);
   }, [profileSwitchNotice]);
 
-  function refreshNationalRanking() {
-    fetchDeals(false, activeZips, benchmarkProfile, true);
-  }
-
   async function fetchTrending(
     refresh = false,
     zips = activeZips,
@@ -214,6 +211,7 @@ export default function App() {
     }
     if (activeTab === "weather") fetchForecast(true);
     else if (activeTab === "trending") fetchTrending(true, activeZips, benchmarkProfile);
+    else if (activeTab === "deals") fetchDeals(true, activeZips, benchmarkProfile, true);
     else fetchDeals(true, activeZips, benchmarkProfile);
   };
 
@@ -225,13 +223,14 @@ export default function App() {
   const goInsightsSection = (sectionId) => {
     setActiveTab("insights");
     window.location.hash = sectionId;
+    requestAnimationFrame(() => {
+      const el = document.getElementById(sectionId);
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   };
 
   const openUploadGuide = () => {
-    setActiveTab("insights");
-    requestAnimationFrame(() => {
-      document.getElementById("insights-upload")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    goInsightsSection("insights-pulse");
   };
 
   const tabRefreshLabel = {
@@ -356,16 +355,13 @@ export default function App() {
             </h1>
             {isBenchmarking ? (
               <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                <span
-                  className="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-foreground sm:text-[11px]"
-                  title="Weekend playbook and Your store data use your home market"
-                >
+                <span className={META_CHIP} title="Your home store (Calhoun) — weekend playbook and your sales data">
                   <span className="text-muted-foreground">Playbook</span>
                   <span className="truncate">{homeMarketSummary.short}</span>
                 </span>
                 <span
-                  className="inline-flex max-w-full items-center gap-1 rounded-full border border-sky/25 bg-sky/10 px-2 py-0.5 text-[10px] font-medium text-foreground sm:text-[11px]"
-                  title="Competitor deals and Market trends scan this benchmark market"
+                  className={META_CHIP_ACCENT}
+                  title="Ad research market — competitor deals and national trends (not your store sales)"
                 >
                   <span className="text-muted-foreground">Scanning</span>
                   <span className="truncate">{compareMarketSummary.short}</span>
@@ -463,7 +459,6 @@ export default function App() {
                     isBenchmarking={isBenchmarking}
                     pendingMarket={dealsScopeMismatch}
                     onRefresh={() => fetchDeals(true, activeZips, benchmarkProfile)}
-                    onRefreshNational={refreshNationalRanking}
                     onUploadGuide={openUploadGuide}
                   />
                 </div>

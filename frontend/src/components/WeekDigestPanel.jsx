@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Check, Copy, Mail, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PANEL } from "../lib/sectionUi";
+import { PANEL, TAG_BADGE, NAV_LINK } from "../lib/sectionUi";
 import {
   buildWeekDigestActions,
   copyText,
@@ -12,7 +12,7 @@ import {
   whatsAppShareUrl,
 } from "../lib/weekDigest";
 
-export default function WeekDigestPanel({ dealsData, forecast, storeName = "La Bodega" }) {
+export default function WeekDigestPanel({ dealsData, forecast, storeName = "La Bodega", onGoActions }) {
   const [copied, setCopied] = useState(null);
   const location = forecast?.location || {};
   const actions = useMemo(
@@ -52,7 +52,16 @@ export default function WeekDigestPanel({ dealsData, forecast, storeName = "La B
             This week&apos;s 3 actions
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Share with your team on WhatsApp or email — pulled from live ads and the weekend playbook.
+            Share with your team on WhatsApp or email — pulled from live ads and the weekend playbook.{" "}
+            {onGoActions && (
+              <button
+                type="button"
+                onClick={onGoActions}
+                className={NAV_LINK}
+              >
+                Segment-specific ideas in Actions →
+              </button>
+            )}
           </p>
         </div>
       </div>
@@ -66,9 +75,7 @@ export default function WeekDigestPanel({ dealsData, forecast, storeName = "La B
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
               <span className="font-display text-sm font-bold tabular-nums text-brand">{i + 1}.</span>
               {action.tag && (
-                <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand">
-                  {action.tag}
-                </span>
+                <span className={TAG_BADGE}>{action.tag}</span>
               )}
             </div>
             <p className="mt-1.5 text-sm font-semibold leading-snug text-foreground">{action.title}</p>

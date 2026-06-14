@@ -1,5 +1,5 @@
-import { RefreshCw, Trophy, Upload } from "lucide-react";
-import { PANEL, TABLE_HEAD, UploadCtaLink } from "../lib/sectionUi";
+import { Trophy, Upload } from "lucide-react";
+import { PANEL, TABLE_HEAD, UploadCtaLink, SUCCESS_BADGE, INFO_BADGE } from "../lib/sectionUi";
 
 const BAND_STYLE = {
   national_leader: { label: "National leader", className: "text-leaf" },
@@ -24,7 +24,7 @@ function ScoreRing({ score }) {
   );
 }
 
-export default function NationalRankPanel({ ranking, onRefresh, loading, onUploadGuide }) {
+export default function NationalRankPanel({ ranking, onUploadGuide }) {
   if (!ranking) return null;
 
   const rows = (ranking.rows || []).filter((r) => r.national_low != null || r.own_avg != null);
@@ -48,17 +48,6 @@ export default function NationalRankPanel({ ranking, onRefresh, loading, onUploa
             )}
           </div>
         </div>
-        {onRefresh && (
-          <button
-            type="button"
-            onClick={onRefresh}
-            disabled={loading}
-            className="inline-flex min-h-[36px] items-center gap-2 rounded-full border border-border px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:border-border disabled:opacity-50"
-          >
-            <RefreshCw size={13} className={loading ? "animate-spin" : ""} aria-hidden />
-            Refresh national scan
-          </button>
-        )}
       </div>
 
       {ranking.requires_upload ? (
@@ -82,13 +71,11 @@ export default function NationalRankPanel({ ranking, onRefresh, loading, onUploa
         </div>
       ) : (
         <div className="mt-4 flex flex-wrap gap-3 text-xs">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-leaf/30 bg-leaf/10 px-2.5 py-1 text-leaf">
+          <span className={SUCCESS_BADGE}>
             <Trophy size={12} aria-hidden />
             {ranking.national_leaders || 0} at national low
           </span>
-          <span className="rounded-full border border-sky/30 bg-sky/10 px-2.5 py-1 text-sky">
-            {ranking.competitive_count || 0} competitive
-          </span>
+          <span className={INFO_BADGE}>{ranking.competitive_count || 0} competitive</span>
         </div>
       )}
 

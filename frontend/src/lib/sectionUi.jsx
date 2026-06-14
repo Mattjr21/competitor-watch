@@ -22,8 +22,25 @@ export const SCROLL_MT = "scroll-mt-section";
 export const TAB_SECTION_SPACE = "space-y-10 sm:space-y-12";
 export const TABLE_HEAD =
   "bg-muted/60 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground";
+/** Shared pill badges — sample, tags, status chips */
 export const SAMPLE_BADGE =
-  "rounded-full border border-border bg-muted px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-[11px] sm:normal-case sm:tracking-normal";
+  "inline-flex items-center rounded-full border border-border bg-muted/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-[11px] sm:normal-case sm:tracking-normal";
+export const TAG_BADGE =
+  "inline-flex items-center rounded-full border border-brand/25 bg-brand/10 px-2.5 py-1 text-[10px] font-semibold text-brand sm:text-[11px]";
+export const INFO_BADGE =
+  "inline-flex items-center rounded-full border border-sky/30 bg-sky/10 px-2.5 py-1 text-[10px] font-semibold text-sky sm:text-[11px]";
+export const SUCCESS_BADGE =
+  "inline-flex items-center gap-1 rounded-full border border-leaf/30 bg-leaf/10 px-2.5 py-1 text-[10px] font-semibold text-leaf sm:text-[11px]";
+export const META_CHIP =
+  "inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-foreground sm:text-[11px]";
+export const META_CHIP_ACCENT =
+  "inline-flex max-w-full items-center gap-1 rounded-full border border-sky/25 bg-sky/10 px-2 py-0.5 text-[10px] font-medium text-foreground sm:text-[11px]";
+
+/** In-app navigation links (sky). Primary green stays for CTAs and UploadCtaLink actions. */
+export const NAV_LINK =
+  "font-medium text-sky underline-offset-2 hover:underline focus-visible:rounded focus-visible:ring-2 focus-visible:ring-ring";
+export const NAV_LINK_SEMIBOLD =
+  "font-semibold text-sky underline-offset-2 hover:underline focus-visible:rounded focus-visible:ring-2 focus-visible:ring-ring";
 
 /** Light-theme alert for server week_signal copy (amber on white). */
 export const WEEK_SIGNAL_PANEL =
@@ -120,15 +137,9 @@ export function StatCard({ label, value, suffix = "", hint, accentClass = "text-
   );
 }
 
-export function UploadCtaLink({ className = "", label = "Upload sales CSV" }) {
+export function UploadCtaLink({ className = "", label = "Connect store data" }) {
   return (
-    <a
-      href="#insights-upload"
-      className={
-        "inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-2 hover:underline focus-visible:rounded focus-visible:ring-2 focus-visible:ring-ring " +
-        className
-      }
-    >
+    <a href="#insights-pulse" className={"inline-flex min-h-11 items-center text-sm " + NAV_LINK_SEMIBOLD + " " + className}>
       {label}
     </a>
   );
