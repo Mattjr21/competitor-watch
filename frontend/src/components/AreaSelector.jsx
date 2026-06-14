@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, MapPin, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DEFAULT_LOCAL_ZIPS,
   buildZipsCsv,
@@ -56,7 +58,7 @@ function MarketPill({ area, selected, disabled, onClick }) {
         "inline-flex min-h-[40px] items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm transition focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60 " +
         (selected
           ? "border-leaf/60 bg-leaf/10 font-medium text-leaf"
-          : "border-white/12 text-white/60 hover:border-white/30 hover:text-white/85")
+          : "border-border text-muted-foreground hover:border-border hover:text-foreground/90")
       }
     >
       {area.flag} {area.label}
@@ -69,7 +71,7 @@ function RegionalPills({ groups, draft, disabled, compareMode, onPick }) {
     <div className="space-y-4">
       {groups.map((group) => (
         <fieldset key={group.id} className="min-w-0 border-0 p-0">
-          <legend className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-white/45">
+          <legend className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/80">
             {group.label}
           </legend>
           <div className="flex flex-wrap gap-2">
@@ -181,7 +183,7 @@ export default function AreaSelector({ onApply, isLoading, appliedZips, homeZips
 
   return (
     <div
-      className="no-print rounded-xl border border-white/10 bg-ink-2/40"
+      className="no-print rounded-xl border border-border bg-muted/40"
       role="region"
       aria-label="Benchmark market"
     >
@@ -189,38 +191,40 @@ export default function AreaSelector({ onApply, isLoading, appliedZips, homeZips
         <div className="flex min-w-0 items-center gap-2.5">
           <MapPin size={15} className="shrink-0 text-brand" aria-hidden />
           <div className="min-w-0">
-            <p className="text-sm font-medium text-white/90">Benchmark market</p>
-            <p className="truncate text-xs text-white/55">
+            <p className="text-sm font-medium text-foreground">Benchmark market</p>
+            <p className="truncate text-xs text-muted-foreground">
               {isHomeMarket ? loadedLine : `Research: ${loadedLine}`}
             </p>
           </div>
         </div>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-controls="area-selector-panel"
-          className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full border border-white/15 px-3.5 py-1.5 text-xs font-medium text-white/80 transition hover:border-white/30 hover:text-white focus-visible:ring-2 focus-visible:ring-brand"
+          className="min-h-11 shrink-0"
         >
           {open ? "Close" : "Change"}
           <ChevronDown size={14} className={"transition " + (open ? "rotate-180" : "")} aria-hidden />
-        </button>
+        </Button>
       </div>
 
       {open && (
-        <div id="area-selector-panel" className="border-t border-white/8 px-4 pb-4 pt-3 sm:px-5">
+        <div id="area-selector-panel" className="border-t border-border/70 px-4 pb-4 pt-3 sm:px-5">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs text-white/55">
+            <p className="text-xs text-muted-foreground">
               {compareMode
                 ? "Select multiple markets to compare ads, then Apply."
                 : "Tap a market to browse its competitor ads."}
               {homeSummary && !isHomeMarket && (
-                <span className="block mt-1 text-white/45">
+                <span className="block mt-1 text-muted-foreground/80">
                   Home market for playbook: {homeSummary.short}
                 </span>
               )}
             </p>
-            <label className="flex cursor-pointer items-center gap-2 text-xs text-white/60">
+            <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
               <input
                 type="checkbox"
                 checked={compareMode}
@@ -241,42 +245,42 @@ export default function AreaSelector({ onApply, isLoading, appliedZips, homeZips
 
           {compareMode && hasPendingChanges && (
             <div className="mt-3 flex flex-wrap items-center gap-3">
-              <button
+              <Button
                 type="button"
                 onClick={() => commitSelection(draft, draftCustom)}
                 disabled={isApplying || customInvalid.length > 0}
-                className="inline-flex min-h-[44px] items-center rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white disabled:opacity-40"
+                className="min-h-11"
               >
                 {isApplying ? "Loading ads…" : "Apply selection"}
-              </button>
+              </Button>
               {isApplying && (
-                <span className="text-xs text-white/45">First load can take up to 60 seconds</span>
+                <span className="text-xs text-muted-foreground/80">First load can take up to 60 seconds</span>
               )}
             </div>
           )}
 
           <details className="group mt-3">
-            <summary className="cursor-pointer text-xs font-medium text-white/55 hover:text-white/75">
+            <summary className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-muted-foreground">
               Which ZIP codes are tracked?
             </summary>
-            <div className="mt-3 space-y-3 border-t border-white/8 pt-3">
+            <div className="mt-3 space-y-3 border-t border-border/70 pt-3">
               {loadedSummary.areas.map((area) => (
                 <div key={area.id}>
-                  <p className="text-xs font-medium text-white/80">
+                  <p className="text-xs font-medium text-foreground/85">
                     {area.flag} {area.label}{" "}
-                    <span className="font-normal text-white/45">({area.zipCount} ZIPs)</span>
+                    <span className="font-normal text-muted-foreground/80">({area.zipCount} ZIPs)</span>
                   </p>
-                  <p className="mt-1 font-mono text-[11px] leading-relaxed text-white/55">
+                  <p className="mt-1 font-mono text-[11px] leading-relaxed text-muted-foreground">
                     {area.zips.join(", ")}
                   </p>
                   {area.criteria && (
-                    <p className="mt-1 text-[11px] leading-relaxed text-white/40">{area.criteria}</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground/70">{area.criteria}</p>
                   )}
                 </div>
               ))}
               {loadedSummary.customZips.length > 0 && (
                 <div>
-                  <p className="text-xs font-medium text-white/80">Custom ZIPs</p>
+                  <p className="text-xs font-medium text-foreground/85">Custom ZIPs</p>
                   <p className="mt-1 font-mono text-[11px] text-sky">{loadedSummary.customZips.join(", ")}</p>
                 </div>
               )}
@@ -284,14 +288,14 @@ export default function AreaSelector({ onApply, isLoading, appliedZips, homeZips
           </details>
 
           <details className="group mt-2">
-            <summary className="cursor-pointer text-xs font-medium text-white/55 hover:text-white/75">
+            <summary className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-muted-foreground">
               Add custom ZIP codes
             </summary>
             <div className="mt-2">
               <label htmlFor="area-custom-zips" className="sr-only">
                 Custom ZIP codes, up to five, comma separated
               </label>
-              <input
+              <Input
                 id="area-custom-zips"
                 type="text"
                 inputMode="numeric"
@@ -299,10 +303,10 @@ export default function AreaSelector({ onApply, isLoading, appliedZips, homeZips
                 onChange={(e) => updateCustomInput(e.target.value)}
                 placeholder="e.g. 77036, 60632 (up to 5)"
                 disabled={isApplying}
-                className="min-h-[44px] w-full rounded-xl border border-white/15 bg-ink px-3 py-2 text-sm text-white placeholder:text-white/40 outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="min-h-11"
               />
               {customInvalid.length > 0 && (
-                <p className="mt-1.5 text-xs text-red-300">Invalid: {customInvalid.join(", ")}</p>
+                <p className="mt-1.5 text-xs text-destructive">Invalid: {customInvalid.join(", ")}</p>
               )}
               {draftCustom.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -328,7 +332,7 @@ export default function AreaSelector({ onApply, isLoading, appliedZips, homeZips
                   type="button"
                   onClick={() => commitSelection(draft, draftCustom)}
                   disabled={isApplying || customInvalid.length > 0}
-                  className="mt-3 inline-flex min-h-[44px] items-center rounded-full border border-white/20 px-4 py-2 text-xs font-medium text-white/80 hover:border-white/40"
+                  className="mt-3 inline-flex min-h-[44px] items-center rounded-full border border-border px-4 py-2 text-xs font-medium text-foreground/85 hover:border-border"
                 >
                   Apply custom ZIPs
                 </button>

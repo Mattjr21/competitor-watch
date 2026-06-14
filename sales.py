@@ -104,35 +104,89 @@ def _loyalty_tier_label(orders):
     return "New"
 
 
-def analyze(csv_text, categories, weather_categories=None, store_location=None, zip_centroids=None):
+def _csv_column_map(headers):
+    """Map export headers to normalized sale-line fields."""
+    return {
+        "order_id": _pick(headers, "Order", "Order Ref", "Order Reference", "Receipt", "Ticket"),
+        "date": _pick(headers, "Order Date", "Date", "Create Date"),
+        "product": _pick(headers, "Product", "Product Variant", "Order Lines/Product", "Product Name", "Item"),
+        "qty": _pick(headers, "Qty Ordered", "Order Lines/Quantity", "Quantity", "Qty"),
+        "total": _pick(headers, "Total", "Order Lines/Total cost", "Subtotal", "Line Total", "Amount"),
+        "unit_price": _pick(headers, "Unit Price", "Order Lines/Unit Price", "Price"),
+        "customer": _pick(
+            headers,
+            "Customer",
+            "Partner",
+            "Contact",
+            "Client",
+            "Member",
+            "Customer Name",
+            "Customer ID",
+            "Partner/ID",
+        ),
+        "zip": _pick(headers, "Zip", "ZIP", "Postal Code", "Postcode", "Zip Code", "Customer Zip"),
+    }
+
+
+def _row_to_line(row, cols):
+    oid = (row.get(cols["order_id"]) or "").strip()
+    if not oid:
+        return None
+    name = (row.get(cols["product"]) or "").strip()
+    line_total = _f(row.get(cols["total"])) if cols["total"] else None
+    if line_total is None:
+        line_total = 0.0
+    qty = _f(row.get(cols["qty"])) if cols["qty"] else None
+    unit = _f(row.get(cols["unit_price"])) if cols["unit_price"] else None
+    if unit is None and qty:
+        unit = line_total / qty if qty else None
+    cust = (row.get(cols["customer"]) or "").strip() if cols["customer"] else ""
+    dt = _parse_date(row.get(cols["date"])) if cols["date"] else None
+    z = _normalize_zip(row.get(cols["zip"])) if cols["zip"] else None
+    return {
+        "order_id": oid,
+        "date": dt,
+        "product": name,
+        "qty": qty,
+        "total": line_total,
+        "unit_price": unit,
+        "customer": cust or None,
+        "zip": z,
+    }
+
+
+def lines_from_csv(csv_text):
+    """Parse an order-line CSV export into normalized sale-line dicts."""
     reader = csv.DictReader(io.StringIO(csv_text))
     headers = reader.fieldnames or []
     if not headers:
         raise ValueError("No header row found in CSV.")
-
-    c_order = _pick(headers, "Order", "Order Ref", "Order Reference")
-    c_date = _pick(headers, "Order Date", "Date")
-    c_prod = _pick(headers, "Product", "Product Variant", "Order Lines/Product")
-    c_qty = _pick(headers, "Qty Ordered", "Order Lines/Quantity", "Quantity")
-    c_total = _pick(headers, "Total", "Order Lines/Total cost", "Subtotal")
-    c_unit = _pick(headers, "Unit Price", "Order Lines/Unit Price", "Price")
-    c_customer = _pick(headers, "Customer", "Partner", "Contact", "Client", "Member", "Customer Name")
-    c_zip = _pick(headers, "Zip", "ZIP", "Postal Code", "Postcode", "Zip Code", "Customer Zip")
-
-    if not (c_order and c_prod and c_total):
+    cols = _csv_column_map(headers)
+    if not (cols["order_id"] and cols["product"] and cols["total"]):
         raise ValueError(
             "CSV must have at least Order, Product and Total columns. "
             f"Found headers: {headers}"
         )
+    lines = []
+    for row in reader:
+        line = _row_to_line(row, cols)
+        if line:
+            lines.append(line)
+    if not lines:
+        raise ValueError("No valid orders parsed from CSV.")
+    return lines
 
+
+def analyze_lines(lines, categories, weather_categories=None, store_location=None, zip_centroids=None, extra=None):
+    """Build sales facts from normalized order-line records (API or merged CSV)."""
     cat_keys = [c["key"] for c in categories]
-    orders = {}            # order_id -> {total, date, cats:set, customer, zip}
-    customers = {}         # customer_id -> {orders, spend, weekend_orders, weekday_orders, cats}
-    prod_rev = {}          # product -> revenue
-    prod_units = {}        # product -> units
-    prod_price_sum = {}    # product -> sum(unit price * weight)
+    orders = {}
+    customers = {}
+    prod_rev = {}
+    prod_units = {}
+    prod_price_sum = {}
     prod_price_wt = {}
-    cat_price_rev = {k: 0.0 for k in cat_keys}   # weighted price accumulation
+    cat_price_rev = {k: 0.0 for k in cat_keys}
     cat_price_units = {k: 0.0 for k in cat_keys}
 
     wcats = weather_categories or []
@@ -141,29 +195,22 @@ def analyze(csv_text, categories, weather_categories=None, store_location=None, 
     wcat_dates = {k: [set() for _ in range(7)] for k in wkeys}
 
     rows = 0
-    for r in reader:
+    for line in lines:
         rows += 1
-        oid = (r.get(c_order) or "").strip()
-        if not oid:
-            continue
-        name = (r.get(c_prod) or "").strip()
-        line_total = _f(r.get(c_total)) or 0.0
-        qty = _f(r.get(c_qty)) if c_qty else None
-        unit = _f(r.get(c_unit)) if c_unit else None
-        if unit is None and qty:
-            unit = line_total / qty if qty else None
-
-        cust = (r.get(c_customer) or "").strip() if c_customer else ""
-        o = orders.setdefault(oid, {"total": 0.0, "date": None, "cats": set(), "customer": cust or None, "zip": None})
+        oid = line["order_id"]
+        name = line.get("product") or ""
+        line_total = line.get("total") or 0.0
+        qty = line.get("qty")
+        unit = line.get("unit_price")
+        cust = line.get("customer")
+        o = orders.setdefault(oid, {"total": 0.0, "date": None, "cats": set(), "customer": cust, "zip": None})
         o["total"] += line_total
-        if o["date"] is None and c_date:
-            o["date"] = _parse_date(r.get(c_date))
+        if o["date"] is None and line.get("date"):
+            o["date"] = line["date"]
         if cust and o["customer"] is None:
             o["customer"] = cust
-        if c_zip:
-            z = _normalize_zip(r.get(c_zip))
-            if z and o["zip"] is None:
-                o["zip"] = z
+        if line.get("zip") and o["zip"] is None:
+            o["zip"] = line["zip"]
 
         cats = _match_cat(name, categories)
         for ck in cats:
@@ -192,7 +239,7 @@ def analyze(csv_text, categories, weather_categories=None, store_location=None, 
                 wcat_dates[wk][dow].add(o["date"].date())
 
     if not orders:
-        raise ValueError("No valid orders parsed from CSV.")
+        raise ValueError("No valid orders parsed from sale lines.")
 
     for o in orders.values():
         cid = o.get("customer")
@@ -330,7 +377,22 @@ def analyze(csv_text, categories, weather_categories=None, store_location=None, 
         "customer_analytics": customer_analytics,
         "weather_baselines": weather_baselines,
     }
+    if extra:
+        facts["integration_meta"] = extra
     return facts
+
+
+def analyze(csv_text, categories, weather_categories=None, store_location=None, zip_centroids=None, extra=None):
+    """Analyze a single order-line CSV export (legacy upload path)."""
+    lines = lines_from_csv(csv_text)
+    return analyze_lines(
+        lines,
+        categories,
+        weather_categories=weather_categories,
+        store_location=store_location,
+        zip_centroids=zip_centroids,
+        extra=extra,
+    )
 
 
 def _build_trade_area(customers, orders, store_location=None, zip_centroids=None):

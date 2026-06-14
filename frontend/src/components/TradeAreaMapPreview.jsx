@@ -18,11 +18,11 @@ export default function TradeAreaMapPreview({
   if (locked) {
     return (
       <div
-        className="relative isolate overflow-hidden rounded-2xl border border-white/10 bg-ink-2/30"
+        className="relative isolate overflow-hidden rounded-2xl border border-border bg-muted/30 shadow-sm"
         role="region"
         aria-label={`Sample preview: ${title}`}
       >
-        <div className="relative z-10 flex items-center border-b border-white/10 bg-ink/70 px-3 py-2.5 sm:px-4">
+        <div className="relative z-10 flex items-center border-b border-border bg-background/90 px-3 py-2.5 sm:px-4">
           <span className={SAMPLE_BADGE}>
             {city}, {zip} · ~{radiusMiles} mi radius
           </span>
@@ -45,7 +45,7 @@ export default function TradeAreaMapPreview({
   }
 
   return (
-    <div className="relative isolate min-h-[280px] overflow-hidden rounded-2xl border border-white/10 sm:min-h-[320px] lg:min-h-[360px]">
+    <div className="relative isolate min-h-[280px] overflow-hidden rounded-2xl border border-border shadow-sm sm:min-h-[320px] lg:min-h-[360px]">
       <div className="absolute inset-0 z-0 overflow-hidden">
         <TradeAreaMap
           lat={lat}

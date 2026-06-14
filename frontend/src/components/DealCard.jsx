@@ -72,13 +72,13 @@ export default function DealCard({ d, compact = false, showMerchant = true }) {
     <article
       aria-label={`${merchantLabel}${d.name}${displayPrice ? `, ${formatPrice(displayPrice, d.unit)}` : ""}`}
       className={
-        "flex h-full min-h-0 flex-col rounded-2xl border border-white/10 bg-ink-2 transition-colors hover:border-white/25 " +
+        "flex h-full min-h-0 flex-col rounded-2xl border border-border bg-muted transition-colors hover:border-border " +
         (compact ? "gap-1.5 p-3 sm:p-3.5" : "gap-2 p-4 sm:p-5")
       }
     >
       <div
         className={
-          "shrink-0 overflow-hidden rounded-xl border border-white/8 bg-white/5 " +
+          "shrink-0 overflow-hidden rounded-xl border border-border/70 bg-muted/60 " +
           (compact ? "" : "mb-1")
         }
       >
@@ -97,7 +97,7 @@ export default function DealCard({ d, compact = false, showMerchant = true }) {
         )}
       </div>
       {showMerchant && !compact && (
-        <div className="min-h-[1rem] shrink-0 truncate text-[11px] font-semibold uppercase tracking-wide text-white/60">
+        <div className="min-h-[1rem] shrink-0 truncate text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           {d.merchant || "\u00A0"}
         </div>
       )}
@@ -115,7 +115,7 @@ export default function DealCard({ d, compact = false, showMerchant = true }) {
         <h4
           className={
             (compact ? "line-clamp-2 text-xs" : "line-clamp-2 text-[13px]") +
-            " m-0 font-medium leading-snug text-white/90"
+            " m-0 font-medium leading-snug text-foreground"
           }
         >
           {d.name}
@@ -128,20 +128,20 @@ export default function DealCard({ d, compact = false, showMerchant = true }) {
             <div className="flex flex-wrap items-baseline gap-2">
               {d.original_price != null &&
                 parseFloat(d.original_price) > parseFloat(displayPrice) && (
-                  <span className="text-sm tabular-nums text-white/40 line-through">
+                  <span className="text-sm tabular-nums text-muted-foreground/70 line-through">
                     ${parseFloat(d.original_price).toFixed(2).replace(/\.00$/, "")}
                   </span>
                 )}
               <AnimatedPrice value={displayPrice} unit={d.unit} compact={compact} />
             </div>
             {!compact && (
-              <p className="mt-0.5 line-clamp-2 min-h-[1.25rem] text-[11px] leading-snug text-white/60">
+              <p className="mt-0.5 line-clamp-2 min-h-[1.25rem] text-[11px] leading-snug text-muted-foreground">
                 {condition || "\u00A0"}
               </p>
             )}
           </>
         ) : (
-          <p className="line-clamp-2 text-xs text-white/60">
+          <p className="line-clamp-2 text-xs text-muted-foreground">
             {saleStory || "See weekly ad for price"}
           </p>
         )}
@@ -162,12 +162,12 @@ export default function DealCard({ d, compact = false, showMerchant = true }) {
           </span>
         )}
         {validTo && (
-          <span className="text-[11px] text-white/50">
+          <span className="text-[11px] text-muted-foreground">
             Valid thru {validTo}
           </span>
         )}
         {d.is_latino && (
-          <span className="rounded-full border border-white/20 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white/60">
+          <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
             Latino grocer
           </span>
         )}

@@ -1,39 +1,40 @@
 import { Lock, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Eyebrow, CountUp } from "./ui";
 import { PANEL, PANEL_MUTED } from "./layout";
 
 export const PAGE_TITLE =
-  "font-display text-3xl font-bold tracking-[-0.02em] sm:text-4xl lg:text-5xl";
-export const PAGE_LEDE = "mt-3 max-w-2xl text-sm leading-relaxed text-white/65";
-export const PAGE_META = "mt-3 text-sm text-white/65";
+  "font-display text-3xl font-bold tracking-[-0.02em] text-foreground sm:text-4xl lg:text-[2.75rem]";
+export const PAGE_LEDE = "mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground";
+export const PAGE_META = "mt-3 text-sm text-muted-foreground";
 export const SECTION_TITLE =
-  "font-display text-xl font-semibold tracking-tight text-white sm:text-2xl";
-export const SECTION_LEDE = "mt-1.5 max-w-2xl text-sm leading-relaxed text-white/65";
+  "font-display text-xl font-semibold tracking-tight text-foreground sm:text-2xl";
+export const SECTION_LEDE = "mt-1.5 max-w-2xl text-sm leading-relaxed text-muted-foreground";
 
 export const BTN_GHOST =
-  "inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-medium text-white/80 transition hover:border-white/40 hover:text-white focus-visible:ring-2 focus-visible:ring-brand";
+  "inline-flex min-h-11 items-center gap-2 rounded-2xl border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50";
 export const BTN_PRIMARY =
-  "inline-flex min-h-[44px] items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-ink transition hover:bg-brand hover:text-white disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-ink-2";
+  "inline-flex min-h-11 items-center gap-2 rounded-2xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-ring";
 
 export { PANEL, PANEL_MUTED };
 export const SCROLL_MT = "scroll-mt-section";
-export const TAB_SECTION_SPACE = "space-y-12 sm:space-y-14";
+export const TAB_SECTION_SPACE = "space-y-10 sm:space-y-12";
 export const TABLE_HEAD =
-  "bg-white/5 text-[11px] uppercase tracking-wider text-white/60";
+  "bg-muted/60 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground";
 export const SAMPLE_BADGE =
-  "rounded-full border border-white/12 bg-white/5 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-white/65 sm:text-[11px] sm:normal-case sm:tracking-normal";
+  "rounded-full border border-border bg-muted px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-[11px] sm:normal-case sm:tracking-normal";
+
+/** Light-theme alert for server week_signal copy (amber on white). */
+export const WEEK_SIGNAL_PANEL =
+  "rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm leading-relaxed text-amber-900";
 
 export function RefreshButton({ onClick, loading, label = "Refresh" }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-busy={loading || undefined}
-      className={BTN_GHOST}
-    >
+    <Button type="button" variant="outline" onClick={onClick} disabled={loading} className="min-h-11">
       <RefreshCw size={14} className={loading ? "animate-spin" : ""} aria-hidden />
       {label}
-    </button>
+    </Button>
   );
 }
 
@@ -66,7 +67,7 @@ export function PageHeader({
 
 export function SectionHeader({
   icon: Icon,
-  iconClass = "text-white/70",
+  iconClass = "text-primary",
   title,
   description,
   className = "mb-6",
@@ -86,7 +87,7 @@ export function SectionHeader({
   );
 }
 
-export function StatCard({ label, value, suffix = "", hint, accentClass = "text-white" }) {
+export function StatCard({ label, value, suffix = "", hint, accentClass = "text-foreground" }) {
   const display =
     typeof value === "number"
       ? value < 1000
@@ -95,25 +96,27 @@ export function StatCard({ label, value, suffix = "", hint, accentClass = "text-
       : value;
 
   return (
-    <article className={PANEL} aria-label={`${label}: ${display}${suffix}`}>
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-white/60">
-        {label}
-      </div>
-      <div className={"mt-2 font-display text-3xl font-bold tabular-nums " + accentClass}>
-        {typeof value === "number" && value < 1000 ? (
-          <>
-            <CountUp to={value} />
-            {suffix}
-          </>
-        ) : (
-          <>
-            {display}
-            {suffix}
-          </>
-        )}
-      </div>
-      {hint && <p className="mt-2 text-xs leading-relaxed text-white/60">{hint}</p>}
-    </article>
+    <Card className="shadow-sm">
+      <CardContent className="p-4 sm:p-5" aria-label={`${label}: ${display}${suffix}`}>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </div>
+        <div className={"mt-2 font-display text-3xl font-bold tabular-nums " + accentClass}>
+          {typeof value === "number" && value < 1000 ? (
+            <>
+              <CountUp to={value} />
+              {suffix}
+            </>
+          ) : (
+            <>
+              {display}
+              {suffix}
+            </>
+          )}
+        </div>
+        {hint && <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{hint}</p>}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -122,7 +125,7 @@ export function UploadCtaLink({ className = "", label = "Upload sales CSV" }) {
     <a
       href="#insights-upload"
       className={
-        "inline-flex min-h-[44px] items-center text-sm font-semibold text-brand underline-offset-2 hover:underline focus-visible:rounded focus-visible:ring-2 focus-visible:ring-brand " +
+        "inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-2 hover:underline focus-visible:rounded focus-visible:ring-2 focus-visible:ring-ring " +
         className
       }
     >
@@ -133,20 +136,20 @@ export function UploadCtaLink({ className = "", label = "Upload sales CSV" }) {
 
 export function LockedFooter({ title, detail, showUploadLink = true, className = "" }) {
   return (
-    <div className={"border-t border-white/12 bg-ink px-3 py-3 sm:px-4 sm:py-4 " + className}>
+    <div className={"border-t border-border bg-muted/40 px-3 py-3 sm:px-4 sm:py-4 " + className}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
         <div className="flex min-w-0 flex-1 items-start gap-3">
           <div
-            className="grid shrink-0 place-items-center rounded-lg border border-brand/30 bg-brand/15 p-2 text-brand"
+            className="grid shrink-0 place-items-center rounded-lg border border-primary/20 bg-primary/10 p-2 text-primary"
             aria-hidden
           >
             <Lock size={18} strokeWidth={2} />
           </div>
           <div className="min-w-0">
-            <p className="font-display text-[15px] font-semibold leading-snug text-white sm:text-base">
+            <p className="font-display text-[15px] font-semibold leading-snug text-foreground sm:text-base">
               {title}
             </p>
-            <p className="mt-1 text-sm leading-relaxed text-white/70">{detail}</p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{detail}</p>
           </div>
         </div>
         {showUploadLink && <UploadCtaLink className="shrink-0 sm:mt-1" />}
@@ -158,8 +161,8 @@ export function LockedFooter({ title, detail, showUploadLink = true, className =
 export function NeedsDataPanel({ title, detail, showUploadLink = true }) {
   return (
     <div className={PANEL_MUTED + " px-5 py-6 sm:px-6 sm:py-8"} role="status">
-      <p className="font-medium text-white/90">{title}</p>
-      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/65">{detail}</p>
+      <p className="font-medium text-foreground">{title}</p>
+      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{detail}</p>
       {showUploadLink && (
         <div className="mt-4">
           <UploadCtaLink />

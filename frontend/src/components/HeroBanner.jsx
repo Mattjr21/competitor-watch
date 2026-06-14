@@ -3,72 +3,61 @@ import { EASE } from "../lib/ui";
 
 const HERO_SRC = "/hero-la-bodega.png?v=7";
 
-const textShadow =
-  "drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)] drop-shadow-[0_4px_16px_rgba(0,0,0,0.75)]";
-
-export default function HeroBanner({ location }) {
+export default function HeroBanner({ location, compactOnMobile = false }) {
   const city = location?.city || "Calhoun";
   const state = location?.state || "GA";
+  const imageClass =
+    "aspect-[16/10] w-full object-cover object-[62%_42%] sm:aspect-[21/9] sm:max-h-[400px] sm:object-[68%_45%] " +
+    (compactOnMobile ? "max-h-[200px] sm:max-h-[400px]" : "max-h-[240px] sm:max-h-[400px]");
+
+  const headlineClass = compactOnMobile
+    ? "text-[15px] leading-[1.25] sm:text-lg lg:text-xl"
+    : "text-base leading-[1.25] sm:text-lg lg:text-xl";
 
   return (
     <motion.section
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: EASE }}
-      className="relative mb-4 overflow-hidden rounded-xl border border-white/10 sm:mb-8 sm:rounded-2xl lg:mb-10"
+      className="relative mb-4 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm ring-1 ring-border/50 sm:mb-8 lg:mb-10"
       aria-label="La Bodega store"
     >
       <img
         src={HERO_SRC}
         alt="La Bodega Supermercado — produce, grocery aisles, and meat counter"
-        className="aspect-[16/10] max-h-[200px] w-full object-cover object-[22%_38%] sm:aspect-[21/9] sm:max-h-[360px] sm:object-center"
+        className={imageClass}
         fetchPriority="high"
       />
 
-      {/* Mobile: short bottom fade — image stays visible above */}
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-[48%] bg-gradient-to-t from-ink/95 via-ink/45 to-transparent sm:hidden"
-        aria-hidden
-      />
-
-      {/* Desktop: left + bottom scrims */}
-      <div
-        className="pointer-events-none absolute inset-y-0 left-0 hidden w-[58%] bg-gradient-to-r from-ink/70 via-ink/25 to-transparent sm:block"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_0%_100%,rgba(15,23,42,0.55)_0%,rgba(15,23,42,0.18)_42%,transparent_68%)] sm:bg-[radial-gradient(ellipse_85%_90%_at_0%_100%,rgba(15,23,42,0.5)_0%,rgba(15,23,42,0.12)_45%,transparent_70%)]"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-[42%] bg-gradient-to-t from-ink/45 via-ink/10 to-transparent sm:block"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[38%] bg-gradient-to-t from-black/30 to-transparent sm:hidden"
         aria-hidden
       />
 
-      {/* Mobile: text on gradient only — no solid card */}
-      <div className="absolute inset-x-0 bottom-0 px-3.5 pb-3 pt-10 sm:hidden">
-        <p className={`text-[10px] font-semibold uppercase tracking-[0.18em] text-brand ${textShadow}`}>
-          La Bodega Supermercado
-        </p>
-        <p className={`mt-0.5 font-display text-lg font-bold leading-snug tracking-tight text-white ${textShadow}`}>
-          See the market before your customers do.
-        </p>
-        <p className={`mt-1 text-xs text-white/80 ${textShadow}`}>
-          {city}, {state} · weather & competitor intel
-        </p>
-      </div>
+      <div className="absolute bottom-2.5 left-2.5 right-2.5 sm:bottom-4 sm:left-4 sm:right-auto sm:max-w-[22rem] md:max-w-[24rem] lg:bottom-5 lg:left-5 lg:max-w-[25rem]">
+        <div className="rounded-xl border border-white/50 bg-white/95 px-3.5 py-3 shadow-lg ring-1 ring-black/5 backdrop-blur-sm supports-[backdrop-filter:blur(0)]:bg-white/95 sm:rounded-2xl sm:px-4 sm:py-3">
+          <div className="flex items-center gap-1.5">
+            <span className="h-4 w-0.5 shrink-0 rounded-full bg-brand" aria-hidden />
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand sm:text-[11px]">
+              La Bodega Supermercado
+              <span className="font-normal normal-case tracking-normal text-secondary-foreground">
+                {" "}
+                · {city}, {state}
+              </span>
+            </p>
+          </div>
 
-      {/* Desktop: left-aligned overlay */}
-      <div className="absolute inset-0 hidden flex-col justify-end p-6 sm:flex lg:p-8 md:max-w-lg">
-        <div className="relative">
-          <div
-            className="pointer-events-none absolute -inset-4 -z-10 rounded-xl bg-ink/25 backdrop-blur-[1px]"
-            aria-hidden
-          />
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-brand drop-shadow-sm">
-            La Bodega Supermercado
-          </p>
-          <p className="mt-2 font-display text-3xl font-bold leading-tight tracking-tight text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.65)]">
-            See the market before your customers do.
-          </p>
-          <p className="mt-2 text-sm text-white/85 drop-shadow-[0_1px_6px_rgba(0,0,0,0.55)]">
-            {city}, {state} · weather, competitor ads, and pricing intelligence
+          <h2 className={"mt-1.5 font-display font-bold tracking-tight text-ink " + headlineClass}>
+            <span className="block">See what competitors are pushing</span>
+            <span className="block text-foreground/90">before the weekend starts.</span>
+          </h2>
+
+          <p className="mt-1.5 text-[11px] leading-snug text-secondary-foreground sm:text-xs">
+            Live ad intel, weather demand signals, and pricing gaps — all in one dashboard.
           </p>
         </div>
       </div>

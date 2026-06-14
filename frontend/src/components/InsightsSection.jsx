@@ -1,7 +1,6 @@
-import { useRef, useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "motion/react";
 import {
-  Upload,
   TrendingUp,
   TrendingDown,
   Minus,
@@ -16,9 +15,12 @@ import {
 } from "lucide-react";
 import { EmptyState, ErrorState, EASE } from "../lib/ui";
 import { exportPriceComparisonCsv, printReport } from "../lib/export";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import {
   BTN_GHOST,
-  BTN_PRIMARY,
   NeedsDataPanel,
   PageHeader,
   PANEL,
@@ -34,6 +36,7 @@ import TradeAreaMapPreview from "./TradeAreaMapPreview";
 import OutreachSection from "./OutreachSection";
 import { CompareBars, DonutChart, RankedBars, RetentionGauge, SegmentBar } from "./InsightCharts";
 import RecommendationCards from "./RecommendationCards";
+import StoreDataConnectPanel from "./StoreDataConnectPanel";
 import { describeLoadedMarkets } from "../lib/marketAreas";
 import {
   BasketAnalysisDemoPreview,
@@ -41,18 +44,21 @@ import {
   TopCustomersDemoPreview,
 } from "./DemoCustomerPreviews";
 
-const API = import.meta.env.VITE_API_URL || "";
-
-const INSIGHTS_NAV = [
-  { id: "insights-upload", label: "Upload" },
-  { id: "insights-pricing", label: "Pricing" },
-  { id: "insights-outreach", label: "Outreach" },
+const INSIGHTS_CUSTOMER_NAV = [
   { id: "insights-basket", label: "Basket" },
   { id: "insights-retention", label: "Retention" },
   { id: "insights-top-customers", label: "Top customers" },
   { id: "insights-trade-area", label: "Trade area" },
-  { id: "insights-ideas", label: "Ideas" },
 ];
+
+const INSIGHTS_CUSTOMER_IDS = INSIGHTS_CUSTOMER_NAV.map((item) => item.id);
+
+function customerTabForHash(hash) {
+  if (["insights-outreach", "insights-ideas"].includes(hash)) return "actions";
+  if (INSIGHTS_CUSTOMER_IDS.includes(hash)) return "customers";
+  if (hash === "insights-pricing") return "competitive";
+  return null;
+}
 
 function positionMeta(position) {
   switch (position) {
@@ -61,7 +67,7 @@ function positionMeta(position) {
     case "mid_market":
       return { label: "Mid-market", color: "#f0b429", Icon: Minus };
     case "above_market":
-      return { label: "Above market", color: "#ff6a3d", Icon: TrendingUp };
+      return { label: "Above market", color: "#d97706", Icon: TrendingUp };
     default:
       return { label: "Needs data", color: "#8b95a5", Icon: Minus };
   }
@@ -70,12 +76,12 @@ function positionMeta(position) {
 function UploadUnlock({ title, detail }) {
   return (
     <div
-      className="rounded-2xl border border-dashed border-white/15 bg-ink-2/50 px-6 py-10 text-center"
+      className="rounded-2xl border border-dashed border-border bg-muted/50 px-6 py-10 text-center"
       role="status"
     >
-      <Lock size={22} className="mx-auto text-white/45" aria-hidden />
-      <p className="mt-3 font-medium text-white/90">{title}</p>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/65">{detail}</p>
+      <Lock size={22} className="mx-auto text-muted-foreground/80" aria-hidden />
+      <p className="mt-3 font-medium text-foreground">{title}</p>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">{detail}</p>
       <div className="mt-5 flex justify-center">
         <UploadCtaLink />
       </div>
@@ -97,10 +103,10 @@ function PriceComparisonSection({ priceRows, hasUploadedData, marketLabel, gener
     <>
       {!hasUploadedData && (
         <p
-          className="mb-4 rounded-xl border border-white/10 bg-white/4 px-4 py-3 text-sm leading-relaxed text-white/70"
+          className="mb-4 rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm leading-relaxed text-muted-foreground"
           role="note"
         >
-          Upload your sales CSV to unlock <strong className="text-white">your avg</strong> and
+          Upload your sales CSV to unlock <strong className="text-foreground">your avg</strong> and
           competitive position for each category.{" "}
           <UploadCtaLink className="min-h-0 inline text-sm" />
         </p>
@@ -125,7 +131,7 @@ function PriceComparisonSection({ priceRows, hasUploadedData, marketLabel, gener
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-white/10">
+      <div className="overflow-hidden rounded-2xl border border-border">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[520px] text-left text-sm">
             <caption className="sr-only">
@@ -162,26 +168,26 @@ function PriceComparisonSection({ priceRows, hasUploadedData, marketLabel, gener
                 const Icon = meta.Icon;
                 const showStatus = hasUploadedData && row.own_avg != null && row.position !== "no_data";
                 return (
-                  <tr key={row.key} className="border-t border-white/8">
-                    <td className="px-4 py-3 font-medium text-white/90 sm:px-5">{row.label}</td>
+                  <tr key={row.key} className="border-t border-border/70">
+                    <td className="px-4 py-3 font-medium text-foreground sm:px-5">{row.label}</td>
                     {hasUploadedData && (
-                      <td className="px-4 py-3 tabular-nums text-white/80 sm:px-5">
+                      <td className="px-4 py-3 tabular-nums text-foreground/85 sm:px-5">
                         {row.own_avg != null ? `$${row.own_avg}` : "—"}
                       </td>
                     )}
                     <td className="px-4 py-3 sm:px-5">
                       {row.market ? (
-                        <span className="tabular-nums text-white/80">
+                        <span className="tabular-nums text-foreground/85">
                           <strong className="text-leaf">${row.market.low}</strong>
                           {row.market.cheapest_merchant && (
-                            <span className="text-white/50"> · {row.market.cheapest_merchant}</span>
+                            <span className="text-muted-foreground"> · {row.market.cheapest_merchant}</span>
                           )}
                         </span>
                       ) : (
                         "—"
                       )}
                     </td>
-                    <td className="hidden px-4 py-3 tabular-nums text-white/55 sm:table-cell sm:px-5">
+                    <td className="hidden px-4 py-3 tabular-nums text-muted-foreground sm:table-cell sm:px-5">
                       {row.market ? `$${row.market.median} · ${row.market.count} ads` : "—"}
                     </td>
                     {hasUploadedData && (
@@ -195,7 +201,7 @@ function PriceComparisonSection({ priceRows, hasUploadedData, marketLabel, gener
                             <Icon size={12} aria-hidden /> {meta.label}
                           </span>
                         ) : (
-                          <span className="text-xs text-white/45">—</span>
+                          <span className="text-xs text-muted-foreground/80">—</span>
                         )}
                       </td>
                     )}
@@ -223,15 +229,15 @@ function PriceComparisonSection({ priceRows, hasUploadedData, marketLabel, gener
             .filter((r) => r.own_avg != null && r.suggested_action && r.position !== "no_data")
             .slice(0, showAll ? undefined : 2)
             .map((row) => (
-              <p key={row.key} className="text-xs leading-relaxed text-white/55">
-                <span className="font-medium text-white/70">{row.label}:</span> {row.suggested_action}
+              <p key={row.key} className="text-xs leading-relaxed text-muted-foreground">
+                <span className="font-medium text-muted-foreground">{row.label}:</span> {row.suggested_action}
               </p>
             ))}
         </div>
       )}
 
       {marketLabel && (
-        <p className="mt-3 text-[11px] text-white/45">
+        <p className="mt-3 text-[11px] text-muted-foreground/80">
           vs {marketLabel}
           {generatedAt ? ` · ads updated ${generatedAt}` : ""} · change markets above
         </p>
@@ -240,21 +246,50 @@ function PriceComparisonSection({ priceRows, hasUploadedData, marketLabel, gener
   );
 }
 
-function InsightsSubNav() {
+function InsightsCustomersSubNav() {
+  const [activeId, setActiveId] = useState("");
+
+  useEffect(() => {
+    const elements = INSIGHTS_CUSTOMER_IDS.map((id) => document.getElementById(id)).filter(Boolean);
+    if (!elements.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (visible[0]?.target?.id) setActiveId(visible[0].target.id);
+      },
+      { rootMargin: "-15% 0px -55% 0px", threshold: [0, 0.15, 0.4] }
+    );
+
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <nav
-      aria-label="Your Store sections"
-      className="no-print sticky z-30 -mx-1 mb-6 flex gap-1 overflow-x-auto border-b border-white/10 bg-ink px-1 py-2 [top:var(--app-header-height)] [scrollbar-width:thin]"
+      aria-label="Customer analytics sections"
+      className="no-print mb-6 flex gap-1 overflow-x-auto border-b border-border pb-2 [scrollbar-width:thin]"
     >
-      {INSIGHTS_NAV.map((item) => (
-        <a
-          key={item.id}
-          href={`#${item.id}`}
-          className="shrink-0 rounded-full px-3.5 py-2.5 text-sm font-medium text-white/60 transition hover:bg-white/8 hover:text-white focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-ink sm:px-4"
-        >
-          {item.label}
-        </a>
-      ))}
+      {INSIGHTS_CUSTOMER_NAV.map((item) => {
+        const active = activeId === item.id;
+        return (
+          <a
+            key={item.id}
+            href={`#${item.id}`}
+            aria-current={active ? "location" : undefined}
+            className={cn(
+              "shrink-0 rounded-full px-3 py-2 text-sm font-medium transition focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:px-3.5",
+              active
+                ? "bg-muted text-foreground"
+                : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+            )}
+          >
+            {item.label}
+          </a>
+        );
+      })}
     </nav>
   );
 }
@@ -270,10 +305,23 @@ export default function InsightsSection({
   isBenchmarking = false,
   pendingMarket = false,
 }) {
-  const fileRef = useRef(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadMsg, setUploadMsg] = useState(null);
-  const [uploadErr, setUploadErr] = useState(null);
+  const [insightsTab, setInsightsTab] = useState("competitive");
+
+  useEffect(() => {
+    const syncFromHash = () => {
+      const hash = window.location.hash.replace("#", "");
+      const tab = customerTabForHash(hash);
+      if (tab) setInsightsTab(tab);
+      if (hash && document.getElementById(hash)) {
+        requestAnimationFrame(() => {
+          document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
+    };
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, []);
 
   const facts = data?.facts || {};
   const ca = facts.customer_analytics || {};
@@ -328,32 +376,6 @@ export default function InsightsSection({
     [topCustomers]
   );
 
-  async function handleUpload(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    setUploadErr(null);
-    setUploadMsg(`Analyzing ${file.name}…`);
-    try {
-      const text = await file.text();
-      const res = await fetch(`${API}/api/upload`, {
-        method: "POST",
-        headers: { "Content-Type": "text/csv", "X-Filename": file.name },
-        body: text,
-      });
-      const out = await res.json();
-      if (out.error) throw new Error(out.error);
-      setUploadMsg(`Loaded ${out.source_label}`);
-      onUploadComplete?.();
-    } catch (err) {
-      setUploadErr(err.message || "Upload failed");
-      setUploadMsg(null);
-    } finally {
-      setUploading(false);
-      e.target.value = "";
-    }
-  }
-
   if (error && !data) return <ErrorState message={error} onRetry={onRefresh} />;
   if (loading && !data)
     return (
@@ -362,9 +384,9 @@ export default function InsightsSection({
           <div
             role="status"
             aria-live="polite"
-            className="rounded-xl border border-brand/30 bg-brand/10 px-4 py-3 text-sm text-white/80"
+            className="rounded-xl border border-brand/30 bg-brand/10 px-4 py-3 text-sm text-foreground/85"
           >
-            Loading competitor data for <span className="font-semibold text-white">{marketLabel}</span>…
+            Loading competitor data for <span className="font-semibold text-foreground">{marketLabel}</span>…
           </div>
         )}
         {Array.from({ length: 4 }).map((_, i) => (
@@ -377,123 +399,71 @@ export default function InsightsSection({
   return (
     <section className={TAB_SECTION_SPACE} aria-labelledby="insights-page-title">
       <PageHeader
-        eyebrow="Your store"
+        eyebrow="Your store data"
         eyebrowDot
         titleId="insights-page-title"
         title="Price & customer intelligence"
         description={
           isBenchmarking
-            ? `Shelf prices vs competitors in ${marketLabel}. Deals tab shows ${compareMarketLabel || "another market"} for research.`
-            : "Compare your shelf prices to live competitor ads, then layer in basket, customer, and WhatsApp outreach insights."
+            ? `Shelf prices vs competitors in ${marketLabel}. Competitor deals tab shows ${compareMarketLabel || "another market"} for research.`
+            : "Connect Odoo or upload CSVs, then use Competitive, Customers, and Actions tabs for pricing, analytics, and outreach."
         }
         onRefresh={onRefresh}
         loading={loading}
       />
 
-      {/* Upload — always first */}
-      <div
-        id="insights-upload"
-        className={"no-print " + SCROLL_MT + " rounded-2xl border border-dashed border-white/20 bg-ink-2/80 p-4 sm:p-5 lg:p-6"}
-      >
-        <div className="flex flex-wrap items-start gap-6">
-          <div className="grid h-12 w-12 place-items-center rounded-xl bg-brand/15 text-brand" aria-hidden>
-            <Upload size={22} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="font-display text-xl font-semibold">Upload sales CSV</h3>
-            <p id="insights-upload-help" className="mt-1 text-sm leading-relaxed text-white/65">
-              Use a standard order-line export from your POS. Include shopper ID and ZIP for customer
-              and trade-area views.
-              {data.data_source && (
-                <>
-                  {" "}
-                  Current view:{" "}
-                  <span className="font-medium text-white/90">{data.data_source}</span>
-                </>
-              )}
-            </p>
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <label htmlFor="insights-sales-csv" className="sr-only">
-                Sales CSV file from your POS
-              </label>
-              <input
-                ref={fileRef}
-                id="insights-sales-csv"
-                type="file"
-                accept=".csv,text/csv"
-                hidden
-                onChange={handleUpload}
-                aria-describedby="insights-upload-help insights-upload-status"
-              />
-              <button
-                type="button"
-                disabled={uploading}
-                aria-controls="insights-sales-csv"
-                onClick={() => fileRef.current?.click()}
-                className={BTN_PRIMARY}
-              >
-                {uploading ? "Analyzing…" : "Choose CSV file"}
-              </button>
-              <div id="insights-upload-status" aria-live="polite" aria-atomic="true" className="min-w-0">
-                {uploadMsg && <span className="text-sm text-leaf">{uploadMsg}</span>}
-                {uploadErr && (
-                  <span className="text-sm text-red-300" role="alert">
-                    {uploadErr}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <StoreDataConnectPanel dataSource={data.data_source} onComplete={onUploadComplete} />
 
       {!hasUploadedData && (
         <div
           role="status"
-          className="rounded-xl border border-brand/20 bg-brand/8 px-4 py-3 text-sm leading-relaxed text-white/80"
+          className="rounded-xl border border-brand/20 bg-brand/8 px-4 py-3 text-sm leading-relaxed text-foreground/85"
         >
-          <strong className="text-white">Sample previews below</strong> use May sales analysis numbers.
+          <strong className="text-foreground">Sample previews below</strong> use May sales analysis numbers.
           Upload your CSV to replace them with your store&apos;s data.{" "}
           <UploadCtaLink className="min-h-0 inline text-sm" />
         </div>
       )}
 
-      <InsightsSubNav />
+      <Tabs value={insightsTab} onValueChange={setInsightsTab} className="gap-6">
+        <TabsList className="no-print h-auto w-full flex-wrap justify-start gap-1 p-1">
+          <TabsTrigger value="competitive" className="px-3 sm:px-4">
+            Competitive
+          </TabsTrigger>
+          <TabsTrigger value="customers" className="px-3 sm:px-4">
+            Customers
+          </TabsTrigger>
+          <TabsTrigger value="actions" className="px-3 sm:px-4">
+            Actions
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Pricing — above the fold */}
-      <div id="insights-pricing" className={SCROLL_MT}>
-        <SectionHeader
-          icon={TrendingUp}
-          iconClass="text-leaf"
-          title={hasUploadedData ? "Your prices vs market" : "Market reference prices"}
-          description={
-            hasUploadedData
-              ? "Your shelf averages compared to live competitor ads."
-              : "Competitor lows by category until you upload POS data."
-          }
-        />
+        <TabsContent value="competitive" className="mt-0">
+          <div id="insights-pricing" className={SCROLL_MT}>
+            <SectionHeader
+              icon={TrendingUp}
+              iconClass="text-leaf"
+              title={hasUploadedData ? "Your prices vs market" : "Market reference prices"}
+              description={
+                hasUploadedData
+                  ? "Your shelf averages compared to live competitor ads."
+                  : "Competitor lows by category until you upload POS data."
+              }
+            />
 
-        <PriceComparisonSection
-          priceRows={priceRows}
-          hasUploadedData={hasUploadedData}
-          marketLabel={marketInfo.short}
-          generatedAt={data.generated_at}
-        />
-      </div>
+            <PriceComparisonSection
+              priceRows={priceRows}
+              hasUploadedData={hasUploadedData}
+              marketLabel={marketInfo.short}
+              generatedAt={data.generated_at}
+            />
+          </div>
+        </TabsContent>
 
-      {/* Outreach */}
-      <div id="insights-outreach" className={"no-print " + SCROLL_MT}>
-        <SectionHeader
-          icon={MessageSquare}
-          iconClass="text-leaf"
-          title="WhatsApp outreach"
-          description="Campaign reach and reply rates from your CRM — sample metrics until you connect live data."
-        />
-        <OutreachSection facts={facts} compactDemo={isSampleData} />
-      </div>
+        <TabsContent value="customers" className="mt-0">
+          <InsightsCustomersSubNav />
 
-      {/* Customers — basket, loyalty, top customers, trade area */}
-      <div className="no-print space-y-14">
+          <div className="no-print space-y-14">
         <div id="insights-basket" className={SCROLL_MT}>
           <SectionHeader
             icon={ShoppingBasket}
@@ -516,6 +486,7 @@ export default function InsightsSection({
                   label="With meat"
                   value={facts.meat_basket_avg}
                   hint={`vs $${facts.nonmeat_basket_avg} without meat`}
+                  accentClass="text-meat"
                 />
                 <StatCard label="Weekend basket" value={facts.weekend_avg_basket} hint="Sat & Sun trips" />
                 <StatCard label="Weekday basket" value={facts.weekday_avg_basket} hint="Mon–Fri trips" />
@@ -523,8 +494,8 @@ export default function InsightsSection({
 
               <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <div className={PANEL}>
-                  <h4 className="text-sm font-semibold text-white/80">Basket size comparison</h4>
-                  <p className="mt-1 text-xs text-white/50">Meat anchor effect vs trips without meat</p>
+                  <h4 className="text-sm font-semibold text-foreground/85">Basket size comparison</h4>
+                  <p className="mt-1 text-xs text-muted-foreground">Meat anchor effect vs trips without meat</p>
                   <div className="mt-4">
                     <CompareBars
                       label="Basket averages: with meat, without meat, weekend, and weekday"
@@ -532,7 +503,7 @@ export default function InsightsSection({
                         {
                           label: "With meat",
                           value: facts.meat_basket_avg,
-                          color: "#ff6a3d",
+                          color: "#b91c1c",
                         },
                         {
                           label: "Without meat",
@@ -556,8 +527,8 @@ export default function InsightsSection({
 
                 {ca.basket_segments?.length > 0 && (
                   <div className={PANEL}>
-                    <h4 className="text-sm font-semibold text-white/80">Basket size mix</h4>
-                    <p className="mt-1 text-xs text-white/50">Share of orders by ticket size</p>
+                    <h4 className="text-sm font-semibold text-foreground/85">Basket size mix</h4>
+                    <p className="mt-1 text-xs text-muted-foreground">Share of orders by ticket size</p>
                     <div className="mt-4">
                       <DonutChart segments={ca.basket_segments} label="Basket size mix by order count" />
                     </div>
@@ -567,14 +538,14 @@ export default function InsightsSection({
 
               {attachRateRows.length > 0 && (
                 <div className={"mt-6 " + PANEL}>
-                  <h4 className="text-sm font-semibold text-white/80">Add-on attach rates (meat baskets)</h4>
-                  <p className="mt-1 text-xs text-white/50">How often categories ride with a meat purchase</p>
+                  <h4 className="text-sm font-semibold text-meat">Add-on attach rates (meat baskets)</h4>
+                  <p className="mt-1 text-xs text-muted-foreground">How often categories ride with a meat purchase</p>
                   <div className="mt-4">
                     <RankedBars
                       items={attachRateRows}
                       valueKey="value"
                       labelKey="label"
-                      color="#34c759"
+                      color="#b91c1c"
                       formatValue={(v) => `${v}%`}
                       label="Add-on attach rates for meat baskets"
                     />
@@ -621,7 +592,7 @@ export default function InsightsSection({
 
               {ca.retention_rate_pct != null && (
                 <div className={"mt-6 " + PANEL}>
-                  <h4 className="text-sm font-semibold text-white/80">Retention snapshot</h4>
+                  <h4 className="text-sm font-semibold text-foreground/85">Retention snapshot</h4>
                   <div className="mt-4">
                     <RetentionGauge
                       rate={ca.retention_rate_pct}
@@ -635,21 +606,21 @@ export default function InsightsSection({
               <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
                 {ca.loyalty_tiers?.length > 0 && (
                   <div className={PANEL + " lg:col-span-1"}>
-                    <h4 className="text-sm font-semibold text-white/80">Loyalty tiers</h4>
-                    <p className="mt-1 text-xs text-white/50">By visit frequency</p>
+                    <h4 className="text-sm font-semibold text-foreground/85">Loyalty tiers</h4>
+                    <p className="mt-1 text-xs text-muted-foreground">By visit frequency</p>
                     <div className="mt-4">
                       <DonutChart segments={ca.loyalty_tiers} label="Customer loyalty tiers by visit count" />
                     </div>
                   </div>
                 )}
                 <div className={PANEL}>
-                  <h4 className="text-sm font-semibold text-white/80">Spend segments</h4>
+                  <h4 className="text-sm font-semibold text-foreground/85">Spend segments</h4>
                   <div className="mt-4">
                     <SegmentBar items={ca.segments} color="#4aa3ff" label="Spend segments by customer count" />
                   </div>
                 </div>
                 <div className={PANEL}>
-                  <h4 className="text-sm font-semibold text-white/80">Shopping rhythm</h4>
+                  <h4 className="text-sm font-semibold text-foreground/85">Shopping rhythm</h4>
                   <div className="mt-4">
                     <SegmentBar items={ca.rhythm_segments} color="#f0b429" label="Shopping rhythm segments" />
                   </div>
@@ -674,20 +645,20 @@ export default function InsightsSection({
           ) : topCustomers.length > 0 ? (
             <div className="space-y-6">
               <div className={PANEL}>
-                <h4 className="text-sm font-semibold text-white/80">Spend ranking</h4>
-                <p className="mt-1 text-xs text-white/50">Top shoppers by lifetime spend — IDs masked</p>
+                <h4 className="text-sm font-semibold text-foreground/85">Spend ranking</h4>
+                <p className="mt-1 text-xs text-muted-foreground">Top shoppers by lifetime spend — IDs masked</p>
                 <div className="mt-4">
                   <RankedBars
                     items={topCustomerRows}
                     valueKey="value"
                     labelKey="label"
-                    color="#ff6a3d"
+                    color="#22c55e"
                     label="Top customers by lifetime spend"
                   />
                 </div>
               </div>
 
-              <div className="overflow-hidden rounded-2xl border border-white/10">
+              <div className="overflow-hidden rounded-2xl border border-border">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[520px] text-left text-sm">
                   <caption className="sr-only">Top customers ranked by lifetime spend</caption>
@@ -715,16 +686,16 @@ export default function InsightsSection({
                   </thead>
                   <tbody>
                     {topCustomers.map((row) => (
-                      <tr key={row.id_masked} className="border-t border-white/8">
-                        <td className="px-4 py-3 font-mono text-xs text-white/80 sm:px-5">{row.id_masked}</td>
-                        <td className="px-4 py-3 tabular-nums text-white/75 sm:px-5">{row.orders}</td>
-                        <td className="px-4 py-3 font-semibold tabular-nums text-white sm:px-5">
+                      <tr key={row.id_masked} className="border-t border-border/70">
+                        <td className="px-4 py-3 font-mono text-xs text-foreground/85 sm:px-5">{row.id_masked}</td>
+                        <td className="px-4 py-3 tabular-nums text-muted-foreground sm:px-5">{row.orders}</td>
+                        <td className="px-4 py-3 font-semibold tabular-nums text-foreground sm:px-5">
                           ${row.spend?.toLocaleString()}
                         </td>
-                        <td className="px-4 py-3 tabular-nums text-white/75 sm:px-5">${row.avg_basket}</td>
-                        <td className="px-4 py-3 text-white/55 sm:px-5">{row.last_visit || "—"}</td>
+                        <td className="px-4 py-3 tabular-nums text-muted-foreground sm:px-5">${row.avg_basket}</td>
+                        <td className="px-4 py-3 text-muted-foreground sm:px-5">{row.last_visit || "—"}</td>
                         <td className="px-4 py-3 sm:px-5">
-                          <span className="rounded-full bg-white/8 px-2 py-0.5 text-[11px] font-semibold text-white/70">
+                          <span className="rounded-full bg-muted/80 px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
                             {row.tier}
                           </span>
                         </td>
@@ -733,7 +704,7 @@ export default function InsightsSection({
                   </tbody>
                 </table>
               </div>
-              <p className="border-t border-white/8 px-4 py-2 text-[11px] text-white/45 sm:px-5">
+              <p className="border-t border-border/70 px-4 py-2 text-[11px] text-muted-foreground/80 sm:px-5">
                 IDs are masked for privacy · ranked by lifetime spend
               </p>
             </div>
@@ -771,7 +742,7 @@ export default function InsightsSection({
           ) : tradeArea.has_zip_data ? (
             <div className="space-y-4">
               <TradeAreaMapPreview locked={false} zip={tradeArea.store_zip} city={tradeArea.store_city}>
-                <div className="border-t border-white/10 bg-ink/85 p-4 backdrop-blur-md sm:p-5">
+                <div className="border-t border-border bg-background/85 p-4 backdrop-blur-md sm:p-5">
                   <TradeAreaCard tradeArea={tradeArea} embedded />
                 </div>
               </TradeAreaMapPreview>
@@ -786,10 +757,21 @@ export default function InsightsSection({
             />
           )}
         </div>
-      </div>
+          </div>
+        </TabsContent>
 
-      {/* Promo ideas */}
-      <div id="insights-ideas" className={"no-print " + SCROLL_MT}>
+        <TabsContent value="actions" className="mt-0 space-y-14">
+          <div id="insights-outreach" className={"no-print " + SCROLL_MT}>
+            <SectionHeader
+              icon={MessageSquare}
+              iconClass="text-leaf"
+              title="WhatsApp outreach"
+              description="Campaign reach and reply rates from your CRM — sample metrics until you connect live data."
+            />
+            <OutreachSection facts={facts} compactDemo={isSampleData} />
+          </div>
+
+          <div id="insights-ideas" className={"no-print " + SCROLL_MT}>
         <SectionHeader
           icon={Sparkles}
           iconClass="text-brand"
@@ -829,16 +811,16 @@ export default function InsightsSection({
                         aria-label={`${block.title}: ${s.title}`}
                       >
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/55">
+                          <span className="rounded-full bg-muted/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                             {s.segment}
                           </span>
                           {s.from_recommendation && (
                             <Sparkles size={12} className="text-brand" aria-label="Market-driven" />
                           )}
                         </div>
-                        <div className="mt-2 font-medium text-white/90">{s.title}</div>
-                        <p className="mt-1 text-xs text-white/55">{s.reason}</p>
-                        <p className="mt-2 text-sm leading-relaxed text-white/70">{s.action}</p>
+                        <div className="mt-2 font-medium text-foreground">{s.title}</div>
+                        <p className="mt-1 text-xs text-muted-foreground">{s.reason}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.action}</p>
                       </div>
                     ))}
                   </div>
@@ -849,7 +831,9 @@ export default function InsightsSection({
             ))}
           </div>
         )}
-      </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </section>
   );
 }

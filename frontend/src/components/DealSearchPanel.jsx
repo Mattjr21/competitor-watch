@@ -3,6 +3,9 @@ import { Search } from "lucide-react";
 import DealCard from "./DealCard";
 import { EmptyState } from "../lib/ui";
 import { PANEL } from "../lib/sectionUi";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 const API = import.meta.env.VITE_API_URL || "";
 
@@ -37,7 +40,7 @@ export default function DealSearchPanel({ zips = "", searchHints = [], latinoOnl
   return (
     <div className={PANEL + " space-y-4 p-4 sm:p-5"}>
       <div>
-        <label htmlFor="flipp-search" className="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-white/50">
+        <label htmlFor="flipp-search" className="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Search weekly ads
         </label>
         <form
@@ -50,51 +53,49 @@ export default function DealSearchPanel({ zips = "", searchHints = [], latinoOnl
           <div className="relative min-w-0 flex-1">
             <Search
               size={15}
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/50"
+              className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground"
               aria-hidden
             />
-            <input
+            <Input
               id="flipp-search"
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Product name — e.g. chorizo, maseca, carne asada"
-              className="toolbar-control w-full pl-11 text-white placeholder:text-white/45 outline-none focus:border-white/40 focus-visible:ring-2 focus-visible:ring-brand"
+              className="h-11 pl-10"
             />
           </div>
-          <button
-            type="submit"
-            disabled={loading || query.trim().length < 2}
-            className="toolbar-control shrink-0 justify-center disabled:opacity-50"
-          >
+          <Button type="submit" disabled={loading || query.trim().length < 2} className="min-h-11 shrink-0">
             {loading ? "Searching…" : "Search ads"}
-          </button>
+          </Button>
         </form>
         {searchHints.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Popular searches">
             {searchHints.slice(0, 8).map((hint) => (
-              <button
+              <Badge
                 key={hint}
-                type="button"
-                onClick={() => runSearch(hint)}
-                className="rounded-full border border-white/12 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 transition hover:border-white/25 hover:text-white focus-visible:ring-2 focus-visible:ring-brand"
+                asChild
+                variant="secondary"
+                className="cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium"
               >
-                {hint}
-              </button>
+                <button type="button" onClick={() => runSearch(hint)}>
+                  {hint}
+                </button>
+              </Badge>
             ))}
           </div>
         )}
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-red-300">
+        <p role="alert" className="text-sm text-destructive">
           {error}
         </p>
       )}
 
       {results && (
         <div>
-          <p className="mb-3 text-sm text-white/55">
+          <p className="mb-3 text-sm text-muted-foreground">
             {results.length} result{results.length !== 1 ? "s" : ""} for &ldquo;{query}&rdquo;
           </p>
           {results.length === 0 ? (

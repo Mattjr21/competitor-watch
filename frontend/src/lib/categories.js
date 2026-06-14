@@ -13,7 +13,7 @@ import {
 
 // Maps a free-text category label (English or Spanish) to a color + icon.
 const RULES = [
-  { kw: ["meat", "carne", "beef", "pork", "poultry", "chicken", "pollo", "seafood", "fish", "pescado"], color: "#ff6a3d", icon: Beef },
+  { kw: ["meat", "carne", "beef", "pork", "poultry", "chicken", "pollo", "seafood", "fish", "pescado"], color: "#b91c1c", icon: Beef },
   { kw: ["produce", "verdura", "vegetable", "fruit", "fruta", "tomato"], color: "#34c759", icon: Carrot },
   { kw: ["dairy", "lacteo", "cheese", "queso", "milk", "leche", "cream", "crema", "butter", "yogurt"], color: "#4aa3ff", icon: Milk },
   { kw: ["tortilla", "bread", "bakery", "pan", "masa", "chips", "snack"], color: "#f0b429", icon: Wheat },

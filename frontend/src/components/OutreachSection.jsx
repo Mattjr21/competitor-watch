@@ -53,7 +53,7 @@ export default function OutreachSection({ facts, compactDemo = false }) {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-white/60">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             {data.channel === "whatsapp" ? "WhatsApp Business" : data.channel} · {data.period_label}
           </p>
           {!data.demo_mode && (
@@ -65,7 +65,7 @@ export default function OutreachSection({ facts, compactDemo = false }) {
             href={data.crm_app_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-[44px] items-center gap-1.5 text-sm text-white/75 underline-offset-2 hover:text-white hover:underline focus-visible:rounded focus-visible:ring-2 focus-visible:ring-brand"
+            className="inline-flex min-h-[44px] items-center gap-1.5 text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline focus-visible:rounded focus-visible:ring-2 focus-visible:ring-brand"
           >
             Open production CRM <ExternalLink size={14} />
           </a>
@@ -91,12 +91,12 @@ export default function OutreachSection({ facts, compactDemo = false }) {
 
       {data.language_mix?.length > 0 && !hideDetails && (
         <div className={PANEL}>
-          <h4 className="text-sm font-semibold text-white/80">Campaign language mix</h4>
+          <h4 className="text-sm font-semibold text-foreground/85">Campaign language mix</h4>
           <div className="mt-4 flex flex-wrap gap-4">
             {data.language_mix.map((row) => (
               <div key={row.language} className="min-w-[120px]">
-                <div className="text-xs text-white/60">{row.language}</div>
-                <div className="font-display text-2xl font-bold text-white">{row.pct}%</div>
+                <div className="text-xs text-muted-foreground">{row.language}</div>
+                <div className="font-display text-2xl font-bold text-foreground">{row.pct}%</div>
               </div>
             ))}
           </div>
@@ -104,9 +104,9 @@ export default function OutreachSection({ facts, compactDemo = false }) {
       )}
 
       {campaigns.length > 0 && !hideDetails && (
-        <div className="overflow-hidden rounded-2xl border border-white/10">
-          <div className="border-b border-white/8 bg-white/5 px-4 py-3 sm:px-5">
-            <h4 className="text-sm font-semibold text-white/80">Recent campaigns (aggregates)</h4>
+        <div className="overflow-hidden rounded-2xl border border-border">
+          <div className="border-b border-border/70 bg-muted/60 px-4 py-3 sm:px-5">
+            <h4 className="text-sm font-semibold text-foreground/85">Recent campaigns (aggregates)</h4>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[560px] text-left text-sm">
@@ -122,13 +122,13 @@ export default function OutreachSection({ facts, compactDemo = false }) {
               </thead>
               <tbody>
                 {campaigns.map((c, i) => (
-                  <tr key={i} className="border-t border-white/8">
-                    <td className="px-4 py-3 font-medium text-white/90 sm:px-5">{c.name}</td>
-                    <td className="px-4 py-3 tabular-nums text-white/75 sm:px-5">{c.sent?.toLocaleString()}</td>
+                  <tr key={i} className="border-t border-border/70">
+                    <td className="px-4 py-3 font-medium text-foreground sm:px-5">{c.name}</td>
+                    <td className="px-4 py-3 tabular-nums text-muted-foreground sm:px-5">{c.sent?.toLocaleString()}</td>
                     <td className="px-4 py-3 tabular-nums text-sky sm:px-5">{c.read_rate_pct}%</td>
                     <td className="px-4 py-3 tabular-nums text-brand sm:px-5">{c.reply_rate_pct}%</td>
                     <td className="px-4 py-3 tabular-nums text-leaf sm:px-5">{c.visit_match_pct}%</td>
-                    <td className="px-4 py-3 text-white/55 sm:px-5">{c.language || "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground sm:px-5">{c.language || "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -138,10 +138,10 @@ export default function OutreachSection({ facts, compactDemo = false }) {
       )}
 
       {data.visit_match_note && !hideDetails && (
-        <p className="text-xs leading-relaxed text-white/50">{data.visit_match_note}</p>
+        <p className="text-xs leading-relaxed text-muted-foreground">{data.visit_match_note}</p>
       )}
       {data.privacy_note && !hideDetails && (
-        <p className="flex items-start gap-2 text-xs leading-relaxed text-white/45">
+        <p className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground/80">
           <Shield size={14} className="mt-0.5 shrink-0" />
           {data.privacy_note}
         </p>
@@ -165,11 +165,11 @@ export function DemoModeBanner() {
   return (
     <div
       role="status"
-      className="border-b border-sky-500/25 bg-sky-950/40 py-2.5 text-center text-xs text-sky-100/90"
+      className="border-b border-sky/25 bg-sky/10 py-2.5 text-center text-xs text-sky-900"
     >
       <p className="app-shell">
         <span className="font-semibold">Demo mode</span> — sample metrics for review. Upload a POS export
-        on Your Store to see your store&apos;s live numbers.
+        on Your store data to see your store&apos;s live numbers.
       </p>
     </div>
   );

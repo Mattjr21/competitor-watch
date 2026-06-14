@@ -5,7 +5,7 @@ const BAND_STYLE = {
   national_leader: { label: "National leader", className: "text-leaf" },
   competitive: { label: "Competitive", className: "text-sky" },
   above_national: { label: "Above national", className: "text-amber-300" },
-  no_data: { label: "No data", className: "text-white/45" },
+  no_data: { label: "No data", className: "text-muted-foreground/80" },
 };
 
 function ScoreRing({ score }) {
@@ -36,15 +36,15 @@ export default function NationalRankPanel({ ranking, onRefresh, loading, onUploa
         <div className="flex min-w-0 items-start gap-4">
           <ScoreRing score={ranking.overall_score} />
           <div className="min-w-0">
-            <h3 id="national-rank-title" className="font-display text-lg font-semibold text-white">
+            <h3 id="national-rank-title" className="font-display text-lg font-semibold text-foreground">
               National price ranking
             </h3>
-            <p className="mt-1 text-sm text-white/55">
+            <p className="mt-1 text-sm text-muted-foreground">
               {ranking.profile_label || "Benchmark"} · {ranking.scanned_zips?.length || 0} national
               ZIPs · {ranking.categories_ranked || 0} categories scored
             </p>
             {ranking.generated_at && (
-              <p className="mt-0.5 text-xs text-white/40">Benchmark ads: {ranking.generated_at}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground/70">Benchmark ads: {ranking.generated_at}</p>
             )}
           </div>
         </div>
@@ -53,7 +53,7 @@ export default function NationalRankPanel({ ranking, onRefresh, loading, onUploa
             type="button"
             onClick={onRefresh}
             disabled={loading}
-            className="inline-flex min-h-[36px] items-center gap-2 rounded-full border border-white/15 px-3.5 py-1.5 text-xs font-medium text-white/75 hover:border-white/30 disabled:opacity-50"
+            className="inline-flex min-h-[36px] items-center gap-2 rounded-full border border-border px-3.5 py-1.5 text-xs font-medium text-muted-foreground hover:border-border disabled:opacity-50"
           >
             <RefreshCw size={13} className={loading ? "animate-spin" : ""} aria-hidden />
             Refresh national scan
@@ -62,10 +62,10 @@ export default function NationalRankPanel({ ranking, onRefresh, loading, onUploa
       </div>
 
       {ranking.requires_upload ? (
-        <div className="mt-4 flex items-start gap-3 rounded-xl border border-brand/20 bg-brand/8 px-4 py-3 text-sm text-white/80">
+        <div className="mt-4 flex items-start gap-3 rounded-xl border border-brand/20 bg-brand/8 px-4 py-3 text-sm text-foreground/85">
           <Upload size={18} className="mt-0.5 shrink-0 text-brand" aria-hidden />
           <p>
-            Upload your POS CSV to rank <strong className="text-white">your shelf prices</strong> vs
+            Upload your POS CSV to rank <strong className="text-foreground">your shelf prices</strong> vs
             national {ranking.profile_label} markets.{" "}
             {onUploadGuide ? (
               <button
@@ -93,7 +93,7 @@ export default function NationalRankPanel({ ranking, onRefresh, loading, onUploa
       )}
 
       {rows.length > 0 && (
-        <div className="mt-5 overflow-x-auto rounded-xl border border-white/10">
+        <div className="mt-5 overflow-x-auto rounded-xl border border-border">
           <table className="w-full min-w-[520px] text-left text-sm">
             <caption className="sr-only">
               Your prices ranked against national {ranking.profile_label} weekly ad lows
@@ -121,19 +121,19 @@ export default function NationalRankPanel({ ranking, onRefresh, loading, onUploa
               {rows.map((row) => {
                 const band = BAND_STYLE[row.national_band] || BAND_STYLE.no_data;
                 return (
-                  <tr key={row.key} className="border-t border-white/8">
-                    <td className="px-4 py-3 font-medium text-white/90">{row.label}</td>
-                    <td className="px-4 py-3 tabular-nums text-white/70">
+                  <tr key={row.key} className="border-t border-border/70">
+                    <td className="px-4 py-3 font-medium text-foreground">{row.label}</td>
+                    <td className="px-4 py-3 tabular-nums text-muted-foreground">
                       {row.own_avg != null ? `$${row.own_avg}` : "—"}
                     </td>
-                    <td className="px-4 py-3 text-white/60">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {row.national_low != null ? (
                         <>
                           <span className="font-display font-bold tabular-nums text-leaf">
                             ${row.national_low}
                           </span>
                           {row.national_cheapest && (
-                            <span className="ml-1 text-xs text-white/45">· {row.national_cheapest}</span>
+                            <span className="ml-1 text-xs text-muted-foreground/80">· {row.national_cheapest}</span>
                           )}
                         </>
                       ) : (
@@ -143,7 +143,7 @@ export default function NationalRankPanel({ ranking, onRefresh, loading, onUploa
                     <td className={"px-4 py-3 font-semibold tabular-nums " + band.className}>
                       {row.national_score ?? "—"}
                     </td>
-                    <td className="px-4 py-3 text-white/55">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {row.national_rank ? `#${row.national_rank}` : band.label}
                     </td>
                   </tr>
@@ -155,7 +155,7 @@ export default function NationalRankPanel({ ranking, onRefresh, loading, onUploa
       )}
 
       {ranking.note && (
-        <p className="mt-3 text-[11px] leading-relaxed text-white/40">{ranking.note}</p>
+        <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground/70">{ranking.note}</p>
       )}
     </section>
   );

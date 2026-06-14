@@ -26,6 +26,7 @@ import events as local_events
 import forecast
 import outreach
 import benchmark
+from integrations import store_data
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PUBLIC = os.path.join(ROOT, "frontend/dist")
@@ -1322,25 +1323,90 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json({"error": str(e)}, status=400)
             return
 
-        if parsed.path != "/api/upload":
-            self._send_json({"error": "not found"}, status=404)
+        if parsed.path == "/api/integration/credentials":
+            try:
+                body = json.loads(raw) if raw.strip() else {}
+                pid = (body.get("provider") or "").strip()
+                creds = body.get("credentials") or body
+                payload = store_data.save_credentials(pid, creds)
+                self._send_json({"ok": True, **payload})
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=400)
             return
-        try:
-            fname = self.headers.get("X-Filename", "uploaded sales data")
-            cfg = load_config()
-            facts = sales.analyze(
-                raw,
-                cfg["categories"],
-                cfg.get("weather_categories"),
-                store_location=cfg.get("store_location"),
-                zip_centroids=cfg.get("zip_centroids"),
-            )
-            label = f"{fname} ({facts['orders']:,} orders, ${facts['total_revenue']:,.0f})"
-            save_facts(facts, label)
-            print(f"[upload] {label}")
-            self._send_json({"ok": True, "source_label": label, "facts": facts})
-        except Exception as e:
-            self._send_json({"error": str(e)}, status=400)
+
+        if parsed.path == "/api/integration/test":
+            try:
+                body = json.loads(raw) if raw.strip() else {}
+                pid = (body.get("provider") or "").strip() or None
+                result = store_data.test_connection(provider_id=pid)
+                self._send_json({"ok": True, **result})
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=400)
+            return
+
+        if parsed.path == "/api/integration/provider":
+            try:
+                body = json.loads(raw) if raw.strip() else {}
+                pid = (body.get("provider") or "").strip()
+                payload = store_data.set_provider(pid)
+                self._send_json({"ok": True, **payload})
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=400)
+            return
+
+        if parsed.path == "/api/integration/sync":
+            try:
+                cfg = load_config()
+                body = json.loads(raw) if raw.strip() else {}
+                pid = (body.get("provider") or "").strip() or None
+                facts, label, meta = store_data.sync_provider(cfg, provider_id=pid)
+                save_facts(facts, label)
+                print(f"[sync] {label}")
+                self._send_json({"ok": True, "source_label": label, "facts": facts, "meta": meta})
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=400)
+            return
+
+        if parsed.path == "/api/upload/bundle":
+            try:
+                cfg = load_config()
+                body = json.loads(raw) if raw.strip() else {}
+                files = body.get("files") or {}
+                facts, label, meta = store_data.ingest_csv_bundle(files, cfg)
+                save_facts(facts, label)
+                state = store_data.load_integration_state()
+                state["provider"] = "csv"
+                state["last_source_label"] = label
+                state["last_sync_at"] = time.strftime("%Y-%m-%d %H:%M")
+                state["last_sync_status"] = "ok"
+                state["last_sync_error"] = None
+                store_data.save_integration_state(state)
+                print(f"[upload/bundle] {label}")
+                self._send_json({"ok": True, "source_label": label, "facts": facts, "meta": meta})
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=400)
+            return
+
+        if parsed.path == "/api/upload":
+            try:
+                fname = self.headers.get("X-Filename", "uploaded sales data")
+                cfg = load_config()
+                facts, label, meta = store_data.ingest_single_csv(raw, cfg, filename=fname)
+                save_facts(facts, label)
+                state = store_data.load_integration_state()
+                state["provider"] = "csv"
+                state["last_source_label"] = label
+                state["last_sync_at"] = time.strftime("%Y-%m-%d %H:%M")
+                state["last_sync_status"] = "ok"
+                state["last_sync_error"] = None
+                store_data.save_integration_state(state)
+                print(f"[upload] {label}")
+                self._send_json({"ok": True, "source_label": label, "facts": facts, "meta": meta})
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=400)
+            return
+
+        self._send_json({"error": "not found"}, status=404)
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -1351,6 +1417,13 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if not self._authed():
+            return
+
+        if route == "/api/integration":
+            try:
+                self._send_json(store_data.build_status_payload())
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=500)
             return
 
         if route == "/api/meta":

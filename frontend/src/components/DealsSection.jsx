@@ -1,26 +1,36 @@
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useState, lazy, Suspense } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
-import { Search, X, RefreshCw, Download } from "lucide-react";
+import { Search, X, RefreshCw, Download, Flame, Tags, Gift } from "lucide-react";
 import DealCard from "./DealCard";
 import BestDealsPanel from "./BestDealsPanel";
 import CombosSection from "./CombosSection";
 import DealSearchPanel from "./DealSearchPanel";
+import FilterSelect from "./FilterSelect";
 import { customZipsFromCsv, marketAreasFromPresets } from "../lib/marketAreas";
 import { exportDealsCsv } from "../lib/export";
 import { computeCategoryWinners } from "../lib/dealWinners";
-import { Eyebrow, CardSkeletonGrid, ErrorState, EmptyState, EASE } from "../lib/ui";
+import { CardSkeletonGrid, ErrorState, EmptyState, EASE } from "../lib/ui";
 import {
   PANEL,
   PANEL_MUTED,
   FILTER_GRID,
   FILTER_ACTIONS,
 } from "../lib/layout";
+import { PageHeader, TAB_SECTION_SPACE } from "../lib/sectionUi";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const NationalRankPanel = lazy(() => import("./NationalRankPanel"));
+
+const DEALS_PAGE_LEDE =
+  "Lowest price per category and the full ad catalog. For what's advertised most often, see Market trends.";
 
 const DEALS_GRID =
   "grid gap-3 grid-cols-[repeat(auto-fill,minmax(168px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(188px,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]";
 const FLAT_RESULT_LIMIT = 12;
 const FILTER_LABEL =
-  "mb-2.5 block text-[11px] font-semibold uppercase tracking-wider text-white/50";
+  "mb-2.5 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground";
 
 function filterDeals(deals, { search, catFilter, merchFilter, latinoOnly }) {
   const q = search.toLowerCase();
@@ -92,6 +102,8 @@ export default function DealsSection({
   profileLabel = "Latino grocery",
   isBenchmarking = false,
   pendingMarket = false,
+  onRefreshNational,
+  onUploadGuide,
 }) {
   const reduceMotion = useReducedMotion();
   const bestPanelId = useId();
@@ -174,24 +186,32 @@ export default function DealsSection({
   if (error && !data) return <ErrorState message={error} onRetry={onRefresh} />;
   if ((loading && !data) || pendingMarket) {
     return (
-      <div>
+      <section className={TAB_SECTION_SPACE} aria-labelledby="deals-section-heading">
+        <PageHeader
+          eyebrow="Competitor deals"
+          eyebrowDot
+          titleId="deals-section-heading"
+          title="Competitor deals"
+          description={DEALS_PAGE_LEDE}
+          loading={true}
+        />
         <div
           role="status"
           aria-live="polite"
-          className="mb-4 rounded-xl border border-brand/30 bg-brand/10 px-4 py-3 text-sm text-white/80"
+          className="rounded-xl border border-brand/30 bg-brand/10 px-4 py-3 text-sm text-foreground/85"
         >
           <RefreshCw size={14} className="mr-2 inline animate-spin" aria-hidden />
-          Loading competitor ads for <span className="font-semibold text-white">{marketLabel}</span>
+          Loading competitor ads for <span className="font-semibold text-foreground">{marketLabel}</span>
           {profileLabel && (
             <>
               {" "}
-              (<span className="font-semibold text-white">{profileLabel}</span> search terms)
+              (<span className="font-semibold text-foreground">{profileLabel}</span> search terms)
             </>
           )}
           … first load can take up to 60 seconds.
         </div>
         <CardSkeletonGrid count={8} />
-      </div>
+      </section>
     );
   }
   if (!data) return <EmptyState>No deals loaded yet.</EmptyState>;
@@ -208,16 +228,27 @@ export default function DealsSection({
       };
 
   return (
-    <section className="relative" aria-labelledby="deals-section-heading">
-      <h2 id="deals-section-heading" className="sr-only">
-        Competitor deals
-      </h2>
+    <section className={TAB_SECTION_SPACE + " relative"} aria-labelledby="deals-section-heading">
+      <PageHeader
+        eyebrow="Competitor deals"
+        eyebrowDot
+        titleId="deals-section-heading"
+        title="Competitor deals"
+        description={DEALS_PAGE_LEDE}
+        meta={
+          data?.generated_at
+            ? `${marketLabel} · ${data.merchants?.length || 0} retailers · synced ${data.generated_at}`
+            : undefined
+        }
+        onRefresh={onRefresh}
+        loading={loading && !!data}
+      />
 
       {loading && data && (
         <div
           role="status"
           aria-live="polite"
-          className="absolute right-0 top-0 z-10 flex items-center gap-2 rounded-full border border-white/15 bg-ink-2 px-3 py-1.5 text-xs text-white/60"
+          className="absolute right-0 top-0 z-10 flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1.5 text-xs text-muted-foreground"
         >
           <RefreshCw size={12} className="animate-spin" aria-hidden />
           Updating deals…
@@ -225,48 +256,40 @@ export default function DealsSection({
       )}
 
       {error && (
-        <div role="alert" className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <div role="alert" className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}
 
       <div
         role="note"
-        className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs leading-relaxed text-white/60"
+        className="mb-4 rounded-xl border border-border bg-muted/40 px-4 py-3 text-xs leading-relaxed text-muted-foreground"
       >
         Showing benchmark ads for{" "}
-        <span className="font-semibold text-white/85">{marketLabel}</span>
+        <span className="font-semibold text-foreground/90">{marketLabel}</span>
         {isBenchmarking && homeMarketLabel && (
-          <span className="text-white/45"> · playbook uses {homeMarketLabel}</span>
+          <span className="text-muted-foreground/80"> · playbook uses {homeMarketLabel}</span>
         )}
         {activeZips.length > 0 && (
           <>
             {" "}
-            · <span className="font-mono text-white/50">{activeZips.join(", ")}</span>
+            · <span className="font-mono text-muted-foreground">{activeZips.join(", ")}</span>
           </>
         )}
         {data.generated_at && (
-          <span className="text-white/40"> · synced {data.generated_at}</span>
+          <span className="text-muted-foreground/70"> · synced {data.generated_at}</span>
         )}
       </div>
 
-      {data.week_signal && (
-        <div role="note" className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-          {data.week_signal}
-        </div>
-      )}
-
-      <Eyebrow>Competitor ads</Eyebrow>
-
-      <div className="mt-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-white/10">
+      <div className="mt-2 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-border">
         <div role="tablist" aria-label="Deal views" className="-mb-px flex gap-0.5">
           {[
-            { id: "best", label: "Best near you", count: categoryWinners.length, countSuffix: "winners", panelId: bestPanelId },
-            { id: "all", label: "Deals by store", count: deals.length, countSuffix: "deals", panelId: dealsPanelId },
-            { id: "combos", label: "Combo packs", count: comboCount, countSuffix: "packs", panelId: combosPanelId },
+            { id: "best", label: "Best near you", icon: Flame, count: categoryWinners.length, countSuffix: "winners", panelId: bestPanelId },
+            { id: "all", label: "Deals by store", icon: Tags, count: deals.length, countSuffix: "deals", panelId: dealsPanelId },
+            { id: "combos", label: "Combo packs", icon: Gift, count: comboCount, countSuffix: "packs", panelId: combosPanelId },
           ].map((tab) => {
             const active = dealsView === tab.id;
-            const tabIcon = tab.id === "best" ? "🔥 " : tab.id === "all" ? "🏷️ " : "🎁 ";
+            const TabIcon = tab.icon;
             return (
               <button
                 key={tab.id}
@@ -277,14 +300,14 @@ export default function DealsSection({
                 aria-controls={tab.panelId}
                 onClick={() => setDealsView(tab.id)}
                 className={
-                  "relative min-h-[44px] px-4 py-3 text-sm font-medium transition focus-visible:rounded-t focus-visible:ring-2 focus-visible:ring-brand " +
-                  (active ? "text-white" : "text-white/55 hover:text-white/85")
+                  "relative inline-flex min-h-[44px] items-center gap-1.5 px-4 py-3 text-sm font-medium transition focus-visible:rounded-t focus-visible:ring-2 focus-visible:ring-brand " +
+                  (active ? "text-foreground" : "text-muted-foreground hover:text-foreground/90")
                 }
               >
-                {tabIcon}
+                <TabIcon size={15} className="shrink-0 opacity-80" aria-hidden />
                 {tab.label}
                 {tab.count > 0 && (
-                  <span className="ml-1 text-white/50" aria-hidden>
+                  <span className="ml-1 text-muted-foreground" aria-hidden>
                     ({tab.count} {tab.countSuffix})
                   </span>
                 )}
@@ -306,15 +329,15 @@ export default function DealsSection({
           })}
         </div>
         {dealsView === "best" && (
-          <p className="pb-3 text-xs text-white/50 sm:text-sm" aria-hidden>
+          <p className="pb-3 text-xs text-muted-foreground sm:text-sm" aria-hidden>
             {categoryWinners.length} winner{categoryWinners.length !== 1 ? "s" : ""} · {grouped.length} stores
-            {data.generated_at && <span className="text-white/40"> · {data.generated_at}</span>}
+            {data.generated_at && <span className="text-muted-foreground/70"> · {data.generated_at}</span>}
           </p>
         )}
         {dealsView === "all" && (
-          <p className="pb-3 text-xs text-white/50 sm:text-sm" aria-hidden>
+          <p className="pb-3 text-xs text-muted-foreground sm:text-sm" aria-hidden>
             {filteredDeals.length} deals · {grouped.length} stores
-            {data.generated_at && <span className="text-white/40"> · {data.generated_at}</span>}
+            {data.generated_at && <span className="text-muted-foreground/70"> · {data.generated_at}</span>}
           </p>
         )}
       </div>
@@ -359,28 +382,28 @@ export default function DealsSection({
               aria-label="Filter competitor deals"
             >
               <div>
-                <label htmlFor="deals-search" className={FILTER_LABEL}>
+                <label id="deals-search-label" htmlFor="deals-search" className={FILTER_LABEL}>
                   Search deals
                 </label>
                 <div className="relative">
                   <Search
                     size={15}
-                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/50"
+                    className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground"
                     aria-hidden
                   />
-                  <input
+                  <Input
                     id="deals-search"
                     type="search"
                     placeholder="Product name, store, or category"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="toolbar-control text-white placeholder:text-white/45 outline-none transition focus:border-white/40 focus-visible:ring-2 focus-visible:ring-brand"
+                    className="h-11 pl-10"
                   />
                   {search && (
                     <button
                       type="button"
                       onClick={() => setSearch("")}
-                      className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-white/50 transition hover:text-white focus-visible:ring-2 focus-visible:ring-brand"
+                      className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition hover:text-foreground focus-visible:ring-2 focus-visible:ring-brand"
                       aria-label="Clear search"
                     >
                       <X size={14} aria-hidden />
@@ -392,53 +415,48 @@ export default function DealsSection({
               <div>
                 <p className={FILTER_LABEL}>Filters</p>
                 <div className={FILTER_GRID}>
-                  <select
+                  <FilterSelect
                     id="deals-cat-filter"
                     aria-label="Filter by category"
                     value={catFilter}
-                    onChange={(e) => setCatFilter(e.target.value)}
-                    className="toolbar-control w-full min-w-0 text-white outline-none focus:border-white/40 focus-visible:ring-2 focus-visible:ring-brand sm:w-auto sm:min-w-[11rem]"
-                  >
-                    <option value="">All categories</option>
-                    {(data.categories || []).map((c) => (
-                      <option key={c.key} value={c.key}>
-                        {c.label} ({(data.deals_by_category[c.key] || []).length})
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setCatFilter}
+                    options={[
+                      { value: "", label: "All categories" },
+                      ...(data.categories || []).map((c) => ({
+                        value: c.key,
+                        label: `${c.label} (${(data.deals_by_category[c.key] || []).length})`,
+                      })),
+                    ]}
+                  />
 
-                  <select
+                  <FilterSelect
                     id="deals-merch-filter"
                     aria-label="Filter by retailer"
                     value={merchFilter}
-                    onChange={(e) => setMerchFilter(e.target.value)}
-                    className="toolbar-control w-full min-w-0 text-white outline-none focus:border-white/40 focus-visible:ring-2 focus-visible:ring-brand sm:w-auto sm:min-w-[10.5rem]"
-                  >
-                    <option value="">All retailers</option>
-                    {(data.merchants || []).map((m) => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setMerchFilter}
+                    options={[
+                      { value: "", label: "All retailers" },
+                      ...(data.merchants || []).map((m) => ({ value: m, label: m })),
+                    ]}
+                  />
 
-                  <select
+                  <FilterSelect
                     id="deals-sort"
                     aria-label="Sort store groups"
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="toolbar-control w-full min-w-0 text-white outline-none focus:border-white/40 focus-visible:ring-2 focus-visible:ring-brand sm:w-auto sm:min-w-[10rem]"
-                  >
-                    <option value="merchant">Store A–Z</option>
-                    <option value="count">Most deals per store</option>
-                    <option value="price">Store order by cheapest item</option>
-                  </select>
+                    onChange={setSortBy}
+                    options={[
+                      { value: "merchant", label: "Store A–Z" },
+                      { value: "count", label: "Most deals per store" },
+                      { value: "price", label: "Store order by cheapest item" },
+                    ]}
+                  />
 
                   <label
                     htmlFor={latinoFilterId}
                     className={
-                      "toolbar-control toolbar-toggle w-full shrink-0 sm:w-auto " +
-                      (latinoOnly ? "border-leaf/50 bg-leaf/10 text-leaf" : "")
+                      "flex h-11 min-h-11 cursor-pointer items-center gap-2 rounded-2xl border border-border bg-input/50 px-3 text-sm " +
+                      (latinoOnly ? "border-leaf/50 bg-leaf/10 text-leaf" : "text-foreground")
                     }
                   >
                     <input
@@ -446,7 +464,7 @@ export default function DealsSection({
                       type="checkbox"
                       checked={latinoOnly}
                       onChange={(e) => setLatinoOnly(e.target.checked)}
-                      className="h-4 w-4 shrink-0 rounded border-white/25"
+                      className="h-4 w-4 shrink-0 rounded border-border"
                     />
                     Latino grocers only
                   </label>
@@ -497,7 +515,7 @@ export default function DealsSection({
 
             {!useFlatGrid && grouped.length > 4 && (
               <div
-                className="mt-5 border-t border-white/8 pt-5 sm:mt-6 sm:pt-6"
+                className="mt-5 border-t border-border/70 pt-5 sm:mt-6 sm:pt-6"
                 role="group"
                 aria-label="Jump to store"
               >
@@ -514,8 +532,8 @@ export default function DealsSection({
                         className={
                           "toolbar-control shrink-0 text-xs font-medium focus-visible:ring-2 focus-visible:ring-brand " +
                           (pressed
-                            ? "border-brand bg-brand text-white"
-                            : "text-white/75 hover:border-white/30 hover:text-white")
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "text-muted-foreground hover:border-border hover:text-foreground")
                         }
                       >
                         {merchant}
@@ -537,7 +555,7 @@ export default function DealsSection({
                 <div className="mx-auto max-w-md space-y-4">
                   <p>{resultsSummary}</p>
                   {noDealsLoaded && !hasFilters && activeZips.length > 0 && (
-                    <p className="text-sm text-white/55">
+                    <p className="text-sm text-muted-foreground">
                       {customZips.length > 0
                         ? "This ZIP may not have weekly ad coverage yet. Try a nearby code or select a preset market in Market areas."
                         : "Try selecting another market above, or add a nearby ZIP under Additional markets."}
@@ -547,7 +565,7 @@ export default function DealsSection({
                     <button
                       type="button"
                       onClick={clearFilters}
-                      className="inline-flex min-h-[44px] items-center rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/85 transition hover:border-white/40 hover:text-white focus-visible:ring-2 focus-visible:ring-brand"
+                      className="inline-flex min-h-[44px] items-center rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground/90 transition hover:border-border hover:text-foreground focus-visible:ring-2 focus-visible:ring-brand"
                     >
                       Clear all filters
                     </button>
@@ -556,7 +574,7 @@ export default function DealsSection({
                       <button
                         type="button"
                         onClick={onRefresh}
-                        className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/85 transition hover:border-white/40 hover:text-white focus-visible:ring-2 focus-visible:ring-brand"
+                        className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-foreground/90 transition hover:border-border hover:text-foreground focus-visible:ring-2 focus-visible:ring-brand"
                       >
                         <RefreshCw size={14} aria-hidden />
                         Refresh deals
@@ -568,12 +586,12 @@ export default function DealsSection({
             </div>
           ) : useFlatGrid ? (
             <div className="mt-6" aria-labelledby={resultsLiveId}>
-              <p className="mb-3 text-sm text-white/60">
+              <p className="mb-3 text-sm text-muted-foreground">
                 {filteredDeals.length} result{filteredDeals.length !== 1 ? "s" : ""}
                 {search ? (
                   <>
                     {" "}
-                    for <strong className="text-white/85">&ldquo;{search}&rdquo;</strong>
+                    for <strong className="text-foreground/90">&ldquo;{search}&rdquo;</strong>
                   </>
                 ) : (
                   " matching filters"
@@ -612,7 +630,7 @@ export default function DealsSection({
                       >
                         {merchant}
                       </h3>
-                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] tabular-nums text-white/60">
+                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] tabular-nums text-muted-foreground">
                         {merchantDeals.length} deal{merchantDeals.length !== 1 ? "s" : ""}
                       </span>
                     </div>
@@ -628,6 +646,24 @@ export default function DealsSection({
             </div>
           )}
         </div>
+      )}
+
+      {data.national_ranking && (
+        <Suspense
+          fallback={
+            <div className="space-y-3 rounded-2xl border border-border p-4 sm:p-5">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+          }
+        >
+          <NationalRankPanel
+            ranking={data.national_ranking}
+            onRefresh={onRefreshNational}
+            loading={loading}
+            onUploadGuide={onUploadGuide}
+          />
+        </Suspense>
       )}
     </section>
   );

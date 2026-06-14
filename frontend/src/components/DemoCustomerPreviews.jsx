@@ -8,15 +8,15 @@ import {
   demoTopCustomerRows,
 } from "../lib/demoAnalytics";
 
-function DemoStat({ label, value, hint, suffix = "" }) {
+function DemoStat({ label, value, hint, suffix = "", valueClass = "text-foreground" }) {
   return (
-    <div className="rounded-xl border border-white/8 bg-ink-2/80 p-3 sm:p-4">
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-white/55">{label}</div>
-      <div className="mt-1 font-display text-xl font-bold tabular-nums text-white sm:text-2xl">
+    <div className="rounded-xl border border-border bg-muted/50 p-3 sm:p-4">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={"mt-1 font-display text-xl font-bold tabular-nums sm:text-2xl " + valueClass}>
         {value}
         {suffix}
       </div>
-      {hint && <p className="mt-0.5 text-[11px] text-white/50">{hint}</p>}
+      {hint && <p className="mt-0.5 text-[11px] text-muted-foreground">{hint}</p>}
     </div>
   );
 }
@@ -33,15 +33,16 @@ export function BasketAnalysisDemoPreview({ attachRates, categoryLabels, title, 
           label="With meat"
           value={`$${b.meat_basket_avg}`}
           hint={`vs $${b.nonmeat_basket_avg} without`}
+          valueClass="text-meat"
         />
         <DemoStat label="Weekend" value={`$${b.weekend_avg_basket}`} hint="Sat & Sun" />
         <DemoStat label="Weekday" value={`$${b.weekday_avg_basket}`} hint="Mon–Fri" />
       </div>
-      <div className="mt-3 rounded-xl border border-white/8 bg-ink-2/70 p-3">
+      <div className="mt-3 rounded-xl border border-border bg-muted/40 p-3">
         <CompareBars
           label="Basket size comparison preview"
           items={[
-            { label: "With meat", value: b.meat_basket_avg, color: "#ff6a3d" },
+            { label: "With meat", value: b.meat_basket_avg, color: "#b91c1c" },
             { label: "Without meat", value: b.nonmeat_basket_avg, color: "#4aa3ff" },
           ]}
         />
@@ -56,7 +57,7 @@ export function BasketAnalysisDemoPreview({ attachRates, categoryLabels, title, 
             items={attachRows.slice(0, 3)}
             valueKey="value"
             labelKey="label"
-            color="#34c759"
+            color="#b91c1c"
             formatValue={(v) => `${v}%`}
             maxItems={3}
           />
@@ -76,7 +77,7 @@ export function RetentionLoyaltyDemoPreview({ title, detail }) {
         <DemoStat label="Retention rate" value={d.retention_rate_pct} suffix="%" hint="2+ visits" />
         <DemoStat label="Orders linked" value={d.orders_with_customer.toLocaleString()} />
       </div>
-      <div className="mt-3 rounded-xl border border-white/8 bg-ink-2/70 p-3">
+      <div className="mt-3 rounded-xl border border-border bg-muted/40 p-3">
         <RetentionGauge
           rate={d.retention_rate_pct}
           repeatCount={d.loyalty_repeat_count}
@@ -100,7 +101,7 @@ export function TopCustomersDemoPreview({ title, detail }) {
         items={rows}
         valueKey="value"
         labelKey="label"
-        color="#ff6a3d"
+        color="#22c55e"
         maxItems={5}
         label="Top customers by spend preview"
       />

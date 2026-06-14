@@ -6,7 +6,7 @@ const TONE_STYLE = {
   anchor: { border: "border-l-brand", tag: "bg-brand/20 text-brand" },
   protect: { border: "border-l-sky", tag: "bg-sky/15 text-sky" },
   attach: { border: "border-l-leaf", tag: "bg-leaf/15 text-leaf" },
-  midweek: { border: "border-l-amber-400", tag: "bg-amber-500/15 text-amber-200" },
+  midweek: { border: "border-l-amber-400", tag: "bg-amber-500/15 text-amber-800" },
 };
 
 function formatBenchPrice(b) {
@@ -22,16 +22,16 @@ function Benchmark({ benchmark }) {
   if (!benchmark) return null;
   const price = formatBenchPrice(benchmark);
   return (
-    <div className="mt-3 rounded-lg border border-white/8 bg-white/[0.03] px-3 py-2 text-xs text-white/60">
-      <span className="font-semibold text-white/75">{benchmark.merchant}</span>
+    <div className="mt-3 rounded-lg border border-border/70 bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+      <span className="font-semibold text-muted-foreground">{benchmark.merchant}</span>
       {benchmark.is_latino && (
-        <span className="ml-1.5 rounded-full border border-white/15 px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-white/50">
+        <span className="ml-1.5 rounded-full border border-border px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-muted-foreground">
           Latino
         </span>
       )}
       {price && <span className="ml-1.5 font-display font-bold text-leaf">{price}</span>}
       {benchmark.valid_to && (
-        <span className="ml-1.5 text-white/40">thru {benchmark.valid_to}</span>
+        <span className="ml-1.5 text-muted-foreground/70">thru {benchmark.valid_to}</span>
       )}
     </div>
   );
@@ -43,7 +43,7 @@ function RecommendationItem({ rec }) {
   return (
     <details
       className={
-        "group overflow-hidden rounded-2xl border border-white/10 bg-ink-2/40 border-l-4 " +
+        "group overflow-hidden rounded-2xl border border-border bg-muted/40 border-l-4 " +
         tone.border
       }
     >
@@ -64,24 +64,24 @@ function RecommendationItem({ rec }) {
           >
             {rec.tag}
           </span>
-          <p className="mt-1.5 font-display text-sm font-semibold leading-snug text-white sm:text-[15px]">
+          <p className="mt-1.5 font-display text-sm font-semibold leading-snug text-foreground sm:text-[15px]">
             {rec.title}
           </p>
         </div>
         <ChevronDown
           size={18}
-          className="mt-1 shrink-0 text-white/40 transition group-open:rotate-180"
+          className="mt-1 shrink-0 text-muted-foreground/70 transition group-open:rotate-180"
           aria-hidden
         />
       </summary>
-      <div className="border-t border-white/8 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
+      <div className="border-t border-border/70 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
         {(rec.plain || rec.goal) && (
-          <p className="text-xs text-white/50">
+          <p className="text-xs text-muted-foreground">
             {rec.plain}
             {rec.goal ? ` · Goal: ${rec.goal}` : ""}
           </p>
         )}
-        {rec.body && <p className="mt-2 text-sm leading-relaxed text-white/70">{rec.body}</p>}
+        {rec.body && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{rec.body}</p>}
         <Benchmark benchmark={rec.benchmark} />
       </div>
     </details>
@@ -104,11 +104,11 @@ export default function RecommendationCards({
       {(title || description) && (
         <header className={compact ? "mb-3" : "mb-4"}>
           {title && (
-            <h3 className="font-display text-lg font-semibold tracking-tight text-white sm:text-xl">
+            <h3 className="font-display text-lg font-semibold tracking-tight text-foreground sm:text-xl">
               {title}
             </h3>
           )}
-          {description && <p className="mt-1 text-sm text-white/50">{description}</p>}
+          {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
         </header>
       )}
       <div className="space-y-2">

@@ -4,6 +4,9 @@ import { ErrorState, EmptyState, EASE } from "../lib/ui";
 import { getSuggestedBenchmarkPresets } from "../lib/benchmarkProfiles";
 import { PageHeader, PANEL, SectionHeader, TAB_SECTION_SPACE } from "../lib/sectionUi";
 
+const TRENDING_PAGE_LEDE =
+  "Most-advertised products by store count — ethnic vs mainstream chains. For lowest prices and category winners, see Competitor deals.";
+
 function TrendCard({ item, rank, accent }) {
   const price =
     item.min != null ? (item.min === item.max ? `$${item.min}` : `$${item.min}–$${item.max}`) : null;
@@ -17,10 +20,10 @@ function TrendCard({ item, rank, accent }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.32, delay: (rank - 1) * 0.03, ease: EASE }}
       whileHover={{ y: -4 }}
-      className={"flex flex-col gap-2 transition-colors hover:border-white/25 " + PANEL + " p-4 sm:p-5"}
+      className={"flex flex-col gap-2 transition-colors hover:border-border " + PANEL + " p-4 sm:p-5"}
     >
       {item.image && (
-        <div className="overflow-hidden rounded-xl border border-white/8 bg-white/5">
+        <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/60">
           <img
             src={item.image}
             alt=""
@@ -36,7 +39,7 @@ function TrendCard({ item, rank, accent }) {
         <span className="font-display text-sm font-bold" style={{ color: accent }}>
           #{rank}
         </span>
-        <span className="text-sm font-semibold leading-snug text-white/90">{item.name}</span>
+        <span className="text-sm font-semibold leading-snug text-foreground">{item.name}</span>
       </div>
       {price && <span className="font-display text-lg font-bold text-leaf">{price}</span>}
       <div className="flex items-center gap-2">
@@ -47,7 +50,7 @@ function TrendCard({ item, rank, accent }) {
           {item.stores ?? 0} {item.stores === 1 ? "store" : "stores"}
         </span>
       </div>
-      {merchantList && <span className="text-xs leading-relaxed text-white/45">{merchantList}</span>}
+      {merchantList && <span className="text-xs leading-relaxed text-muted-foreground/80">{merchantList}</span>}
     </motion.div>
   );
 }
@@ -60,7 +63,7 @@ function TrendGrid({ items, loading, accent, emptyMsg, loadingMsg }) {
           <div
             role="status"
             aria-live="polite"
-            className="mb-4 flex items-center gap-2 rounded-xl border border-brand/25 bg-brand/10 px-4 py-3 text-sm text-white/75"
+            className="mb-4 flex items-center gap-2 rounded-xl border border-brand/25 bg-brand/10 px-4 py-3 text-sm text-muted-foreground"
           >
             <RefreshCw size={14} className="animate-spin shrink-0" aria-hidden />
             {loadingMsg}
@@ -100,20 +103,21 @@ export default function TrendingSection({
     return (
       <section className={TAB_SECTION_SPACE}>
         <PageHeader
-          eyebrow="Trending"
-          title="What's being advertised in your market."
-          description={`Loading ${profileLabel.toLowerCase()} vs mainstream trends in ${marketLabel}…`}
+          eyebrow="Market trends"
+          title="What's being advertised"
+          description={TRENDING_PAGE_LEDE}
+          meta={`Loading ${profileLabel.toLowerCase()} vs mainstream in ${marketLabel}…`}
           onRefresh={onRefresh}
           loading={true}
         />
         <div
           role="status"
           aria-live="polite"
-          className="rounded-xl border border-brand/30 bg-brand/10 px-4 py-3 text-sm text-white/80"
+          className="rounded-xl border border-brand/30 bg-brand/10 px-4 py-3 text-sm text-foreground/85"
         >
           <RefreshCw size={14} className="mr-2 inline animate-spin" aria-hidden />
-          Scanning Flipp ads for <span className="font-semibold text-white">{profileLabel}</span> in{" "}
-          <span className="font-semibold text-white">{marketLabel}</span> — can take up to 60 seconds.
+          Scanning Flipp ads for <span className="font-semibold text-foreground">{profileLabel}</span> in{" "}
+          <span className="font-semibold text-foreground">{marketLabel}</span> — can take up to 60 seconds.
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -152,32 +156,33 @@ export default function TrendingSection({
   return (
     <section className={TAB_SECTION_SPACE}>
       <PageHeader
-        eyebrow="Trending"
-        title="What's being advertised in your market."
-        description={`Most-advertised products in ${scopeLine} — ${ethnicLabel.toLowerCase()} grocers vs mainstream chains`}
+        eyebrow="Market trends"
+        title="What's being advertised"
+        description={TRENDING_PAGE_LEDE}
+        meta={`${scopeLine} · ${ethnicLabel.toLowerCase()} vs mainstream`}
         onRefresh={onRefresh}
         loading={loading}
       />
 
       <div
         role="note"
-        className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs leading-relaxed text-white/60"
+        className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-xs leading-relaxed text-muted-foreground"
       >
-        Scanning <span className="font-medium text-white/80">{scopeLine}</span>
+        Scanning <span className="font-medium text-foreground/85">{scopeLine}</span>
         {zipCount > 0 && data?.scanned_zips && (
           <>
             {" "}
-            · <span className="font-mono text-white/50">{data.scanned_zips.join(", ")}</span>
+            · <span className="font-mono text-muted-foreground">{data.scanned_zips.join(", ")}</span>
           </>
         )}
         {data?.generated_at && (
-          <span className="text-white/40"> · updated {data.generated_at}</span>
+          <span className="text-muted-foreground/70"> · updated {data.generated_at}</span>
         )}
         {data?.discovered_merchants?.length > 0 && (
           <>
             {" "}
             ·{" "}
-            <span className="text-white/55">
+            <span className="text-muted-foreground">
               {data.discovered_merchants.length} Flipp{" "}
               {ethnicLabel.toLowerCase()} grocer{data.discovered_merchants.length !== 1 ? "s" : ""}:{" "}
               {data.discovered_merchants.slice(0, 4).join(", ")}
@@ -197,7 +202,7 @@ export default function TrendingSection({
         <TrendGrid
           items={ethnicItems}
           loading={loading}
-          accent="#ff6a3d"
+          accent="#22c55e"
           emptyMsg={ethnicEmptyMsg}
           loadingMsg={loadingMsg}
         />

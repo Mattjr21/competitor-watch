@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 import { EASE } from "../lib/ui";
 
-const CHART_COLORS = ["#4aa3ff", "#34c759", "#ff6a3d", "#f0b429", "#a78bfa", "#38bdf8"];
+const CHART_COLORS = ["#4aa3ff", "#34c759", "#22c55e", "#f0b429", "#a78bfa", "#38bdf8"];
 
 function chartColor(index, override) {
   return override || CHART_COLORS[index % CHART_COLORS.length];
@@ -15,12 +15,12 @@ export function SegmentBar({ items, valueKey = "pct", color = "#4aa3ff", label }
       {items.map((item) => (
         <div key={item.key || item.label}>
           <div className="mb-1 flex items-center justify-between text-xs">
-            <span className="font-medium text-white/80">{item.label}</span>
-            <span className="tabular-nums text-white/55">
+            <span className="font-medium text-foreground/85">{item.label}</span>
+            <span className="tabular-nums text-muted-foreground">
               {item.count ?? item.orders} · {item[valueKey]}%
             </span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-white/8">
+          <div className="h-2 overflow-hidden rounded-full bg-muted/80">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(item[valueKey], 100)}%` }}
@@ -45,14 +45,14 @@ export function CompareBars({ items, unit = "$", label = "Comparison" }) {
       {items.map((item, i) => (
         <div key={item.label}>
           <div className="mb-1.5 flex items-center justify-between gap-2 text-xs">
-            <span className="font-medium text-white/80">{item.label}</span>
-            <span className="shrink-0 tabular-nums text-white/55">
+            <span className="font-medium text-foreground/85">{item.label}</span>
+            <span className="shrink-0 tabular-nums text-muted-foreground">
               {unit}
               {typeof item.value === "number" ? item.value.toFixed(2) : item.value}
               {item.hint ? ` · ${item.hint}` : ""}
             </span>
           </div>
-          <div className="h-3 overflow-hidden rounded-full bg-white/8">
+          <div className="h-3 overflow-hidden rounded-full bg-muted/80">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(100, (item.value / max) * 100)}%` }}
@@ -119,10 +119,10 @@ export function DonutChart({ segments, size = 168, stroke = 14, label = "Segment
         </svg>
         <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
           <div>
-            <div className="font-display text-2xl font-bold tabular-nums text-white">
+            <div className="font-display text-2xl font-bold tabular-nums text-foreground">
               {segments.reduce((n, s) => n + (s.count ?? s.orders ?? 0), 0).toLocaleString()}
             </div>
-            <div className="text-[10px] uppercase tracking-wider text-white/45">total</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground/80">total</div>
           </div>
         </div>
       </div>
@@ -135,8 +135,8 @@ export function DonutChart({ segments, size = 168, stroke = 14, label = "Segment
               aria-hidden
             />
             <div className="min-w-0">
-              <div className="font-medium text-white/80">{seg.label}</div>
-              <div className="tabular-nums text-white/50">
+              <div className="font-medium text-foreground/85">{seg.label}</div>
+              <div className="tabular-nums text-muted-foreground">
                 {seg.pct}% · {seg.count ?? seg.orders ?? "—"}
                 {seg.avg_basket != null && ` · $${seg.avg_basket} avg`}
                 {seg.avg_spend != null && ` · $${seg.avg_spend} spend`}
@@ -192,17 +192,17 @@ export function RetentionGauge({ rate, repeatCount, newCount }) {
           />
         </svg>
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
-          <span className="font-display text-xl font-bold tabular-nums text-white">{pct}%</span>
+          <span className="font-display text-xl font-bold tabular-nums text-foreground">{pct}%</span>
         </div>
       </div>
       <div className="text-sm">
-        <div className="font-medium text-white/85">2+ visit shoppers</div>
-        <p className="mt-1 text-xs leading-relaxed text-white/55">
+        <div className="font-medium text-foreground/90">2+ visit shoppers</div>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
           {repeatCount != null && newCount != null ? (
             <>
               <span className="text-leaf">{repeatCount.toLocaleString()} returning</span>
               {" · "}
-              <span className="text-white/65">{newCount.toLocaleString()} one-time</span>
+              <span className="text-muted-foreground">{newCount.toLocaleString()} one-time</span>
             </>
           ) : (
             "Share of customers who came back at least once."
@@ -233,10 +233,10 @@ export function RankedBars({
       {rows.map((row, i) => (
         <div key={row.key || row[labelKey] || i}>
           <div className="mb-1 flex items-center justify-between gap-2 text-xs">
-            <span className="truncate font-medium text-white/80">{row[labelKey]}</span>
-            <span className="shrink-0 tabular-nums text-white/55">{formatValue(row[valueKey])}</span>
+            <span className="truncate font-medium text-foreground/85">{row[labelKey]}</span>
+            <span className="shrink-0 tabular-nums text-muted-foreground">{formatValue(row[valueKey])}</span>
           </div>
-          <div className="h-2.5 overflow-hidden rounded-full bg-white/8">
+          <div className="h-2.5 overflow-hidden rounded-full bg-muted/80">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(100, ((row[valueKey] || 0) / max) * 100)}%` }}
@@ -245,7 +245,7 @@ export function RankedBars({
               style={{ background: row.color || color, opacity: 1 - i * 0.06 }}
             />
           </div>
-          {row.sub && <div className="mt-0.5 text-[10px] text-white/40">{row.sub}</div>}
+          {row.sub && <div className="mt-0.5 text-[10px] text-muted-foreground/70">{row.sub}</div>}
         </div>
       ))}
     </div>

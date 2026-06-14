@@ -30,7 +30,7 @@ export default function CombosSection({ data, embedded = false }) {
       )}
 
       {embedded && (
-        <p className="mb-6 text-sm text-white/55">
+        <p className="mb-6 text-sm text-muted-foreground">
           Multi-buy and bundle promos near your markets — inspiration for Sat &amp; Sun flyers.
         </p>
       )}
@@ -42,12 +42,12 @@ export default function CombosSection({ data, embedded = false }) {
       ) : (
         <>
           <div className="mb-6 flex flex-wrap items-center gap-4">
-            <label className="flex items-center gap-2 text-sm text-white/60">
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>Area</span>
               <select
                 value={zipFilter}
                 onChange={(e) => setZipFilter(e.target.value)}
-                className="toolbar-control cursor-pointer text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="toolbar-control cursor-pointer text-sm outline-none focus-visible:ring-2 focus-visible:ring-brand"
               >
                 <option value="">All areas</option>
                 {zips.map((z) => {
@@ -60,12 +60,12 @@ export default function CombosSection({ data, embedded = false }) {
                 })}
               </select>
             </label>
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-white/60">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
               <input
                 type="checkbox"
                 checked={latinoOnly}
                 onChange={(e) => setLatinoOnly(e.target.checked)}
-                className="rounded border-white/20"
+                className="rounded border-border"
               />
               Latino groceries only
             </label>
